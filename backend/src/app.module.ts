@@ -6,12 +6,12 @@ import { ConfigModule } from '@nestjs/config';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
-
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot({
       type: 'postgres',
+      url: process.env.DATABASE_URL,
       autoLoadEntities: true,
       entities: [],
       synchronize: true,
