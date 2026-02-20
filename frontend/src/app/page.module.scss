@@ -1,0 +1,45 @@
+.page {
+  text-align: center;
+
+  .main {
+    padding: 2rem;
+    background-color: lightblue;
+  }
+
+  .intro {
+    color: darkblue;
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      font-size: 1rem;
+      a {
+        color: darkred;
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .ctas {
+    margin-top: 2rem;
+    display: flex;
+    gap: 1rem;
+
+    a.primary {
+      background-color: blue;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+    }
+
+    a.secondary {
+      background-color: gray;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+    }
+  }
+}
