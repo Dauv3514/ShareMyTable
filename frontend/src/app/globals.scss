@@ -1,4 +1,9 @@
-@import './_variables.scss';
+@use './variables' as *;
+
+:root {
+  --background: #{$background-light};
+  --foreground: #{$foreground-light};
+}
 
 :root {
   --background: #{$background-light};
