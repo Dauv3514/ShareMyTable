@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+  <meta charset="utf-8">
+  <title>Cartographie ShareMyTable</title>
+
+  <style>
+    body {
+      font-family: Segoe UI, Arial;
+      background: #f7f8fc;
+      margin: 0;
+      padding: 30px;
+      color: #1c2430;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 25px;
+    }
+
+    .title {
+      font-weight: 700;
+      background: #e8ecf7;
+      padding: 8px 12px;
+      border: 1px solid #c8cdda;
+      border-radius: 4px;
+      text-transform: uppercase;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .box {
+      background: white;
+      border: 1px solid #c8cdda;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .box-header {
+      background: #eef1fa;
+      padding: 8px 10px;
+      font-weight: 700;
+      font-size: 13px;
+      border-bottom: 1px solid #c8cdda;
+      text-transform: uppercase;
+    }
+
+    .flow {
+      text-align: center;
+    }
+
+    .node {
+      background: #2f5fb8;
+      color: white;
+      padding: 12px;
+      margin: 8px;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+
+    .node.light {
+      background: white;
+      color: #222;
+      border: 1px solid #c8cdda;
+    }
+
+    .arrow {
+      font-size: 20px;
+      color: #7a869a;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      border: 1px solid #c8cdda;
+      padding: 8px;
+    }
+
+    th {
+      background: #f1f3fa;
+    }
+
+    .two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .diagram {
+      margin-top: 30px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .pill {
+      padding: 14px;
+      border-radius: 8px;
+      color: white;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .blue {
+      background: #2a5bd7;
+    }
+
+    .red {
+      background: #c62828;
+    }
+
+    .green {
+      background: #2e7d32;
+    }
+
+    .yellow {
+      background: #d19c00;
+    }
+
+    .center {
+      text-align: center;
+      font-size: 18px;
+      color: #7a869a;
+    }
+
+    .node {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-direction: column;
+      background: #2f5fb8;
+      color: white;
+      padding: 14px;
+      margin: 8px;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+
+    .node img {
+      width: 26px;
+      height: 26px;
+    }
+
+    .node.light {
+      background: white;
+      color: #222;
+      border: 1px solid #c8cdda;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <!-- COLONNE GAUCHE -->
+
+    <div>
+
+      <div class="title">Vue d'ensemble</div>
+
+      <div class="flow">
+
+        <div class="node">
+          <img src="https://cdn-icons-png.flaticon.com/512/1006/1006771.png">
+          Client Web / Mobile
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="node">
+          <div style="display:flex; gap:6px;">
+            <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg">
+            <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg">
+          </div>
+          Frontend WebApp<br>
+          Next.js + React
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="node">
+          <img src="https://nestjs.com/img/logo-small.svg">
+          API Backend<br>
+          NestJS
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="node">
+          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg">
+          Base de données<br>
+          PostgreSQL
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="node light">
+
+          <div style="display:flex; gap:8px; justify-content:center;">
+
+            <img src="https://upload.wikimedia.org/wikipedia/commons/b/b0/Openstreetmap_logo.svg" width="22">
+
+          </div>
+
+          Services externes<br>
+          OSM • OpenRouteService • TheMealDB • Stripe
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- COLONNE DROITE -->
+
+    <div>
+
+      <div class="box">
+
+        <div class="box-header">
+          Cartographie Fonctionnelle
+        </div>
+
+        <table>
+
+          <tr>
+            <th>Domaine</th>
+            <th>Modules</th>
+            <th>Description</th>
+          </tr>
+
+          <tr>
+            <td>Utilisateurs</td>
+            <td>Auth, Profil, Rôles</td>
+            <td>Gestion des comptes et permissions</td>
+          </tr>
+
+          <tr>
+            <td>Repas</td>
+            <td>Meals, Photos</td>
+            <td>Création et publication de repas</td>
+          </tr>
+
+          <tr>
+            <td>Réservations</td>
+            <td>Bookings</td>
+            <td>Réservation et gestion des places</td>
+          </tr>
+
+          <tr>
+            <td>Avis</td>
+            <td>Reviews</td>
+            <td>Notes et commentaires après repas</td>
+          </tr>
+
+          <tr>
+            <td>Messagerie</td>
+            <td>Conversations, Messages</td>
+            <td>Communication invités / hôtes</td>
+          </tr>
+
+          <tr>
+            <td>Paiements</td>
+            <td>Payments</td>
+            <td>Paiement et commission plateforme</td>
+          </tr>
+
+          <tr>
+            <td>Administration</td>
+            <td>Reports</td>
+            <td>Modération et signalements</td>
+          </tr>
+
+        </table>
+
+      </div>
+
+
+      <div class="two">
+
+        <div class="box">
+
+          <div class="box-header">
+            Flux d'inscription
+          </div>
+
+          <table>
+
+            <tr>
+              <td>Utilisateur → Formulaire inscription</td>
+            </tr>
+            <tr>
+              <td>Frontend → API /auth/register</td>
+            </tr>
+            <tr>
+              <td>Validation DTO + Hash password</td>
+            </tr>
+            <tr>
+              <td>Création utilisateur PostgreSQL</td>
+            </tr>
+            <tr>
+              <td>Réponse 201 → Compte créé</td>
+            </tr>
+
+          </table>
+
+        </div>
+
+
+        <div class="box">
+
+          <div class="box-header">
+            Cartographie Technique
+          </div>
+
+          <table>
+
+            <tr>
+              <th>Couche</th>
+              <th>Technologies</th>
+            </tr>
+
+            <tr>
+              <td>Frontend</td>
+              <td>Next.js, React, SASS</td>
+            </tr>
+
+            <tr>
+              <td>Backend</td>
+              <td>NestJS, TypeORM</td>
+            </tr>
+
+            <tr>
+              <td>Base de données</td>
+              <td>PostgreSQL</td>
+            </tr>
+
+            <tr>
+              <td>Carte</td>
+              <td>Leaflet, OpenStreetMap</td>
+            </tr>
+
+            <tr>
+              <td>Itinéraires</td>
+              <td>OpenRouteService</td>
+            </tr>
+
+            <tr>
+              <td>Recettes</td>
+              <td>TheMealDB</td>
+            </tr>
+
+            <tr>
+              <td>Paiement</td>
+              <td>Stripe (phase finale)</td>
+            </tr>
+
+          </table>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- DIAGRAMME BAS -->
+
+  <div class="diagram">
+
+    <div class="title">Vue Diagramme</div>
+
+    <div class="row">
+
+      <div class="pill blue">
+        FRONTEND<br>
+        Next.js + React
+      </div>
+
+      <div class="pill red">
+        BACKEND<br>
+        NestJS
+      </div>
+
+      <div class="pill green">
+        DATABASE<br>
+        PostgreSQL
+      </div>
+
+    </div>
+
+    <div class="center">↔ ↔ ↔</div>
+
+    <div class="row">
+
+      <div></div>
+
+      <div class="pill yellow">
+        Services externes<br>
+        OSM • ORS • TheMealDB • Stripe
+      </div>
+
+      <div></div>
+
+    </div>
+
+  </div>
+
+</body>
+
+</html>
