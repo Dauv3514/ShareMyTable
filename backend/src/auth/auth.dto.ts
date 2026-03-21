@@ -55,3 +55,18 @@ export class ConnexionDto {
   @IsNotEmpty({ message: "Le mot de passe est obligatoire" })
   password_hash: string;
 }
+
+export class ForgotPasswordDto {
+  @IsNotEmpty({ message: "L'email est obligatoire" })
+  @IsEmail({}, { message: "L'email est invalide" })
+  email: string;
+}
+
+export class ResetPasswordDto {
+  @IsNotEmpty({ message: 'Token manquant' })
+  token: string;
+
+  @IsNotEmpty({ message: 'Le nouveau mot de passe est obligatoire' })
+  @Length(8, 255, { message: 'Le mot de passe doit contenir au moins 8 caractères' })
+  new_password: string;
+}
