@@ -1,0 +1,33 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 89vh;
+  text-align: center;
+  background-color: black;
+  color: #ffffff;
+  font-family: 'Open Sans', sans-serif;
+  padding: 0 1rem;
+}
+
+.title {
+  font-size: 6rem;
+  margin: 0;
+}
+
+.message {
+  font-size: 1.5rem;
+  margin: 1rem 0;
+}
+
+.link {
+  color: #1e4dd8;
+  text-decoration: none;
+  font-weight: bold;
+  margin-top: 1rem;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
