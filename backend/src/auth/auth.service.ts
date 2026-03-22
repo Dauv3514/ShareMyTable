@@ -113,7 +113,7 @@ export class AuthService {
             const baseUrl =
                 process.env.FRONTEND_URL ??
                 process.env.BACKEND_URL;
-            const resetUrl = `${baseUrl}/reset-password?token=${token}`;
+            const resetUrl = `${baseUrl}/nouveau-mot-de-passe?token=${token}`;
             await this.mailService.sendResetPasswordEmail(user.email, resetUrl);
         }
 

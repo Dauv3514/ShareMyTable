@@ -1,31 +1,46 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import './globals.scss';
+import "./globals.scss";
+// import Navbar from "../components/Navbar/Navbar";
+import { Open_Sans, Merriweather_Sans } from "next/font/google";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { AuthProvider } from "./providers/AuthProvider";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const openSans = Open_Sans({
   subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  variable: "--font-open-sans",
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const merriweatherSans = Merriweather_Sans({
   subsets: ["latin"],
+  weight: ["300", "400", "500"],
+  variable: "--font-merriweather-sans",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Share My Table",
-  description: "Share My Table",
+  title: "RamèneTaPoire",
+  description: "Le blablacar des repas",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        {children}
+    <html lang="fr">
+      <body className={`${openSans.variable} ${merriweatherSans.variable}`}>
+        <AuthProvider>
+          {/* Navbar visible sur toutes les pages
+          <Navbar /> */}
+
+          {/* Contenu spécifique à chaque page */}
+          <main className="page-container">{children}</main>
+
+          {/* Notifications globales */}
+          <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+        </AuthProvider>
       </body>
     </html>
   );

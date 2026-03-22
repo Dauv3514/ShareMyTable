@@ -1,0 +1,93 @@
+@use "../_variables.scss" as *;
+
+.resetContainer {
+  width: 100%;
+  min-height: calc(100vh - 84px);
+  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.resetTitle {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.resetForm {
+  width: 350px;
+  background: #fff;
+  padding: 35px 30px;
+  border-radius: 6px;
+  box-shadow: $shadow;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.resetInput {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid $border;
+  border-radius: 3px;
+  font-size: 14px;
+}
+
+.resetButton {
+  margin-top: 6px;
+  background: $primary;
+  color: white;
+  padding: 12px 0;
+  border-radius: 3px;
+  font-size: 15px;
+  cursor: pointer;
+  border: none;
+
+  &:hover {
+    opacity: 0.9;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.resetSuccessBox {
+  width: 350px;
+  background: #fff;
+  padding: 25px 22px;
+  border-radius: 6px;
+  box-shadow: $shadow;
+  text-align: center;
+  font-size: 14px;
+}
+
+.resetLink {
+  color: $primary;
+  text-decoration: underline;
+  cursor: pointer;
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.resetError {
+  color: #c62828;
+  font-size: 13px;
+}
+
+@media (max-width: 480px) {
+  .resetForm,
+  .resetSuccessBox {
+    width: 100%;
+    padding: 25px 20px;
+  }
+
+  .resetTitle {
+    font-size: 1.2rem;
+  }
+}
