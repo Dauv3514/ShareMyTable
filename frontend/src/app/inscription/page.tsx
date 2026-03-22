@@ -14,13 +14,18 @@ export default function InscriptionPage() {
     password_hash: "",
     first_name: "",
     last_name: "",
-    pseudo: "",
     country: "",
     city: "",
     birth_date: "",
+    pseudo: "",
+    bio: "",
+    profile_photo_url: "",
   });
+  const [showOptional, setShowOptional] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -48,11 +53,14 @@ export default function InscriptionPage() {
         password_hash: "",
         first_name: "",
         last_name: "",
-        pseudo: "",
         country: "",
         city: "",
         birth_date: "",
+        pseudo: "",
+        bio: "",
+        profile_photo_url: "",
       });
+      setShowOptional(false);
 
     } catch (err: any) {
       let message = "Erreur inconnue 😅";
@@ -117,14 +125,6 @@ export default function InscriptionPage() {
         <input
           className={styles.input}
           type="text"
-          name="pseudo"
-          placeholder="Pseudo"
-          value={formData.pseudo}
-          onChange={handleChange}
-        />
-        <input
-          className={styles.input}
-          type="text"
           name="country"
           placeholder="Pays"
           value={formData.country}
@@ -149,6 +149,44 @@ export default function InscriptionPage() {
           onChange={handleChange}
           required
         />
+
+        <button
+          type="button"
+          className={styles.optionalToggle}
+          onClick={() => setShowOptional((prev) => !prev)}
+        >
+          {showOptional ? "Masquer les champs optionnels" : "Afficher les champs optionnels"}
+          <span className={showOptional ? styles.chevronUp : styles.chevronDown}>▾</span>
+        </button>
+
+        {showOptional && (
+          <div className={styles.optionalBlock}>
+            <input
+              className={styles.input}
+              type="text"
+              name="pseudo"
+              placeholder="Pseudo"
+              value={formData.pseudo}
+              onChange={handleChange}
+            />
+            <input
+              className={styles.input}
+              type="url"
+              name="profile_photo_url"
+              placeholder="Photo de profil"
+              value={formData.profile_photo_url}
+              onChange={handleChange}
+            />
+            <textarea
+              className={styles.textarea}
+              name="bio"
+              placeholder="Bio"
+              value={formData.bio}
+              onChange={handleChange}
+              rows={4}
+            />
+          </div>
+        )}
 
         <button className={styles.button} type="submit">
           Inscription
