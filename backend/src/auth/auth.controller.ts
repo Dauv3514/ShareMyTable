@@ -1,7 +1,7 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Get, Query } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Public } from './public.decorator';
-import { InscriptionDto, ConnexionDto } from '../auth/auth.dto';
+import { InscriptionDto, ConnexionDto, ForgotPasswordDto, ResetPasswordDto } from '../auth/auth.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -19,6 +19,27 @@ export class AuthController {
   @Post('connexion')
   async connexion(@Body() body: ConnexionDto) {
     return this.authService.connexion(body.email, body.password_hash);
+  }
+
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @Get('verify-email')
+  async verifyEmail(@Query('token') token: string) {
+    return this.authService.verifyEmail(token);
+  }
+
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @Post('forgot-password')
+  async forgotPassword(@Body() body: ForgotPasswordDto) {
+    return this.authService.forgotPassword(body);
+  }
+
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @Post('reset-password')
+  async resetPassword(@Body() body: ResetPasswordDto) {
+    return this.authService.resetPassword(body);
   }
 
   @Public()

@@ -47,4 +47,58 @@ export class UsersService {
     const user = await this.usersRepository.findOne({ where: { id } });
     return user ?? undefined;
   }
+
+  // fonctions de vérification de l'email lors de l'inscription
+
+  async updateEmailVerifiedAt(userId: number, verifiedAt: Date) {
+    await this.usersRepository.update({ id: userId }, { emailVerifiedAt: verifiedAt });
+  }
+
+  async setEmailVerificationToken(userId: number, tokenHash: string, expiresAt: Date) {
+    await this.usersRepository.update(
+      { id: userId },
+      { emailVerificationTokenHash: tokenHash, emailVerificationExpiresAt: expiresAt },
+    );
+  }
+
+  async findByEmailVerificationTokenHash(tokenHash: string): Promise<Utilisateur | undefined> {
+    const user = await this.usersRepository.findOne({
+      where: { emailVerificationTokenHash: tokenHash },
+    });
+    return user ?? undefined;
+  }
+
+  async clearEmailVerificationToken(userId: number) {
+    await this.usersRepository.update(
+      { id: userId },
+      { emailVerificationTokenHash: null, emailVerificationExpiresAt: null },
+    );
+  }
+
+  // fonctions de réinitialisation du mot de passe
+
+  async setPasswordResetToken(userId: number, tokenHash: string, expiresAt: Date) {
+    await this.usersRepository.update(
+      { id: userId },
+      { passwordResetTokenHash: tokenHash, passwordResetExpiresAt: expiresAt },
+    );
+  }
+
+  async findByPasswordResetTokenHash(tokenHash: string): Promise<Utilisateur | undefined> {
+    const user = await this.usersRepository.findOne({
+      where: { passwordResetTokenHash: tokenHash },
+    });
+    return user ?? undefined;
+  }
+
+  async clearPasswordResetToken(userId: number) {
+    await this.usersRepository.update(
+      { id: userId },
+      { passwordResetTokenHash: null, passwordResetExpiresAt: null },
+    );
+  }
+
+  async updatePasswordHash(userId: number, passwordHash: string) {
+    await this.usersRepository.update({ id: userId }, { passwordHash });
+  }
 }
