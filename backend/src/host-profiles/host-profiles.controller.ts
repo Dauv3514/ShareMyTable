@@ -13,7 +13,7 @@ import { AuthGuard } from '../auth/auth.guard';
 import type { IAuthInfoRequest } from '../auth/auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
-import { UserRole } from '../users/users.entity';
+import { RoleName } from '../users/role.entity';
 import { CreateHostProfileDto } from './dto/create-host-profile.dto';
 import { UpdateHostProfileDto } from './dto/update-host-profile.dto';
 import { HostProfilesService } from './host-profiles.service';
@@ -28,10 +28,8 @@ export class HostProfilesController {
     @Req() req: IAuthInfoRequest,
     @Body() createHostProfileDto: CreateHostProfileDto,
   ) {
-    const userId = req.user?.sub;
-    // TODO: brancher la vraie auth si la structure du payload JWT evolue.
     return this.hostProfilesService.requestHostProfile(
-      Number(userId),
+      Number(req.user.sub),
       createHostProfileDto,
     );
   }
@@ -39,9 +37,7 @@ export class HostProfilesController {
   @UseGuards(AuthGuard)
   @Get('me')
   async getMyHostProfile(@Req() req: IAuthInfoRequest) {
-    const userId = req.user?.sub;
-    // TODO: brancher la vraie auth si la structure du payload JWT evolue.
-    return this.hostProfilesService.findMine(Number(userId));
+    return this.hostProfilesService.findMine(Number(req.user.sub));
   }
 
   @UseGuards(AuthGuard)
@@ -50,23 +46,48 @@ export class HostProfilesController {
     @Req() req: IAuthInfoRequest,
     @Body() updateHostProfileDto: UpdateHostProfileDto,
   ) {
-    const userId = req.user?.sub;
-    // TODO: brancher la vraie auth si la structure du payload JWT evolue.
     return this.hostProfilesService.updateMine(
-      Number(userId),
+      Number(req.user.sub),
       updateHostProfileDto,
     );
   }
 
+  @UseGuards(AuthGuard)
+  @Patch('me/resubmit')
+  async resubmitMyHostProfile(@Req() req: IAuthInfoRequest) {
+    return this.hostProfilesService.resubmitMine(Number(req.user.sub));
+  }
+
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(RoleName.ADMIN)
+  @Get('pending')
+  async findPendingHostProfiles() {
+    return this.hostProfilesService.findPending();
+  }
+
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RoleName.ADMIN)
+  @Get()
+  async findAllHostProfiles() {
+    return this.hostProfilesService.findAll();
+  }
+
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RoleName.ADMIN)
+  @Get(':id')
+  async findHostProfileById(@Param('id', ParseIntPipe) id: number) {
+    return this.hostProfilesService.findById(id);
+  }
+
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RoleName.ADMIN)
   @Patch(':id/approve')
   async approveHostProfile(@Param('id', ParseIntPipe) id: number) {
     return this.hostProfilesService.approve(id);
   }
 
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(RoleName.ADMIN)
   @Patch(':id/reject')
   async rejectHostProfile(@Param('id', ParseIntPipe) id: number) {
     return this.hostProfilesService.reject(id);

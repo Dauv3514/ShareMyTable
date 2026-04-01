@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   IsLatitude,
   IsLongitude,
@@ -13,10 +14,12 @@ export class UpdateHostProfileDto {
   homePhotoUrl?: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsLatitude()
   lat?: number;
 
   @IsOptional()
+  @Type(() => Number)
   @IsLongitude()
   lng?: number;
 

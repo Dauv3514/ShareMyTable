@@ -26,8 +26,9 @@ export class HostProfile {
 
   @Column({
     name: 'validation_status',
-    type: 'varchar',
-    length: 20,
+    type: 'enum',
+    enum: HostValidationStatus,
+    enumName: 'host_validation_status_enum',
     default: HostValidationStatus.PENDING,
   })
   validationStatus: HostValidationStatus;
@@ -56,7 +57,10 @@ export class HostProfile {
   @Column({ type: 'varchar', length: 255 })
   address: string;
 
-  @OneToOne(() => Utilisateur, { nullable: false, onDelete: 'CASCADE' })
+  @OneToOne(() => Utilisateur, (user) => user.hostProfile, {
+    nullable: false,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'user_id', referencedColumnName: 'id' })
   user: Utilisateur;
 }
