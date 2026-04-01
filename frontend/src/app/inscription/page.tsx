@@ -77,10 +77,19 @@ export default function InscriptionPage() {
     }
   };
 
+  const handleOAuth = (provider: "google" | "apple") => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) {
+      toast.error("API_URL manquante");
+      return;
+    }
+    window.location.href = `${apiUrl}/auth/${provider}`;
+  };
+
   return (
     <main className={styles.container}>
       <div className={styles.logoWrapper}>
-        <Image src="./globe.svg" alt="RamèneTaPoire Logo" width={120} height={120} />
+        <Image src="./globe.svg" alt="RamèneTaPoire Logo" width={20} height={20} />
       </div>
 
       <h2 className={styles.title}>Créez votre compte</h2>
@@ -192,6 +201,26 @@ export default function InscriptionPage() {
           Inscription
         </button>
       </form>
+
+      <div className={styles.oauthDivider}>ou</div>
+
+      <div className={styles.oauthGroup}>
+        <button
+          className={styles.oauthButton}
+          type="button"
+          onClick={() => handleOAuth("google")}
+        >
+          Continuer avec Google
+        </button>
+        <button
+          className={styles.oauthButton}
+          type="button"
+          disabled
+          title="Apple à configurer côté backend"
+        >
+          Continuer avec Apple
+        </button>
+      </div>
 
       <p className={styles.bottomText}>
         Vous avez déjà un compte ?{" "}

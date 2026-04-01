@@ -1,7 +1,8 @@
-import { Controller, NotFoundException, Dependencies, Get, Param, Req, UseGuards } from '@nestjs/common';
+import { Controller, NotFoundException, Dependencies, Get, Param, Req, UseGuards, Patch, Body } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AuthGuard } from '../auth/auth.guard';
 import type { IAuthInfoRequest } from '../auth/auth.guard';
+import { CompleteProfileDto } from './users.dto';
 @Controller('users')
 @Dependencies(UsersService)
 export class UsersController {
@@ -29,6 +30,26 @@ export class UsersController {
             biographie: user.bio,
             birthDate: user.birthDate,
             ville: user.city,
+            isProfileComplete: user.isProfileComplete,
+        };
+    }
+
+    @UseGuards(AuthGuard)
+    @Patch('me/complete-profile')
+    async completeProfile(@Req() req: IAuthInfoRequest, @Body() body: CompleteProfileDto) {
+        const updatedUser = await this.usersService.completeProfile(req.user.sub, {
+            country: body.country,
+            city: body.city,
+            birthDate: new Date(body.birth_date),
+        });
+        return {
+            success: true,
+            user: {
+                country: updatedUser.country,
+                city: updatedUser.city,
+                birthDate: updatedUser.birthDate,
+                isProfileComplete: updatedUser.isProfileComplete,
+            },
         };
     }
 

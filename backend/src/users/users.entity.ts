@@ -10,12 +10,17 @@ export enum AccountStatus {
     SUSPENDED = 'suspended',
 }
 
+export enum AuthProvider {
+    LOCAL = 'local',
+    GOOGLE = 'google',
+    APPLE = 'apple',
+}
 @Entity('users')
 export class Utilisateur {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({ length: 50, unique: true, nullable: true })
+    @Column({ type: 'varchar', length: 50, unique: true, nullable: true })
     pseudo: string;
 
     @Column({ length: 150, unique: true })
@@ -24,8 +29,8 @@ export class Utilisateur {
     @Column({ length: 30, nullable: true })
     phone: string;
 
-    @Column({ name: 'password_hash', length: 255 })
-    passwordHash: string;
+    @Column({ name: 'password_hash', type: 'varchar', length: 255, nullable: true })
+    passwordHash: string | null;
 
     @Column({ name: 'first_name', length: 50 })
     firstName: string;
@@ -50,6 +55,20 @@ export class Utilisateur {
 
     @Column({ name: 'email_verified_at', type: 'timestamp', nullable: true })
     emailVerifiedAt: Date;
+
+    @Column({
+        name: 'auth_provider',
+        type: 'enum',
+        enum: AuthProvider,
+        default: AuthProvider.LOCAL,
+    })
+    authProvider: AuthProvider;
+
+    @Column({ name: 'auth_provider_id', type: 'varchar', length: 150, nullable: true })
+    authProviderId: string | null;
+
+    @Column({ name: 'is_profile_complete', type: 'boolean', default: false })
+    isProfileComplete: boolean;
 
     @Column({ name: 'email_verification_token_hash', type: 'varchar', length: 64, nullable: true })
     emailVerificationTokenHash: string | null;

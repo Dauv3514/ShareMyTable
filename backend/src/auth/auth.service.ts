@@ -5,6 +5,25 @@ import * as bcrypt from 'bcrypt';
 import { randomBytes, createHash } from 'crypto';
 import { InscriptionDto, ForgotPasswordDto, ResetPasswordDto } from '../auth/auth.dto';
 import { MailService } from '../mail/mail.service';
+import { AuthProvider } from '../users/users.entity';
+
+type OAuthProfile = {
+    id?: string;
+    emails?: Array<{ value: string }>;
+    name?: { givenName?: string; familyName?: string };
+    displayName?: string;
+    photos?: Array<{ value: string }>;
+};
+
+type OAuthPendingPayload = {
+    type: 'oauth_pending';
+    provider: AuthProvider;
+    providerId: string;
+    email?: string;
+    firstName?: string;
+    lastName?: string;
+    profilePhotoUrl?: string;
+};
 
 @Injectable()
 export class AuthService {
@@ -63,6 +82,10 @@ export class AuthService {
         const user = await this.usersService.findOne(email);
         if (!user) throw new UnauthorizedException('Cet email n\'est pas enregistré');
 
+        if (!user.passwordHash) {
+            throw new UnauthorizedException('Ce compte utilise un fournisseur externe');
+        }
+
         const isValid = await bcrypt.compare(pass, user.passwordHash);
         if (!isValid) throw new UnauthorizedException('Mot de passe incorrect');
 
@@ -73,6 +96,165 @@ export class AuthService {
             nom: user.lastName
         };
         return { access_token: await this.jwtService.signAsync(payload) };
+    }
+
+    async oauthLogin(provider: AuthProvider, profile: OAuthProfile) {
+        const providerId = profile?.id;
+        if (!providerId) {
+            throw new BadRequestException('Identifiant fournisseur manquant');
+        }
+
+        const normalize = (value?: string) =>
+            value && value.trim().length > 0 ? value.trim() : undefined;
+
+        const email = normalize(profile.emails?.[0]?.value);
+        const displayNameParts = profile.displayName?.split(' ');
+        const firstName = normalize(profile.name?.givenName ?? displayNameParts?.[0]);
+        const lastName = normalize(
+            profile.name?.familyName ?? displayNameParts?.slice(1).join(' '),
+        );
+
+        const missingEmail = !email;
+        const missingFirstName = !firstName;
+        const missingLastName = !lastName;
+
+        if (missingEmail || missingFirstName || missingLastName) {
+            const pendingToken = await this.jwtService.signAsync(
+                {
+                    type: 'oauth_pending',
+                    provider,
+                    providerId,
+                    email,
+                    firstName,
+                    lastName,
+                    profilePhotoUrl: profile.photos?.[0]?.value,
+                } satisfies OAuthPendingPayload,
+                { expiresIn: '10m' },
+            );
+
+            return {
+                type: 'pending' as const,
+                pendingToken,
+                missing: {
+                    email: missingEmail,
+                    firstName: missingFirstName,
+                    lastName: missingLastName,
+                },
+            };
+        }
+
+        let user = await this.usersService.findByProvider(provider, providerId);
+
+        if (!user) {
+            user = await this.usersService.findOne(email);
+
+            if (user) {
+                await this.usersService.linkProvider(user.id, provider, providerId);
+            } else {
+                user = await this.usersService.createOAuthUser({
+                    email,
+                    firstName,
+                    lastName,
+                    profilePhotoUrl: profile.photos?.[0]?.value,
+                    provider,
+                    providerId,
+                });
+            }
+        }
+
+        const payload = {
+            sub: user.id,
+            email: user.email,
+            roles: user.roles,
+            nom: user.lastName,
+        };
+        const token = await this.jwtService.signAsync(payload);
+        return { type: 'complete' as const, access_token: token, isProfileComplete: user.isProfileComplete };
+    }
+
+    async completeOAuthProfile(params: {
+        pendingToken: string;
+        email?: string;
+        firstName?: string;
+        lastName?: string;
+        country: string;
+        city: string;
+        birthDate: Date;
+    }) {
+        let payload: OAuthPendingPayload;
+        try {
+            payload = (await this.jwtService.verifyAsync(params.pendingToken)) as OAuthPendingPayload;
+        } catch {
+            throw new BadRequestException('Token OAuth invalide ou expiré');
+        }
+
+        if (payload.type !== 'oauth_pending') {
+            throw new BadRequestException('Token OAuth invalide');
+        }
+
+        const normalize = (value?: string) =>
+            value && value.trim().length > 0 ? value.trim() : undefined;
+
+        const email = normalize(payload.email) ?? normalize(params.email);
+        const firstName = normalize(payload.firstName) ?? normalize(params.firstName);
+        const lastName = normalize(payload.lastName) ?? normalize(params.lastName);
+
+        if (!email || !firstName || !lastName) {
+            throw new BadRequestException('Informations manquantes');
+        }
+
+        let user = await this.usersService.findByProvider(payload.provider, payload.providerId);
+        if (!user) {
+            user = await this.usersService.findOne(email);
+            if (user) {
+                await this.usersService.linkProvider(user.id, payload.provider, payload.providerId);
+            } else {
+                user = await this.usersService.createOAuthUser({
+                    email,
+                    firstName,
+                    lastName,
+                    profilePhotoUrl: payload.profilePhotoUrl,
+                    provider: payload.provider,
+                    providerId: payload.providerId,
+                });
+            }
+        }
+
+        await this.usersService.completeProfile(user.id, {
+            country: params.country,
+            city: params.city,
+            birthDate: params.birthDate,
+        });
+
+        const token = await this.jwtService.signAsync({
+            sub: user.id,
+            email: user.email,
+            roles: user.roles,
+            nom: user.lastName,
+        });
+
+        return { access_token: token };
+    }
+
+    buildOAuthRedirect(token: string, isProfileComplete: boolean) {
+        const baseUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+        const redirectUrl = new URL('/auth/callback', baseUrl);
+        redirectUrl.searchParams.set('token', token);
+        redirectUrl.searchParams.set('profileComplete', String(isProfileComplete));
+        return redirectUrl.toString();
+    }
+
+    buildOAuthPendingRedirect(params: {
+        pendingToken: string;
+        missing: { email: boolean; firstName: boolean; lastName: boolean };
+    }) {
+        const baseUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+        const redirectUrl = new URL('/complete-profile', baseUrl);
+        redirectUrl.searchParams.set('pending', params.pendingToken);
+        if (params.missing.email) redirectUrl.searchParams.set('missingEmail', '1');
+        if (params.missing.firstName) redirectUrl.searchParams.set('missingFirstName', '1');
+        if (params.missing.lastName) redirectUrl.searchParams.set('missingLastName', '1');
+        return redirectUrl.toString();
     }
 
     // fonction de vérification de l'email lors de l'inscription
@@ -112,7 +294,8 @@ export class AuthService {
 
             const baseUrl =
                 process.env.FRONTEND_URL ??
-                process.env.BACKEND_URL;
+                process.env.BACKEND_URL ??
+                `http://localhost:${process.env.PORT ?? 5001}`;
             const resetUrl = `${baseUrl}/nouveau-mot-de-passe?token=${token}`;
             await this.mailService.sendResetPasswordEmail(user.email, resetUrl);
         }
