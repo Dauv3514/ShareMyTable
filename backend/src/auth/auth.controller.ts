@@ -55,6 +55,36 @@ export class AuthController {
   }
 
   @Public()
+  @Get('apple')
+  @UseGuards(PassportAuthGuard('apple'))
+  async appleAuth() {
+    return;
+  }
+
+  @Public()
+  @Post('apple/callback')
+  @UseGuards(PassportAuthGuard('apple'))
+  async appleCallback(@Req() req: Request & { user?: any }, @Res() res: Response) {
+    const result = await this.authService.oauthLogin(
+      AuthProvider.APPLE,
+      req.user as any,
+    );
+    if (result.type === 'pending') {
+      const redirectUrl = this.authService.buildOAuthPendingRedirect({
+        pendingToken: result.pendingToken,
+        missing: result.missing,
+      });
+      return res.redirect(redirectUrl);
+    }
+
+    const redirectUrl = this.authService.buildOAuthRedirect(
+      result.access_token,
+      result.isProfileComplete,
+    );
+    return res.redirect(redirectUrl);
+  }
+
+  @Public()
   @HttpCode(HttpStatus.OK)
   @Get('verify-email')
   async verifyEmail(@Query('token') token: string) {

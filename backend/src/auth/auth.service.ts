@@ -66,7 +66,7 @@ export class AuthService {
         await this.usersService.setEmailVerificationToken(user.id, tokenHash, expiresAt);
 
         const baseUrl =
-            process.env.BACKEND_URL ?? 5001;
+            process.env.BACKEND_URL ?? `http://localhost:${process.env.PORT}`;
         const verifyUrl = `${baseUrl}/auth/verify-email?token=${token}`;
         await this.mailService.sendVerifyEmail(user.email, verifyUrl);
 

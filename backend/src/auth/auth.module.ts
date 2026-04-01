@@ -8,6 +8,7 @@ import { UsersModule } from '../users/users.module';
 import { AuthGuard } from './auth.guard';
 import { MailService } from '../mail/mail.service';
 import { GoogleStrategy } from './google.strategy';
+import { AppleStrategy } from './apple.strategy';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { GoogleStrategy } from './google.strategy';
     AuthGuard,
     MailService,
     GoogleStrategy,
+    AppleStrategy,
   ],
   controllers: [AuthController],
   exports: [AuthService, AuthGuard, JwtModule],
