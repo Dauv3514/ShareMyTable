@@ -7,12 +7,16 @@ import {
 } from 'typeorm';
 import { Utilisateur } from '../users/users.entity';
 
+// Etats possibles d'une demande de profil hote.
 export enum HostValidationStatus {
   PENDING = 'pending',
   APPROVED = 'approved',
   REJECTED = 'rejected',
 }
 
+// Profil hote rattaché en one-to-one à un utilisateur.
+// Il porte l'état de validation et les informations d'adresse nécessaires
+// pour la future publication de repas par les hotes actifs.
 @Entity('host_profiles')
 export class HostProfile {
   @PrimaryGeneratedColumn()

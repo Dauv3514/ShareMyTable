@@ -8,6 +8,7 @@ import {
   MaxLength,
 } from 'class-validator';
 
+// Données modifiables par le user tant que son profil n'est pas approuvé.
 export class UpdateHostProfileDto {
   @IsOptional()
   @IsUrl()

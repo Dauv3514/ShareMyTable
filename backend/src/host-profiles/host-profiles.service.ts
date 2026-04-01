@@ -51,6 +51,8 @@ export class HostProfilesService {
     private readonly usersService: UsersService,
   ) {}
 
+  // Cree la premiere demande hote d'un utilisateur.
+  // Un seul host_profile est autorise par user.
   async requestHostProfile(
     userId: number,
     createHostProfileDto: CreateHostProfileDto,
@@ -91,11 +93,14 @@ export class HostProfilesService {
     return this.toHostProfileResponse(savedHostProfile);
   }
 
+  // Retourne le profil hote du user connecte.
   async findMine(userId: number): Promise<HostProfileResponse> {
     const hostProfile = await this.findEntityByUserId(userId);
     return this.toHostProfileResponse(hostProfile);
   }
 
+  // Les profils pending et rejected peuvent etre modifies.
+  // Un profil approved est fige cote user.
   async updateMine(
     userId: number,
     updateHostProfileDto: UpdateHostProfileDto,
@@ -114,6 +119,7 @@ export class HostProfilesService {
     return this.toHostProfileResponse(updatedHostProfile);
   }
 
+  // Permet a un user de renvoyer un dossier apres refus sans ressaisir toutes les donnees.
   async resubmitMine(userId: number): Promise<HostProfileResponse> {
     const hostProfile = await this.findEntityByUserId(userId);
 
@@ -131,6 +137,8 @@ export class HostProfilesService {
     return this.toHostProfileResponse(updatedHostProfile);
   }
 
+  // Validation admin :
+  // le profil devient actif et le role principal du user passe a HOST.
   async approve(id: number): Promise<HostProfileAdminResponse> {
     const hostProfile = await this.findEntityById(id);
 
@@ -151,6 +159,8 @@ export class HostProfilesService {
     return this.toAdminHostProfileResponse(savedHostProfile);
   }
 
+  // Choix metier retenu :
+  // un profil deja approuve ne peut pas etre rejete pour eviter un downgrade implicite.
   async reject(id: number): Promise<HostProfileAdminResponse> {
     const hostProfile = await this.findEntityById(id);
 
@@ -172,6 +182,7 @@ export class HostProfilesService {
     return this.toAdminHostProfileResponse(savedHostProfile);
   }
 
+  // Liste complete pour la moderation admin.
   async findAll(): Promise<HostProfileAdminResponse[]> {
     const hostProfiles = await this.hostProfilesRepository.find({
       relations: ['user'],
@@ -183,6 +194,7 @@ export class HostProfilesService {
     );
   }
 
+  // Liste ciblee des demandes en attente de moderation.
   async findPending(): Promise<HostProfileAdminResponse[]> {
     const hostProfiles = await this.hostProfilesRepository.find({
       where: { validationStatus: HostValidationStatus.PENDING },
@@ -195,11 +207,13 @@ export class HostProfilesService {
     );
   }
 
+  // Detail admin d'un profil hote precis.
   async findById(id: number): Promise<HostProfileAdminResponse> {
     const hostProfile = await this.findEntityById(id);
     return this.toAdminHostProfileResponse(hostProfile);
   }
 
+  // Resolution interne par user_id pour les routes "me".
   private async findEntityByUserId(userId: number): Promise<HostProfile> {
     const hostProfile = await this.hostProfilesRepository.findOne({
       where: { user: { id: userId } },
@@ -215,6 +229,7 @@ export class HostProfilesService {
     return hostProfile;
   }
 
+  // Resolution interne par id pour les usages admin.
   private async findEntityById(id: number): Promise<HostProfile> {
     const hostProfile = await this.hostProfilesRepository.findOne({
       where: { id },
@@ -228,6 +243,7 @@ export class HostProfilesService {
     return hostProfile;
   }
 
+  // N'autorise que les champs explicitement modifiables par le user.
   private applyUpdatableFields(
     hostProfile: HostProfile,
     updateHostProfileDto: UpdateHostProfileDto,
@@ -263,6 +279,7 @@ export class HostProfilesService {
     }
   }
 
+  // Format public des routes "me".
   private toHostProfileResponse(hostProfile: HostProfile): HostProfileResponse {
     return {
       id: hostProfile.id,
@@ -280,6 +297,7 @@ export class HostProfilesService {
     };
   }
 
+  // Format admin avec un sous-ensemble non sensible des infos user.
   private toAdminHostProfileResponse(
     hostProfile: HostProfile,
   ): HostProfileAdminResponse {
@@ -293,6 +311,7 @@ export class HostProfilesService {
     };
   }
 
+  // Convertit les chaines vides en null pour rester coherent avec la base.
   private normalizeNullableString(value?: string | null): string | null {
     if (value === undefined || value === null) {
       return null;

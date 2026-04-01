@@ -8,6 +8,7 @@ import {
   MaxLength,
 } from 'class-validator';
 
+// Données demandées lors de la première candidature hote.
 export class CreateHostProfileDto {
   @IsOptional()
   @IsUrl()

@@ -18,6 +18,9 @@ import { CreateHostProfileDto } from './dto/create-host-profile.dto';
 import { UpdateHostProfileDto } from './dto/update-host-profile.dto';
 import { HostProfilesService } from './host-profiles.service';
 
+// Routes user et admin autour de la candidature hote.
+// Les routes "me" manipulent uniquement le profil du user connecte.
+// Les routes admin servent a la moderation et a la consultation globale.
 @Controller('host-profiles')
 export class HostProfilesController {
   constructor(private readonly hostProfilesService: HostProfilesService) {}
