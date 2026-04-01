@@ -48,14 +48,23 @@ export default function ConnexionPage() {
     }
   };
 
+  const handleOAuth = (provider: "google" | "apple") => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) {
+      toast.error("API_URL manquante");
+      return;
+    }
+    window.location.href = `${apiUrl}/auth/${provider}`;
+  };
+
   return (
     <main className={styles.container}>
       <div className={styles.logoWrapper}>
         <Image
           src="/globe.svg"
           alt="RamèneTaPoire Logo"
-          width={120}
-          height={120}
+          width={20}
+          height={20}
         />
       </div>
 
@@ -90,6 +99,26 @@ export default function ConnexionPage() {
           Connexion
         </button>
       </form>
+
+      <div className={styles.oauthDivider}>ou</div>
+
+      <div className={styles.oauthGroup}>
+        <button
+          className={styles.oauthButton}
+          type="button"
+          onClick={() => handleOAuth("google")}
+        >
+          Continuer avec Google
+        </button>
+        <button
+          className={styles.oauthButton}
+          type="button"
+          disabled
+          title="Apple à configurer côté backend"
+        >
+          Continuer avec Apple
+        </button>
+      </div>
 
       <p className={styles.bottomText}>
         Vous n’avez pas de compte ?{" "}

@@ -113,6 +113,41 @@
       margin-top: 12px;
     }
   }
+
+  .oauthDivider {
+    margin: 20px 0 12px;
+    font-size: 12px;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .oauthGroup {
+    width: 350px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .oauthButton {
+    width: 100%;
+    padding: 12px 0;
+    border-radius: 3px;
+    font-size: 14px;
+    border: 1px solid $border;
+    background: #f8fafc;
+    cursor: pointer;
+    font-weight: 600;
+
+    &:hover {
+      background: #f1f5f9;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
 }
 
 // Responsive
@@ -121,6 +156,10 @@
     .form {
       width: 100%;
       padding: 25px 20px;
+    }
+
+    .oauthGroup {
+      width: 100%;
     }
 
     .title {

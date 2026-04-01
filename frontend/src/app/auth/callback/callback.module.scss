@@ -1,0 +1,23 @@
+@use "../../_variables.scss" as *;
+
+.container {
+  width: 100%;
+  min-height: calc(100vh - 84px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  text-align: center;
+}
+
+.text {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.error {
+  font-size: 14px;
+  color: #dc2626;
+  font-weight: 600;
+}
