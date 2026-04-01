@@ -8,6 +8,7 @@ import { HostProfile } from './host-profile.entity';
 import { HostProfilesController } from './host-profiles.controller';
 import { HostProfilesService } from './host-profiles.service';
 
+// Module de candidature et moderation des hotes.
 @Module({
   imports: [
     TypeOrmModule.forFeature([HostProfile, Utilisateur]),
