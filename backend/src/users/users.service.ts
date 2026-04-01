@@ -1,31 +1,37 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Utilisateur, AccountStatus, UserRole } from './users.entity';
 import { InscriptionDto } from '../auth/auth.dto';
+import { Role, RoleName } from './role.entity';
+import { AccountStatus, Utilisateur } from './users.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(Utilisateur)
-    private usersRepository: Repository<Utilisateur>,
+    private readonly usersRepository: Repository<Utilisateur>,
+    @InjectRepository(Role)
+    private readonly rolesRepository: Repository<Role>,
   ) {}
 
   async create(userDto: InscriptionDto) {
+    const defaultRole = await this.findOrCreateRole(RoleName.USER);
+
     const newUser = this.usersRepository.create({
-      pseudo: userDto.pseudo,
-      email: userDto.email,
-      firstName: userDto.first_name,
-      lastName: userDto.last_name,
-      profilePhotoUrl: userDto.profile_photo_url,
+      pseudo: this.normalizeNullableString(userDto.pseudo),
+      email: userDto.email.trim().toLowerCase(),
+      firstName: userDto.first_name.trim(),
+      lastName: userDto.last_name.trim(),
+      profilePhotoUrl: this.normalizeNullableString(userDto.profile_photo_url),
       passwordHash: userDto.password_hash,
-      city: userDto.city,
-      country: userDto.country,
-      bio: userDto.bio,
+      city: userDto.city.trim(),
+      country: userDto.country.trim(),
+      bio: this.normalizeNullableString(userDto.bio),
       birthDate: userDto.birth_date ? new Date(userDto.birth_date) : undefined,
       accountStatus: AccountStatus.ACTIVE,
-      roles: UserRole.USER,
+      role: defaultRole,
     });
+
     return this.usersRepository.save(newUser);
   }
 
@@ -34,12 +40,21 @@ export class UsersService {
   }
 
   async findOne(email: string): Promise<Utilisateur | undefined> {
-    const user = await this.usersRepository.findOne({ where: { email } });
+    const user = await this.usersRepository.findOne({
+      where: { email: email.trim().toLowerCase() },
+    });
     return user ?? undefined;
   }
 
   async findByPseudo(pseudo: string): Promise<Utilisateur | undefined> {
-    const user = await this.usersRepository.findOne({ where: { pseudo } });
+    const normalizedPseudo = this.normalizeNullableString(pseudo);
+    if (!normalizedPseudo) {
+      return undefined;
+    }
+
+    const user = await this.usersRepository.findOne({
+      where: { pseudo: normalizedPseudo },
+    });
     return user ?? undefined;
   }
 
@@ -48,7 +63,15 @@ export class UsersService {
     return user ?? undefined;
   }
 
-  // fonctions de vérification de l'email lors de l'inscription
+  async setRole(userId: number, roleName: RoleName): Promise<Utilisateur> {
+    const user = await this.findOneUser(userId);
+    if (!user) {
+      throw new NotFoundException('Utilisateur non trouve');
+    }
+
+    user.role = await this.findOrCreateRole(roleName);
+    return this.usersRepository.save(user);
+  }
 
   async updateEmailVerifiedAt(userId: number, verifiedAt: Date) {
     await this.usersRepository.update({ id: userId }, { emailVerifiedAt: verifiedAt });
@@ -75,8 +98,6 @@ export class UsersService {
     );
   }
 
-  // fonctions de réinitialisation du mot de passe
-
   async setPasswordResetToken(userId: number, tokenHash: string, expiresAt: Date) {
     await this.usersRepository.update(
       { id: userId },
@@ -100,5 +121,27 @@ export class UsersService {
 
   async updatePasswordHash(userId: number, passwordHash: string) {
     await this.usersRepository.update({ id: userId }, { passwordHash });
+  }
+
+  private async findOrCreateRole(roleName: RoleName): Promise<Role> {
+    const existingRole = await this.rolesRepository.findOne({
+      where: { name: roleName },
+    });
+
+    if (existingRole) {
+      return existingRole;
+    }
+
+    const role = this.rolesRepository.create({ name: roleName });
+    return this.rolesRepository.save(role);
+  }
+
+  private normalizeNullableString(value?: string | null): string | null {
+    if (value === undefined || value === null) {
+      return null;
+    }
+
+    const normalizedValue = value.trim();
+    return normalizedValue.length > 0 ? normalizedValue : null;
   }
 }

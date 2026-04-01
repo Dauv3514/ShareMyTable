@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { HostProfilesModule } from './host-profiles/host-profiles.module';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -20,6 +21,7 @@ dotenv.config();
     }),
     AuthModule,
     UsersModule,
+    HostProfilesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
