@@ -93,4 +93,16 @@ export class OAuthCompleteDto {
   @IsNotEmpty({ message: "La date de naissance est obligatoire" })
   @IsDateString({}, { message: "La date de naissance est invalide" })
   birth_date: string;
+
+  @IsOptional()
+  @Length(1, 50, { message: "Le pseudo ne peut pas dépasser 50 caractères" })
+  pseudo?: string;
+
+  @IsOptional()
+  @Length(1, 500, { message: "La bio ne peut pas dépasser 500 caractères" })
+  bio?: string;
+
+  @IsOptional()
+  @Length(1, 255, { message: "La photo ne peut pas dépasser 255 caractères" })
+  profile_photo_url?: string;
 }

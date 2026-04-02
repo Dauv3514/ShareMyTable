@@ -5,7 +5,7 @@ import { createHash, randomBytes } from 'crypto';
 import { ForgotPasswordDto, InscriptionDto, ResetPasswordDto } from '../auth/auth.dto';
 import { MailService } from '../mail/mail.service';
 import { UsersService } from '../users/users.service';
-import { AuthProvider } from '../users/users.entity';
+import { AuthProvider, Utilisateur } from '../users/users.entity';
 
 type OAuthProfile = {
   id?: string;
@@ -25,6 +25,8 @@ type OAuthPendingPayload = {
   profilePhotoUrl?: string;
 };
 
+type MissingFlags = { email: boolean; firstName: boolean; lastName: boolean };
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -32,6 +34,19 @@ export class AuthService {
     private jwtService: JwtService,
     private mailService: MailService,
   ) {}
+
+  private async sendEmailVerification(user: Utilisateur) {
+    const token = randomBytes(32).toString('hex');
+    const tokenHash = createHash('sha256').update(token).digest('hex');
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60);
+
+    await this.usersService.setEmailVerificationToken(user.id, tokenHash, expiresAt);
+
+    const baseUrl =
+      process.env.BACKEND_URL ?? `http://localhost:${process.env.PORT ?? 5001}`;
+    const verifyUrl = `${baseUrl}/auth/verify-email?token=${token}`;
+    await this.mailService.sendVerifyEmail(user.email, verifyUrl);
+  }
 
   async inscription(userDto: InscriptionDto) {
     const normalizedPseudo = userDto.pseudo?.trim() || undefined;
@@ -63,16 +78,7 @@ export class AuthService {
       password_hash: hashedPassword,
     });
 
-    const token = randomBytes(32).toString('hex');
-    const tokenHash = createHash('sha256').update(token).digest('hex');
-    const expiresAt = new Date(Date.now() + 1000 * 60 * 60);
-
-    await this.usersService.setEmailVerificationToken(user.id, tokenHash, expiresAt);
-
-    const baseUrl =
-      process.env.BACKEND_URL ?? `http://localhost:${process.env.PORT ?? 5001}`;
-    const verifyUrl = `${baseUrl}/auth/verify-email?token=${token}`;
-    await this.mailService.sendVerifyEmail(user.email, verifyUrl);
+    await this.sendEmailVerification(user);
 
     return {
       success: true,
@@ -88,6 +94,10 @@ export class AuthService {
 
     if (!user.passwordHash) {
       throw new UnauthorizedException('Ce compte utilise un fournisseur externe');
+    }
+
+    if (!user.emailVerifiedAt) {
+      throw new UnauthorizedException("Veuillez verifier votre adresse email");
     }
 
     const isValid = await bcrypt.compare(pass, user.passwordHash);
@@ -123,16 +133,32 @@ export class AuthService {
     const missingFirstName = !firstName;
     const missingLastName = !lastName;
 
-    if (missingEmail || missingFirstName || missingLastName) {
+    const buildPending = async (overrides?: {
+      email?: string;
+      firstName?: string;
+      lastName?: string;
+      profilePhotoUrl?: string;
+      missing?: Partial<MissingFlags>;
+      reason?: 'missing_identity' | 'profile_incomplete' | 'not_registered';
+    }) => {
+      const pendingEmail = overrides?.email ?? email;
+      const pendingFirstName = overrides?.firstName ?? firstName;
+      const pendingLastName = overrides?.lastName ?? lastName;
+      const missing: MissingFlags = {
+        email: overrides?.missing?.email ?? !pendingEmail,
+        firstName: overrides?.missing?.firstName ?? !pendingFirstName,
+        lastName: overrides?.missing?.lastName ?? !pendingLastName,
+      };
+
       const pendingToken = await this.jwtService.signAsync(
         {
           type: 'oauth_pending',
           provider,
           providerId,
-          email,
-          firstName,
-          lastName,
-          profilePhotoUrl: profile.photos?.[0]?.value,
+          email: pendingEmail,
+          firstName: pendingFirstName,
+          lastName: pendingLastName,
+          profilePhotoUrl: overrides?.profilePhotoUrl ?? profile.photos?.[0]?.value,
         } satisfies OAuthPendingPayload,
         { expiresIn: '10m' },
       );
@@ -140,41 +166,63 @@ export class AuthService {
       return {
         type: 'pending' as const,
         pendingToken,
-        missing: {
-          email: missingEmail,
-          firstName: missingFirstName,
-          lastName: missingLastName,
-        },
+        missing,
+        reason: overrides?.reason,
       };
-    }
+    };
+
+    const issueToken = async (user: Utilisateur) => {
+      const payload = {
+        sub: user.id,
+        email: user.email,
+        role: user.role?.name,
+        nom: user.lastName,
+      };
+      const token = await this.jwtService.signAsync(payload);
+      return { type: 'complete' as const, access_token: token, isProfileComplete: user.isProfileComplete };
+    };
 
     let user = await this.usersService.findByProvider(provider, providerId);
 
     if (!user) {
-      user = await this.usersService.findOne(email);
+      if (email) {
+        user = await this.usersService.findOne(email);
+      }
 
       if (user) {
         await this.usersService.linkProvider(user.id, provider, providerId);
-      } else {
-        user = await this.usersService.createOAuthUser({
-          email,
-          firstName,
-          lastName,
-          profilePhotoUrl: profile.photos?.[0]?.value,
-          provider,
-          providerId,
-        });
       }
     }
 
-    const payload = {
-      sub: user.id,
-      email: user.email,
-      role: user.role?.name,
-      nom: user.lastName,
-    };
-    const token = await this.jwtService.signAsync(payload);
-    return { type: 'complete' as const, access_token: token, isProfileComplete: user.isProfileComplete };
+    if (user) {
+      if (!user.emailVerifiedAt) {
+        await this.sendEmailVerification(user);
+        return { type: 'verify' as const };
+      }
+
+      if (user.isProfileComplete) {
+        return issueToken(user);
+      }
+
+      return buildPending({
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        profilePhotoUrl: user.profilePhotoUrl ?? undefined,
+        missing: { email: false, firstName: false, lastName: false },
+        reason: 'profile_incomplete',
+      });
+    }
+
+    if (missingEmail || missingFirstName || missingLastName) {
+      return buildPending({ reason: 'missing_identity' });
+    }
+
+    // Profil incomplet tant que pays/ville/date de naissance ne sont pas fournis
+    return buildPending({
+      missing: { email: false, firstName: false, lastName: false },
+      reason: 'not_registered',
+    });
   }
 
   async completeOAuthProfile(params: {
@@ -185,6 +233,9 @@ export class AuthService {
     country: string;
     city: string;
     birthDate: Date;
+    pseudo?: string;
+    bio?: string;
+    profilePhotoUrl?: string;
   }) {
     let payload: OAuthPendingPayload;
     try {
@@ -208,6 +259,10 @@ export class AuthService {
       throw new BadRequestException('Informations manquantes');
     }
 
+    if (!params.birthDate || Number.isNaN(params.birthDate.getTime())) {
+      throw new BadRequestException('Date de naissance invalide');
+    }
+
     let user = await this.usersService.findByProvider(payload.provider, payload.providerId);
     if (!user) {
       user = await this.usersService.findOne(email);
@@ -218,10 +273,17 @@ export class AuthService {
           email,
           firstName,
           lastName,
-          profilePhotoUrl: payload.profilePhotoUrl,
+          profilePhotoUrl: params.profilePhotoUrl ?? payload.profilePhotoUrl,
           provider: payload.provider,
           providerId: payload.providerId,
+          country: params.country,
+          city: params.city,
+          birthDate: params.birthDate,
+          pseudo: params.pseudo,
+          bio: params.bio,
         });
+        await this.sendEmailVerification(user);
+        return { verification_required: true };
       }
     }
 
@@ -229,10 +291,18 @@ export class AuthService {
       throw new BadRequestException('Utilisateur introuvable');
     }
 
+    if (!user.emailVerifiedAt) {
+      await this.sendEmailVerification(user);
+      return { verification_required: true };
+    }
+
     await this.usersService.completeProfile(user.id, {
       country: params.country,
       city: params.city,
       birthDate: params.birthDate,
+      pseudo: params.pseudo,
+      bio: params.bio,
+      profilePhotoUrl: params.profilePhotoUrl,
     });
 
     const token = await this.jwtService.signAsync({
@@ -256,6 +326,7 @@ export class AuthService {
   buildOAuthPendingRedirect(params: {
     pendingToken: string;
     missing: { email: boolean; firstName: boolean; lastName: boolean };
+    reason?: 'missing_identity' | 'profile_incomplete' | 'not_registered';
   }) {
     const baseUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
     const redirectUrl = new URL('/complete-profile', baseUrl);
@@ -263,6 +334,7 @@ export class AuthService {
     if (params.missing.email) redirectUrl.searchParams.set('missingEmail', '1');
     if (params.missing.firstName) redirectUrl.searchParams.set('missingFirstName', '1');
     if (params.missing.lastName) redirectUrl.searchParams.set('missingLastName', '1');
+    if (params.reason) redirectUrl.searchParams.set('reason', params.reason);
     return redirectUrl.toString();
   }
 

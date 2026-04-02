@@ -52,6 +52,9 @@ export class UsersController {
             country: body.country,
             city: body.city,
             birthDate: new Date(body.birth_date),
+            pseudo: body.pseudo,
+            bio: body.bio,
+            profilePhotoUrl: body.profile_photo_url,
         });
         return {
             success: true,

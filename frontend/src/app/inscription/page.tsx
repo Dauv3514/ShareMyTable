@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import axios from "axios";
 import styles from "./inscription.module.scss";
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 export default function InscriptionPage() {
+  const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
     email: "",
     password_hash: "",
@@ -22,6 +24,19 @@ export default function InscriptionPage() {
     profile_photo_url: "",
   });
   const [showOptional, setShowOptional] = useState(false);
+
+  useEffect(() => {
+    const reason = searchParams.get("reason");
+    if (reason === "not_registered") {
+      toast.info("Compte introuvable. Crée un compte pour continuer.");
+      localStorage.removeItem("oauth_flow");
+    }
+    const verify = searchParams.get("verify");
+    if (verify === "1") {
+      toast.info("Vérifie ton email pour activer ton compte.");
+      localStorage.removeItem("oauth_flow");
+    }
+  }, [searchParams]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -46,7 +61,7 @@ export default function InscriptionPage() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
       await axios.post(`${apiUrl}/auth/inscription`, formData);
 
-      toast.success("Compte créé avec succès 🎉");
+      toast.success("Compte créé. Vérifie ton email pour l'activer ✅");
 
       setFormData({
         email: "",
@@ -83,7 +98,9 @@ export default function InscriptionPage() {
       toast.error("API_URL manquante");
       return;
     }
-    window.location.href = `${apiUrl}/auth/${provider}`;
+    localStorage.setItem("oauth_flow", "register");
+    const flow = "register";
+    window.location.href = `${apiUrl}/auth/${provider}?flow=${flow}`;
   };
 
   return (

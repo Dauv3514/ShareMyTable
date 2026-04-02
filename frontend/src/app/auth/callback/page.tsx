@@ -18,12 +18,20 @@ export default function OAuthCallbackPage() {
   useEffect(() => {
     if (error) {
       toast.error("Connexion avec Google échouée ❌");
+      localStorage.removeItem("oauth_flow");
       router.replace("/inscription");
       return;
     }
     if (!token) return;
     login(token);
-    toast.success("Synchronisation avec Google réussie ✅");
+
+    if (profileComplete) {
+      toast.success("Connexion avec Google réussie ✅");
+    } else {
+      toast.success("Inscription avec Google réussie ✅");
+    }
+
+    localStorage.removeItem("oauth_flow");
     router.replace(profileComplete ? "/" : "/complete-profile");
   }, [token, profileComplete, login, router]);
 

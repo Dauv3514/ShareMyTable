@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DeepPartial, Repository } from 'typeorm';
 import { InscriptionDto } from '../auth/auth.dto';
 import { Role, RoleName } from './role.entity';
 import { AccountStatus, Utilisateur, AuthProvider } from './users.entity';
@@ -146,6 +146,7 @@ export class UsersService {
     const normalizedValue = value.trim();
     return normalizedValue.length > 0 ? normalizedValue : null;
   }
+  
   // fonctions authentification OAuth (google / apple)
 
   async createOAuthUser(params: {
@@ -155,21 +156,32 @@ export class UsersService {
     profilePhotoUrl?: string;
     provider: AuthProvider;
     providerId: string;
+    country?: string;
+    city?: string;
+    birthDate?: Date;
+    pseudo?: string;
+    bio?: string;
   }): Promise<Utilisateur> {
     const defaultRole = await this.findOrCreateRole(RoleName.USER);
+    const isProfileComplete = Boolean(params.country && params.city && params.birthDate);
     const newUser = this.usersRepository.create({
       email: params.email,
       firstName: params.firstName,
       lastName: params.lastName,
       profilePhotoUrl: params.profilePhotoUrl,
+      country: params.country ?? null,
+      city: params.city ?? null,
+      birthDate: params.birthDate ?? null,
+      pseudo: this.normalizeNullableString(params.pseudo),
+      bio: this.normalizeNullableString(params.bio),
       passwordHash: null,
       accountStatus: AccountStatus.ACTIVE,
       role: defaultRole,
       authProvider: params.provider,
       authProviderId: params.providerId,
-      emailVerifiedAt: new Date(),
-      isProfileComplete: false,
-    });
+      emailVerifiedAt: null,
+      isProfileComplete,
+    } as DeepPartial<Utilisateur>);
     return this.usersRepository.save(newUser);
   }
 
@@ -189,7 +201,7 @@ export class UsersService {
 
   async completeProfile(
     userId: number,
-    data: { country: string; city: string; birthDate: Date },
+    data: { country: string; city: string; birthDate: Date; pseudo?: string; bio?: string; profilePhotoUrl?: string },
   ) {
     await this.usersRepository.update(
       { id: userId },
@@ -197,6 +209,9 @@ export class UsersService {
         country: data.country,
         city: data.city,
         birthDate: data.birthDate,
+        pseudo: this.normalizeNullableString(data.pseudo),
+        bio: this.normalizeNullableString(data.bio),
+        profilePhotoUrl: data.profilePhotoUrl ?? undefined,
         isProfileComplete: true,
       },
     );

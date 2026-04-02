@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-toastify";
@@ -16,6 +16,7 @@ export default function CompleteProfilePage() {
   const missingEmail = searchParams.get("missingEmail") === "1";
   const missingFirstName = searchParams.get("missingFirstName") === "1";
   const missingLastName = searchParams.get("missingLastName") === "1";
+  const reason = searchParams.get("reason");
   const isPendingFlow = useMemo(
     () => Boolean(pendingToken),
     [pendingToken]
@@ -33,6 +34,28 @@ export default function CompleteProfilePage() {
     profile_photo_url: "",
   });
   const [showOptional, setShowOptional] = useState(false);
+  const [oauthFlow] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("oauth_flow");
+  });
+
+  const shouldRedirectToRegister =
+    isPendingFlow && oauthFlow === "login" && reason === "not_registered";
+
+  useEffect(() => {
+    if (!shouldRedirectToRegister) return;
+    toast.info("Compte introuvable. Inscris-toi pour continuer.");
+    localStorage.removeItem("oauth_flow");
+    router.replace("/inscription");
+  }, [shouldRedirectToRegister, router]);
+
+  if (shouldRedirectToRegister) {
+    return (
+      <main className={styles.container}>
+        <p className={styles.text}>Redirection vers l'inscription...</p>
+      </main>
+    );
+  }
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -69,12 +92,20 @@ export default function CompleteProfilePage() {
         }
 
         const res = await axios.post(`${apiUrl}/auth/oauth/complete`, payload);
+        if (res.data?.verification_required) {
+          localStorage.removeItem("oauth_flow");
+          toast.info("Vérifie ton email pour activer ton compte.");
+          router.push("/connexion?verify=1");
+          return;
+        }
+
         const token = res.data.access_token;
         if (!token) {
           toast.error("Token manquant");
           return;
         }
         login(token);
+        localStorage.removeItem("oauth_flow");
         toast.success("Profil complété 🎉");
         router.push("/");
         return;
@@ -89,6 +120,7 @@ export default function CompleteProfilePage() {
       await axios.patch(`${apiUrl}/users/me/complete-profile`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      localStorage.removeItem("oauth_flow");
       toast.success("Profil complété 🎉");
       router.push("/");
     } catch (err: any) {

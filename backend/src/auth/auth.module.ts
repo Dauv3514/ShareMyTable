@@ -9,6 +9,7 @@ import { AuthGuard } from './auth.guard';
 import { MailService } from '../mail/mail.service';
 import { GoogleStrategy } from './google.strategy';
 import { AppleStrategy } from './apple.strategy';
+import { GoogleAuthGuard } from './google-auth.guard';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { AppleStrategy } from './apple.strategy';
   providers: [
     AuthService,
     AuthGuard,
+    GoogleAuthGuard,
     MailService,
     GoogleStrategy,
     AppleStrategy,

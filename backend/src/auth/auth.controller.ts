@@ -5,6 +5,7 @@ import { AuthService } from './auth.service';
 import { Public } from './public.decorator';
 import { InscriptionDto, ConnexionDto, ForgotPasswordDto, ResetPasswordDto, OAuthCompleteDto } from '../auth/auth.dto';
 import { AuthProvider } from '../users/users.entity';
+import { GoogleAuthGuard } from './google-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -26,23 +27,38 @@ export class AuthController {
 
   @Public()
   @Get('google')
-  @UseGuards(PassportAuthGuard('google'))
+  @UseGuards(GoogleAuthGuard)
   async googleAuth() {
     return;
   }
 
   @Public()
   @Get('google/callback')
-  @UseGuards(PassportAuthGuard('google'))
+  @UseGuards(GoogleAuthGuard)
   async googleCallback(@Req() req: Request & { user?: any }, @Res() res: Response) {
     const result = await this.authService.oauthLogin(
       AuthProvider.GOOGLE,
       req.user as any,
     );
+    const flow = typeof req.query.state === 'string' ? req.query.state : undefined;
+    if (result.type === 'verify') {
+      const baseUrl = process.env.FRONTEND_URL;
+      const redirectUrl = new URL(flow === 'login' ? '/connexion' : '/inscription', baseUrl);
+      redirectUrl.searchParams.set('verify', '1');
+      return res.redirect(redirectUrl.toString());
+    }
     if (result.type === 'pending') {
+      if (result.reason === 'not_registered' && flow === 'login') {
+        const baseUrl = process.env.FRONTEND_URL;
+        const redirectUrl = new URL('/inscription', baseUrl);
+        redirectUrl.searchParams.set('oauth', 'google');
+        redirectUrl.searchParams.set('reason', 'not_registered');
+        return res.redirect(redirectUrl.toString());
+      }
       const redirectUrl = this.authService.buildOAuthPendingRedirect({
         pendingToken: result.pendingToken,
         missing: result.missing,
+        reason: result.reason,
       });
       return res.redirect(redirectUrl);
     }
@@ -69,10 +85,18 @@ export class AuthController {
       AuthProvider.APPLE,
       req.user as any,
     );
+    const flow = typeof req.query.state === 'string' ? req.query.state : undefined;
+    if (result.type === 'verify') {
+      const baseUrl = process.env.FRONTEND_URL;
+      const redirectUrl = new URL(flow === 'login' ? '/connexion' : '/inscription', baseUrl);
+      redirectUrl.searchParams.set('verify', '1');
+      return res.redirect(redirectUrl.toString());
+    }
     if (result.type === 'pending') {
       const redirectUrl = this.authService.buildOAuthPendingRedirect({
         pendingToken: result.pendingToken,
         missing: result.missing,
+        reason: result.reason,
       });
       return res.redirect(redirectUrl);
     }
@@ -117,6 +141,9 @@ export class AuthController {
       country: body.country,
       city: body.city,
       birthDate: new Date(body.birth_date),
+      pseudo: body.pseudo,
+      bio: body.bio,
+      profilePhotoUrl: body.profile_photo_url,
     });
   }
 

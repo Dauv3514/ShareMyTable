@@ -1,16 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import styles from "./connexion.module.scss";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/app/providers/AuthProvider";
 
 export default function ConnexionPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
@@ -48,13 +49,23 @@ export default function ConnexionPage() {
     }
   };
 
+  useEffect(() => {
+    const verify = searchParams.get("verify");
+    if (verify === "1") {
+      toast.info("Vérifie ton email pour activer ton compte.");
+      localStorage.removeItem("oauth_flow");
+    }
+  }, [searchParams]);
+
   const handleOAuth = (provider: "google" | "apple") => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     if (!apiUrl) {
       toast.error("API_URL manquante");
       return;
     }
-    window.location.href = `${apiUrl}/auth/${provider}`;
+    localStorage.setItem("oauth_flow", "login");
+    const flow = "login";
+    window.location.href = `${apiUrl}/auth/${provider}?flow=${flow}`;
   };
 
   return (
