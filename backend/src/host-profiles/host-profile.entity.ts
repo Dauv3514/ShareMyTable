@@ -14,8 +14,8 @@ export enum HostValidationStatus {
   REJECTED = 'rejected',
 }
 
-// Profil hote rattaché en one-to-one à un utilisateur.
-// Il porte l'état de validation et les informations d'adresse nécessaires
+// Profil hote rattache en one-to-one a un utilisateur.
+// Il porte l'etat de validation et les informations d'adresse necessaires
 // pour la future publication de repas par les hotes actifs.
 @Entity('host_profiles')
 export class HostProfile {
@@ -60,6 +60,21 @@ export class HostProfile {
 
   @Column({ type: 'varchar', length: 255 })
   address: string;
+
+  @Column({ name: 'address_verified', type: 'boolean', default: false })
+  addressVerified: boolean;
+
+  @Column({ name: 'home_photo_verified', type: 'boolean', default: false })
+  homePhotoVerified: boolean;
+
+  @Column({ name: 'verification_score', type: 'int', default: 0 })
+  verificationScore: number;
+
+  @Column({ name: 'auto_review_notes', type: 'text', nullable: true })
+  autoReviewNotes: string | null;
+
+  @Column({ name: 'last_auto_reviewed_at', type: 'timestamp', nullable: true })
+  lastAutoReviewedAt: Date | null;
 
   @OneToOne(() => Utilisateur, (user) => user.hostProfile, {
     nullable: false,
