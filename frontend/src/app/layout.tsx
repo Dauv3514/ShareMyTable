@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.scss";
-// import Navbar from "../components/Navbar/Navbar";
+import Navbar from "../components/Navbar";
+import BottomMenu from "../components/BottomMenu";
 import { Open_Sans, Merriweather_Sans } from "next/font/google";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -23,6 +24,9 @@ const merriweatherSans = Merriweather_Sans({
 export const metadata: Metadata = {
   title: "RamèneTaPoire",
   description: "Le blablacar des repas",
+  icons: {
+    icon: "/ramenetapoire.svg",
+  },
 };
 
 export default function RootLayout({
@@ -32,14 +36,19 @@ export default function RootLayout({
     <html lang="fr">
       <body className={`${openSans.variable} ${merriweatherSans.variable}`}>
         <AuthProvider>
-          {/* Navbar visible sur toutes les pages
-          <Navbar /> */}
+          <div className="app-shell">
+            <Navbar />
 
-          {/* Contenu spécifique à chaque page */}
-          <main className="page-container">{children}</main>
+            <div className="app-shell__content">
+              {/* Contenu spécifique à chaque page */}
+              <main className="page-container">{children}</main>
+            </div>
 
-          {/* Notifications globales */}
-          <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+            <BottomMenu />
+
+            {/* Notifications globales */}
+            <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+          </div>
         </AuthProvider>
       </body>
     </html>
