@@ -5,6 +5,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { UsersModule } from '../users/users.module';
 import { Utilisateur } from '../users/users.entity';
 import { HostProfile } from './host-profile.entity';
+import { HostProfileVisionService } from './host-profile-vision.service';
 import { HostProfileVerificationService } from './host-profile-verification.service';
 import { HostProfilesController } from './host-profiles.controller';
 import { HostProfilesService } from './host-profiles.service';
@@ -19,6 +20,7 @@ import { HostProfilesService } from './host-profiles.service';
   controllers: [HostProfilesController],
   providers: [
     HostProfilesService,
+    HostProfileVisionService,
     HostProfileVerificationService,
     RolesGuard,
   ],

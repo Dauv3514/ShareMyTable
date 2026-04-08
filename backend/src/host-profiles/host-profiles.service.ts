@@ -12,6 +12,8 @@ import { Utilisateur } from '../users/users.entity';
 import { CreateHostProfileDto } from './dto/create-host-profile.dto';
 import { UpdateHostProfileDto } from './dto/update-host-profile.dto';
 import {
+  HostPhotoSafeSearch,
+  HostPhotoVisionLabel,
   HostProfile,
   HostValidationStatus,
 } from './host-profile.entity';
@@ -41,6 +43,10 @@ type HostProfileResponse = {
   verificationScore: number;
   autoReviewNotes: string | null;
   lastAutoReviewedAt: Date | null;
+  homePhotoVisionLabels: HostPhotoVisionLabel[];
+  homePhotoSafeSearch: HostPhotoSafeSearch;
+  verificationRiskFlags: string[];
+  manualReviewRequired: boolean;
 };
 
 type HostProfileAdminResponse = HostProfileResponse & {
@@ -101,6 +107,10 @@ export class HostProfilesService {
       verificationScore: 0,
       autoReviewNotes: null,
       lastAutoReviewedAt: null,
+      homePhotoVisionLabels: [],
+      homePhotoSafeSearch: null,
+      verificationRiskFlags: [],
+      manualReviewRequired: false,
     });
 
     await this.hostProfileVerificationService.runAutoReview(hostProfile);
@@ -318,6 +328,10 @@ export class HostProfilesService {
       verificationScore: hostProfile.verificationScore,
       autoReviewNotes: hostProfile.autoReviewNotes,
       lastAutoReviewedAt: hostProfile.lastAutoReviewedAt,
+      homePhotoVisionLabels: hostProfile.homePhotoVisionLabels,
+      homePhotoSafeSearch: hostProfile.homePhotoSafeSearch,
+      verificationRiskFlags: hostProfile.verificationRiskFlags,
+      manualReviewRequired: hostProfile.manualReviewRequired,
     };
   }
 

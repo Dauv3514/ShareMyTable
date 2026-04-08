@@ -1,6 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { HostProfile } from './host-profile.entity';
+import {
+  HostPhotoSafeSearch,
+  HostPhotoVisionLabel,
+  HostProfile,
+} from './host-profile.entity';
+import { HostProfileVisionService } from './host-profile-vision.service';
 
 interface NominatimSearchResult {
   lat: string;
@@ -15,21 +20,27 @@ type AddressVerificationResult = {
   note: string;
 };
 
-type PhotoVerificationResult = {
-  verified: boolean;
-  note: string;
+type AutoReviewSummary = {
+  labels: HostPhotoVisionLabel[];
+  safeSearch: HostPhotoSafeSearch;
+  riskFlags: string[];
+  manualReviewRequired: boolean;
 };
 
-// Service de verification automatique niveau 1.
-// Il aide la moderation admin mais n'approuve jamais un profil automatiquement.
+// Service d'auto-review V2.
+// Il combine verification d'adresse, verification image basique et Google Vision.
 @Injectable()
 export class HostProfileVerificationService {
   private readonly logger = new Logger(HostProfileVerificationService.name);
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly hostProfileVisionService: HostProfileVisionService,
+  ) {}
 
   async runAutoReview(hostProfile: HostProfile): Promise<void> {
     const notes: string[] = [];
+    const riskFlags = new Set<string>();
 
     const addressResult = await this.verifyAddress(hostProfile);
     hostProfile.addressVerified = addressResult.verified;
@@ -37,14 +48,42 @@ export class HostProfileVerificationService {
       hostProfile.lat = addressResult.lat;
       hostProfile.lng = addressResult.lng;
     }
+    if (!addressResult.verified) {
+      riskFlags.add('address_not_verified');
+    }
     notes.push(addressResult.note);
 
-    const photoResult = this.verifyHomePhoto(hostProfile.homePhotoUrl);
-    hostProfile.homePhotoVerified = photoResult.verified;
-    notes.push(photoResult.note);
+    const visionResult = await this.hostProfileVisionService.analyzeHomePhoto(
+      hostProfile.homePhotoUrl,
+    );
+
+    hostProfile.homePhotoVisionLabels = visionResult.labels;
+    hostProfile.homePhotoSafeSearch = visionResult.safeSearch;
+    hostProfile.homePhotoVerified =
+      visionResult.executed
+        ? visionResult.homeRelated &&
+          !visionResult.safeSearchFlagged &&
+          !visionResult.riskFlags.includes('image_contains_logo')
+        : visionResult.basicUrlValid;
+
+    for (const riskFlag of visionResult.riskFlags) {
+      riskFlags.add(riskFlag);
+    }
+    notes.push(visionResult.note);
+
+    hostProfile.verificationRiskFlags = Array.from(riskFlags);
+    hostProfile.manualReviewRequired =
+      hostProfile.verificationRiskFlags.length > 0 ||
+      visionResult.manualReviewRequired ||
+      !hostProfile.addressVerified;
 
     hostProfile.verificationScore = this.calculateVerificationScore(hostProfile);
     notes.push(`Score automatique calcule: ${hostProfile.verificationScore}/100.`);
+    notes.push(
+      hostProfile.manualReviewRequired
+        ? 'Review manuelle requise: oui.'
+        : 'Review manuelle requise: non.',
+    );
 
     hostProfile.autoReviewNotes = notes.join('\n');
     hostProfile.lastAutoReviewedAt = new Date();
@@ -54,18 +93,41 @@ export class HostProfileVerificationService {
     let score = 0;
 
     if (hostProfile.addressVerified) {
-      score += 50;
-    }
-
-    if (hostProfile.homePhotoVerified) {
-      score += 30;
+      score += 40;
     }
 
     if (this.hasCleanAddressFields(hostProfile)) {
+      score += 15;
+    }
+
+    const basicPhotoValidation = this.hostProfileVisionService.validatePhotoUrl(
+      hostProfile.homePhotoUrl,
+    );
+    if (basicPhotoValidation.isValid) {
       score += 20;
     }
 
-    return Math.min(score, 100);
+    if (this.hasHomeRelatedVisionLabels(hostProfile.homePhotoVisionLabels)) {
+      score += 25;
+    }
+
+    if (hostProfile.verificationRiskFlags.includes('image_contains_logo')) {
+      score -= 20;
+    }
+
+    if (hostProfile.verificationRiskFlags.includes('image_safe_search_flagged')) {
+      score -= 30;
+    }
+
+    if (hostProfile.verificationRiskFlags.includes('image_not_related_to_home')) {
+      score -= 20;
+    }
+
+    if (hostProfile.verificationRiskFlags.includes('google_vision_failed')) {
+      score -= 15;
+    }
+
+    return Math.max(0, Math.min(score, 100));
   }
 
   private async verifyAddress(
@@ -171,74 +233,6 @@ export class HostProfileVerificationService {
     }
   }
 
-  private verifyHomePhoto(homePhotoUrl: string | null): PhotoVerificationResult {
-    if (!homePhotoUrl) {
-      return {
-        verified: false,
-        note: 'Photo du domicile non verifiee: aucune URL fournie.',
-      };
-    }
-
-    const trimmedUrl = homePhotoUrl.trim();
-    if (!trimmedUrl) {
-      return {
-        verified: false,
-        note: 'Photo du domicile non verifiee: URL vide.',
-      };
-    }
-
-    if (trimmedUrl.startsWith('data:image/')) {
-      return {
-        verified: true,
-        note: 'Photo du domicile verifiee: format data URL image acceptable.',
-      };
-    }
-
-    let parsedUrl: URL;
-    try {
-      parsedUrl = new URL(trimmedUrl);
-    } catch {
-      return {
-        verified: false,
-        note: 'Photo du domicile non verifiee: URL invalide.',
-      };
-    }
-
-    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-      return {
-        verified: false,
-        note: 'Photo du domicile non verifiee: protocole non supporte.',
-      };
-    }
-
-    const pathname = parsedUrl.pathname.toLowerCase();
-    const allowedExtensions = [
-      '.jpg',
-      '.jpeg',
-      '.png',
-      '.webp',
-      '.gif',
-      '.avif',
-      '.heic',
-      '.heif',
-    ];
-    const hasValidExtension = allowedExtensions.some((extension) =>
-      pathname.endsWith(extension),
-    );
-
-    if (!hasValidExtension) {
-      return {
-        verified: false,
-        note: "Photo du domicile non verifiee: extension d'image non reconnue.",
-      };
-    }
-
-    return {
-      verified: true,
-      note: 'Photo du domicile verifiee: URL image de niveau 1 acceptable.',
-    };
-  }
-
   private hasCleanAddressFields(hostProfile: HostProfile): boolean {
     const fields = [
       hostProfile.address,
@@ -250,6 +244,48 @@ export class HostProfileVerificationService {
       const normalized = field.trim();
       return normalized.length >= 2 && normalized === field;
     });
+  }
+
+  private hasHomeRelatedVisionLabels(
+    labels: HostPhotoVisionLabel[],
+  ): boolean {
+    const positiveLabels = new Set([
+      'room',
+      'interior design',
+      'property',
+      'kitchen',
+      'living room',
+      'bedroom',
+      'furniture',
+      'building',
+      'house',
+      'home',
+      'apartment',
+      'real estate',
+      'ceiling',
+      'table',
+      'floor',
+      'couch',
+      'window',
+      'residential area',
+      'cabinetry',
+      'dining room',
+    ]);
+
+    const matchedLabels = labels.filter((label) =>
+      positiveLabels.has(label.description.toLowerCase()),
+    );
+
+    if (matchedLabels.length >= 2) {
+      return true;
+    }
+
+    if (matchedLabels.length === 1) {
+      const topScore = matchedLabels[0].score ?? 0;
+      return topScore >= 0.85;
+    }
+
+    return false;
   }
 
   private buildUserAgent(nominatimEmail: string): string {
