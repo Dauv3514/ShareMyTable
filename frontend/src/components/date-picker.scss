@@ -1,0 +1,412 @@
+.date-picker {
+  position: relative;
+  width: 100%;
+}
+
+.date-picker__trigger {
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 0;
+  font-size: 13px;
+  line-height: 1.2;
+  color: #a58a3d;
+  cursor: pointer;
+}
+
+.date-picker__popover {
+  z-index: 40;
+  width: min(360px, calc(100vw - 32px));
+  border: 1px solid #ded7c8;
+  border-radius: 24px;
+  background: #ffffff;
+  padding: 18px 18px 16px;
+  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.12);
+}
+
+.date-picker__header {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.date-picker__header-label,
+.date-picker__header-value {
+  height: 38px;
+  border: 1px solid #e5d8b5;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  background: #fffdf7;
+}
+
+.date-picker__header-label {
+  color: #a58a3d;
+}
+
+.date-picker__header-value {
+  color: #2f2a21;
+}
+
+.date-picker__controls {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 40px;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.date-picker__selectors {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.date-picker__select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.date-picker__select-wrap--year .date-picker__select {
+  min-width: 108px;
+}
+
+.date-picker__select {
+  height: 42px;
+  min-width: 94px;
+  border: 1px solid #d9d9d9;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #2f2a21;
+  font-size: 15px;
+  line-height: 1;
+  padding: 0 34px 0 16px;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.date-picker__select-icon {
+  position: absolute;
+  right: 12px;
+  width: 15px;
+  height: 15px;
+  pointer-events: none;
+  color: #2f2a21;
+}
+
+.date-picker__nav-button {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 14px;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #262626;
+  cursor: pointer;
+  padding: 0;
+}
+
+.date-picker__nav-button svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 2.25;
+}
+
+.date-picker__nav-button:hover {
+  background: #f8f6ed;
+}
+
+.date-picker__nav-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.dp-root {
+  width: 100%;
+}
+
+.dp-months {
+  display: flex;
+  flex-direction: column;
+}
+
+.dp-month {
+  width: 100%;
+}
+
+.dp-month-caption {
+  display: grid;
+  grid-template-columns: 32px 1fr 32px;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.dp-month-caption-hidden {
+  display: none;
+}
+
+.dp-caption-label {
+  display: none;
+}
+
+.dp-nav {
+  display: contents;
+}
+
+.dp-nav-button {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #262626;
+  padding: 0;
+}
+
+.dp-nav-button:hover {
+  background: #f5f1e6;
+}
+
+.dp-nav-button:focus-visible,
+.dp-day:focus-visible,
+.dp-select:focus-visible {
+  outline: 2px solid rgba(165, 138, 61, 0.3);
+  outline-offset: 2px;
+}
+
+.dp-chevron {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.2;
+}
+
+.dp-dropdowns {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.dp-dropdown-root {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.dp-select {
+  min-width: 72px;
+  height: 34px;
+  border: 1px solid #d9d9d9;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #2f2a21;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0 30px 0 12px;
+  appearance: none;
+  cursor: pointer;
+}
+
+.dp-select--year {
+  min-width: 82px;
+}
+
+.dp-dropdown-root .dp-chevron {
+  position: absolute;
+  right: 10px;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+}
+
+.dp-month-grid {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+}
+
+.dp-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  margin-bottom: 4px;
+}
+
+.dp-weekday {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 400;
+  color: #8a8a8a;
+}
+
+.dp-weeks {
+  display: grid;
+  gap: 8px;
+}
+
+.dp-week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.dp-day-cell {
+  display: flex;
+  justify-content: center;
+}
+
+.dp-day {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: #2f2a21;
+  font-size: 16px;
+  font-weight: 400;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.dp-day:hover {
+  background: #f8f6ed;
+}
+
+.dp-day-cell.dp-day-selected .dp-day,
+.dp-day.dp-day-selected {
+  background: #2b2b2b;
+  color: #ffffff;
+}
+
+.dp-day-cell.dp-day-selected .dp-day:hover,
+.dp-day.dp-day-selected:hover {
+  background: #2b2b2b;
+}
+
+.dp-day-today {
+  background: #f8f6ed;
+}
+
+.dp-day-outside {
+  color: #c8c2b6;
+}
+
+.dp-day-disabled {
+  color: #d5d0c5;
+  cursor: not-allowed;
+}
+
+.dp-day-hidden {
+  visibility: hidden;
+}
+
+@media (max-width: 640px) {
+  .date-picker__popover {
+    width: min(292px, calc(100vw - 28px));
+    padding: 14px 12px 12px;
+    border-radius: 20px;
+  }
+
+  .date-picker__header {
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .date-picker__header-label,
+  .date-picker__header-value {
+    height: 32px;
+    font-size: 12px;
+  }
+
+  .date-picker__controls {
+    grid-template-columns: 30px minmax(0, 1fr) 30px;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .date-picker__selectors {
+    gap: 6px;
+  }
+
+  .date-picker__select {
+    min-width: 72px;
+    height: 34px;
+    font-size: 13px;
+    padding: 0 24px 0 10px;
+    border-radius: 10px;
+  }
+
+  .date-picker__select-wrap--year .date-picker__select {
+    min-width: 82px;
+  }
+
+  .date-picker__select-icon {
+    right: 8px;
+    width: 12px;
+    height: 12px;
+  }
+
+  .date-picker__nav-button {
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+  }
+
+  .date-picker__nav-button svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .dp-month-caption {
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .dp-dropdowns {
+    gap: 8px;
+  }
+
+  .dp-select {
+    min-width: 62px;
+    height: 30px;
+    font-size: 12px;
+    padding-left: 8px;
+  }
+
+  .dp-select--year {
+    min-width: 72px;
+  }
+
+  .dp-day {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+    border-radius: 10px;
+  }
+
+  .dp-weekdays {
+    margin-bottom: 2px;
+  }
+
+  .dp-weeks {
+    gap: 4px;
+  }
+
+  .dp-weekday {
+    font-size: 11px;
+  }
+}
