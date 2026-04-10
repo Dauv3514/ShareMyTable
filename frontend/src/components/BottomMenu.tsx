@@ -4,6 +4,8 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import "./bottom-menu.scss";
 import { useAuth } from "../app/providers/AuthProvider";
+import ProfileMenu from "./ProfileMenu";
+import UserAvatar from "./UserAvatar";
 
 const items = [
   { key: "home", href: "/", icon: "/home.svg", size: 26 },
@@ -14,7 +16,7 @@ const items = [
 
 export default function BottomMenu() {
   const pathname = usePathname();
-  const { isLoggedIn, loading } = useAuth();
+  const { isLoggedIn, loading, user } = useAuth();
   const isMeActive = pathname === "/me";
   const isAuthActive = pathname === "/connexion" || pathname === "/inscription";
 
@@ -38,22 +40,34 @@ export default function BottomMenu() {
         {loading ? (
           <div></div>
         ) : isLoggedIn ? (
-          <Link
-            className={`bottom-menu__item ${isMeActive ? "bottom-menu__item--active" : ""}`}
-            href="/me"
-          >
-            <span className="bottom-menu__avatar">
-              <Image src="/homme-profil.jpg" alt="Profil" width={34} height={34} />
-            </span>
-          </Link>
+          <ProfileMenu>
+            {(open) => (
+              <button
+                type="button"
+                className={`bottom-menu__item ${isMeActive || open ? "bottom-menu__item--active" : ""} bottom-menu__item--button`}
+                aria-label="Ouvrir le menu profil"
+              >
+                <span className="bottom-menu__avatar">
+                  <UserAvatar
+                    src={user?.profilePhotoUrl}
+                    alt="Profil"
+                    size={34}
+                  />
+                </span>
+              </button>
+            )}
+          </ProfileMenu>
         ) : (
           <Link
             className={`bottom-menu__item ${isAuthActive ? "bottom-menu__item--active" : ""}`}
             href="/inscription"
             aria-label="Créer un compte ou se connecter"
           >
-            <span className="bottom-menu__icon bottom-menu__icon--profile" aria-hidden="true">
-              <Image src="/user-profile.svg" alt="" width={30} height={30} />
+            <span className="bottom-menu__avatar" aria-hidden="true">
+              <UserAvatar
+                alt="Profil"
+                size={34}
+              />
             </span>
           </Link>
         )}

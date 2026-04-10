@@ -56,6 +56,19 @@
   gap: 10px;
 }
 
+.navbar__profile-button {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 999px;
+}
+
+.navbar__profile-button--open .navbar__avatar {
+  border-color: #d9dc74;
+  box-shadow: 0 0 0 4px rgba(225, 236, 121, 0.28);
+}
+
 .navbar__actions {
   display: flex;
   align-items: center;
@@ -102,11 +115,11 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  border: 1.5px solid #d6d6d6;
+  border: 2px solid #f1ebd6;
   overflow: hidden;
   display: grid;
   place-items: center;
-  background: #f6f6f6;
+  background: #ffffff;
 }
 
 .navbar__logoRTP {
@@ -114,17 +127,10 @@
   height: 36px;
 }
 
-.navbar__avatar img,
 .navbar__logoRTP img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.navbar__profile-text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.1;
 }
 
 .navbar__profile-title {
@@ -161,10 +167,6 @@
   .navbar__logo-mark {
     width: 48px;
     height: 48px;
-  }
-
-  .navbar__profile-text {
-    display: none;
   }
 
   .navbar__avatar {

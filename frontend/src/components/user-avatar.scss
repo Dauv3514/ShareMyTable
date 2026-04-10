@@ -1,0 +1,24 @@
+.user-avatar {
+  display: block;
+}
+
+.user-avatar--photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-avatar--placeholder {
+  width: 72%;
+  height: 72%;
+  margin: auto;
+  display: grid;
+  place-items: center;
+  color: #8a7a33;
+}
+
+.user-avatar--placeholder svg {
+  width: 100%;
+  height: 100%;
+  stroke-width: 1.8;
+}

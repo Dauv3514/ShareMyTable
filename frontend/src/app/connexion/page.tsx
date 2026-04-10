@@ -34,7 +34,7 @@ export default function ConnexionPage() {
       // 🔐 sauvegarde du token
       login(res.data.access_token);
 
-      toast.success("Connexion réussie 🎾🔥");
+      toast.success("Connexion réussie !");
       router.push("/");
 
     } catch (err: any) {
