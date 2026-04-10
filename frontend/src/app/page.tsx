@@ -40,11 +40,11 @@ const homeSections = [
 ];
 
 export default function Home() {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, loading } = useAuth();
 
   return (
     <div className={styles.page}>
-      {!isLoggedIn && (
+      {!loading && !isLoggedIn && (
         <section className={styles.heroCard}>
           <div className={styles.heroContent}>
             <h1>Ramène ta poire !</h1>

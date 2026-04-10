@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 
 type AuthContextType = {
   isLoggedIn: boolean;
-  loading: boolean;   
+  loading: boolean;
   login: (token: string) => void;
   logout: () => void;
 };
@@ -12,25 +12,25 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return Boolean(localStorage.getItem("token"));
-  });
-  const [loading, setLoading] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsLoggedIn(!!token);
+    setLoading(false);
   }, []);
 
   const login = (token: string) => {
     localStorage.setItem("token", token);
     setIsLoggedIn(true);
+    setLoading(false);
   };
 
   const logout = () => {
     localStorage.removeItem("token");
     setIsLoggedIn(false);
+    setLoading(false);
   };
 
   return (

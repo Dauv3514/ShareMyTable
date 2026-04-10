@@ -13,7 +13,7 @@ const navItems = [
 ];
 
 export default function Navbar() {
-    const { isLoggedIn } = useAuth();
+    const { isLoggedIn, loading } = useAuth();
     return (
         <header className="navbar">
             <div className="navbar__inner">
@@ -37,7 +37,9 @@ export default function Navbar() {
                     ))}
                 </nav>
 
-                {!isLoggedIn && (
+                {loading && <div className="navbar__auth-placeholder" aria-hidden="true" />}
+
+                {!loading && !isLoggedIn && (
                     <div className="navbar__actions">
                         <Link href="/connexion" className="navbar__btn navbar__btn--ghost">
                             Connexion
@@ -48,7 +50,7 @@ export default function Navbar() {
                     </div>
                 )}
 
-                {isLoggedIn && (
+                {!loading && isLoggedIn && (
                     <div className="navbar__profile">
                         <div className="navbar__avatar">
                             <Image

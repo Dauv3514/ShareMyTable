@@ -6,7 +6,7 @@ import "./bottom-menu.scss";
 import { useAuth } from "../app/providers/AuthProvider";
 
 const items = [
-  { key: "home", href: "/home", icon: "/home.svg", size: 26 },
+  { key: "home", href: "/", icon: "/home.svg", size: 26 },
   { key: "search", href: "/rechercher", icon: "/rechercher.svg", size: 26 },
   { key: "meals", href: "/mes-repas", icon: "/ramenetapoire.svg", size: 32 },
   { key: "messages", href: "/messages", icon: "/messages.svg", size: 32 },
@@ -14,7 +14,7 @@ const items = [
 
 export default function BottomMenu() {
   const pathname = usePathname();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, loading } = useAuth();
   const isMeActive = pathname === "/me";
   const isAuthActive = pathname === "/connexion" || pathname === "/inscription";
 
@@ -35,7 +35,9 @@ export default function BottomMenu() {
             </Link>
           );
         })}
-        {isLoggedIn ? (
+        {loading ? (
+          <div></div>
+        ) : isLoggedIn ? (
           <Link
             className={`bottom-menu__item ${isMeActive ? "bottom-menu__item--active" : ""}`}
             href="/me"
