@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import "./bottom-menu.scss";
+import { useAuth } from "../app/providers/AuthProvider";
 
 const items = [
   { key: "home", href: "/home", icon: "/home.svg", size: 26 },
@@ -13,7 +14,10 @@ const items = [
 
 export default function BottomMenu() {
   const pathname = usePathname();
+  const { isLoggedIn } = useAuth();
   const isMeActive = pathname === "/me";
+  const isAuthActive = pathname === "/connexion" || pathname === "/inscription";
+
   return (
     <div className="bottom-menu">
       <nav className="bottom-menu__bar" aria-label="Navigation principale">
@@ -31,14 +35,26 @@ export default function BottomMenu() {
             </Link>
           );
         })}
-        <Link
-          className={`bottom-menu__item ${isMeActive ? "bottom-menu__item--active" : ""}`}
-          href="/me"
-        >
-          <span className="bottom-menu__avatar">
-            <Image src="/homme-profil.jpg" alt="Profil" width={34} height={34} />
-          </span>
-        </Link>
+        {isLoggedIn ? (
+          <Link
+            className={`bottom-menu__item ${isMeActive ? "bottom-menu__item--active" : ""}`}
+            href="/me"
+          >
+            <span className="bottom-menu__avatar">
+              <Image src="/homme-profil.jpg" alt="Profil" width={34} height={34} />
+            </span>
+          </Link>
+        ) : (
+          <Link
+            className={`bottom-menu__item ${isAuthActive ? "bottom-menu__item--active" : ""}`}
+            href="/inscription"
+            aria-label="Créer un compte ou se connecter"
+          >
+            <span className="bottom-menu__icon bottom-menu__icon--profile" aria-hidden="true">
+              <Image src="/user-profile.svg" alt="" width={30} height={30} />
+            </span>
+          </Link>
+        )}
       </nav>
     </div>
   );
