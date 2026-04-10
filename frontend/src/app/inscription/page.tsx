@@ -105,10 +105,6 @@ export default function InscriptionPage() {
 
   return (
     <main className={styles.container}>
-      <div className={styles.logoWrapper}>
-        <Image src="./globe.svg" alt="RamèneTaPoire Logo" width={20} height={20} />
-      </div>
-
       <h2 className={styles.title}>Créez votre compte</h2>
 
       <form className={styles.form} onSubmit={handleSubmit}>

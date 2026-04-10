@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import styles from "./connexion.module.scss";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/app/providers/AuthProvider";
@@ -70,15 +69,6 @@ export default function ConnexionPage() {
 
   return (
     <main className={styles.container}>
-      <div className={styles.logoWrapper}>
-        <Image
-          src="/globe.svg"
-          alt="RamèneTaPoire Logo"
-          width={20}
-          height={20}
-        />
-      </div>
-
       <h2 className={styles.title}>Se connecter</h2>
 
       <form className={styles.form} onSubmit={handleSubmit}>

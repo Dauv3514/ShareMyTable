@@ -42,7 +42,7 @@ body {
 .app-shell__content {
   flex: 1;
   overflow-y: auto;
-  background-color: $gray;
+  background-color: #f8f6ed;
 }
 
 .page-container {
@@ -78,7 +78,6 @@ a {
   color: inherit;
   text-decoration: none;
 }
-
 
 // =========================
 // Buttons

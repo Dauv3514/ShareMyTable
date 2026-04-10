@@ -55,6 +55,11 @@
   height: 100%;
 }
 
+.bottom-menu__icon--profile {
+  width: clamp(24px, 7vw, 30px);
+  height: clamp(24px, 7vw, 30px);
+}
+
 .bottom-menu__item--active {
   color: #3f3b13;
 }
