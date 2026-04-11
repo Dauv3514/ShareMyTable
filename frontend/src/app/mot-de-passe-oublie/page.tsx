@@ -23,9 +23,10 @@ export default function ForgotPasswordPage() {
         "Si cet email existe, un lien de réinitialisation a été envoyé."
       );
       setEmail("");
-    } catch (err: any) {
-      const message =
-        err.response?.data?.message || "Une erreur est survenue. Réessaie plus tard.";
+    } catch (err: unknown) {
+      const message = axios.isAxiosError(err)
+        ? err.response?.data?.message || "Une erreur est survenue. Réessaie plus tard."
+        : "Une erreur est survenue. Réessaie plus tard.";
       setError(message);
       toast.error(message);
     } finally {
@@ -35,25 +36,42 @@ export default function ForgotPasswordPage() {
 
   return (
     <main className={styles.container}>
-      <h2 className={styles.title}>Mot de passe oublié</h2>
+      <div className={styles.shell}>
+        <section className={styles.formCard}>
+          <div className={styles.formHeader}>
+            <h2 className={styles.title}>Mot de passe oublié</h2>
+            <p className={styles.subtitle}>
+              Saisis l&apos;adresse email associée à ton compte.
+            </p>
+          </div>
 
-      <form className={styles.form} onSubmit={onSubmit}>
-        <input
-          className={styles.input}
-          type="email"
-          placeholder="Ton email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        {error && <p className={styles.error}>{error}</p>}
-        <button className={styles.button} type="submit" disabled={loading}>
-          {loading ? "Envoi..." : "Envoyer"}
-        </button>
-        <Link href="/connexion" className={styles.link}>
-          Retour à la connexion
-        </Link>
-      </form>
+          <form className={styles.form} onSubmit={onSubmit}>
+            <label className={styles.field}>
+              <span>Email</span>
+              <input
+                className={styles.input}
+                type="email"
+                placeholder="exemple@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </label>
+
+            {error && <p className={styles.error}>{error}</p>}
+
+            <button className={styles.button} type="submit" disabled={loading}>
+              {loading ? "Envoi..." : "Envoyer le lien"}
+            </button>
+
+            <div className={styles.formMeta}>
+              <Link href="/connexion" className={styles.link}>
+                Retour à la connexion
+              </Link>
+            </div>
+          </form>
+        </section>
+      </div>
     </main>
   );
 }

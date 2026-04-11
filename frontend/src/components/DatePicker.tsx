@@ -102,11 +102,20 @@ export default function DatePickerField({
             className="date-picker__trigger"
             aria-label={ariaLabel}
           >
-            <span className="date-picker__trigger-label">
+            <span
+              className={`date-picker__trigger-label ${
+                !selectedDate ? "date-picker__trigger-label--placeholder" : ""
+              }`}
+            >
               {selectedDate ? format(selectedDate, "dd/MM/yyyy") : placeholder}
             </span>
             {variant === "input" && (
-              <span className="date-picker__trigger-icon" aria-hidden="true">
+              <span
+                className={`date-picker__trigger-icon ${
+                  !selectedDate ? "date-picker__trigger-icon--placeholder" : ""
+                }`}
+                aria-hidden="true"
+              >
                 <CalendarDays />
               </span>
             )}
