@@ -201,20 +201,29 @@ export class UsersService {
 
   async completeProfile(
     userId: number,
-    data: { country: string; city: string; birthDate: Date; pseudo?: string; bio?: string; profilePhotoUrl?: string },
+    data: {
+      country: string;
+      city: string;
+      birthDate: Date;
+      pseudo?: string;
+      bio?: string;
+      profilePhotoUrl?: string | null;
+    },
   ) {
-    await this.usersRepository.update(
-      { id: userId },
-      {
-        country: data.country,
-        city: data.city,
-        birthDate: data.birthDate,
-        pseudo: this.normalizeNullableString(data.pseudo),
-        bio: this.normalizeNullableString(data.bio),
-        profilePhotoUrl: data.profilePhotoUrl ?? undefined,
-        isProfileComplete: true,
-      },
-    );
+    const updateData: DeepPartial<Utilisateur> = {
+      country: data.country,
+      city: data.city,
+      birthDate: data.birthDate,
+      pseudo: this.normalizeNullableString(data.pseudo),
+      bio: this.normalizeNullableString(data.bio),
+      isProfileComplete: true,
+    };
+
+    if (data.profilePhotoUrl !== undefined) {
+      updateData.profilePhotoUrl = this.normalizeNullableString(data.profilePhotoUrl);
+    }
+
+    await this.usersRepository.update({ id: userId }, updateData);
     const updatedUser = await this.usersRepository.findOne({ where: { id: userId } });
     if (!updatedUser) throw new NotFoundException('Utilisateur non trouvé');
     return updatedUser;
@@ -231,23 +240,25 @@ export class UsersService {
       city: string;
       bio?: string;
       birthDate: Date;
-      profilePhotoUrl?: string;
+      profilePhotoUrl?: string | null;
     },
   ) {
-    await this.usersRepository.update(
-      { id: userId },
-      {
-        firstName: data.firstName.trim(),
-        lastName: data.lastName.trim(),
-        phone: this.normalizeNullableString(data.phone),
-        pseudo: this.normalizeNullableString(data.pseudo),
-        country: data.country.trim(),
-        city: data.city.trim(),
-        bio: this.normalizeNullableString(data.bio),
-        birthDate: data.birthDate,
-        profilePhotoUrl: this.normalizeNullableString(data.profilePhotoUrl),
-      },
-    );
+    const updateData: DeepPartial<Utilisateur> = {
+      firstName: data.firstName.trim(),
+      lastName: data.lastName.trim(),
+      phone: this.normalizeNullableString(data.phone),
+      pseudo: this.normalizeNullableString(data.pseudo),
+      country: data.country.trim(),
+      city: data.city.trim(),
+      bio: this.normalizeNullableString(data.bio),
+      birthDate: data.birthDate,
+    };
+
+    if (data.profilePhotoUrl !== undefined) {
+      updateData.profilePhotoUrl = this.normalizeNullableString(data.profilePhotoUrl);
+    }
+
+    await this.usersRepository.update({ id: userId }, updateData);
 
     const updatedUser = await this.usersRepository.findOne({ where: { id: userId } });
     if (!updatedUser) throw new NotFoundException('Utilisateur non trouvé');

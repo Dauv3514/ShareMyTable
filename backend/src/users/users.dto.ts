@@ -24,6 +24,9 @@ export class CompleteProfileDto {
   @IsOptional()
   @IsString({ message: "La photo de profil est invalide" })
   profile_photo_url?: string;
+
+  @IsOptional()
+  remove_profile_photo?: string;
 }
 
 export class UpdateProfileDto {
@@ -62,4 +65,7 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString({ message: 'La photo de profil est invalide' })
   profile_photo_url?: string;
+
+  @IsOptional()
+  remove_profile_photo?: string;
 }

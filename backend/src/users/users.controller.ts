@@ -8,11 +8,15 @@ import {
   UseGuards,
   Patch,
   Body,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '../auth/auth.guard';
 import type { IAuthInfoRequest } from '../auth/auth.guard';
 import { UsersService } from './users.service';
 import { CompleteProfileDto, UpdateProfileDto } from './users.dto';
+import { buildProfilePhotoUrl, profilePhotoUploadOptions } from '../uploads/profile-photo-upload';
 
 @Controller('users')
 @Dependencies(UsersService)
@@ -22,6 +26,25 @@ export class UsersController {
   constructor(usersService: UsersService) {
     this.usersService = usersService;
   }
+
+    private getProfilePhotoUpdate(
+        body: { profile_photo_url?: string; remove_profile_photo?: string },
+        file?: { filename: string },
+    ) {
+        if (file?.filename) {
+            return buildProfilePhotoUrl(file.filename);
+        }
+
+        if (body.remove_profile_photo === 'true') {
+            return null;
+        }
+
+        if (body.profile_photo_url !== undefined) {
+            return body.profile_photo_url;
+        }
+
+        return undefined;
+    }
 
     @UseGuards(AuthGuard)
     @Get('me')
@@ -47,8 +70,13 @@ export class UsersController {
     }
 
     @UseGuards(AuthGuard)
+    @UseInterceptors(FileInterceptor('profile_photo', profilePhotoUploadOptions))
     @Patch('me')
-    async updateProfile(@Req() req: IAuthInfoRequest, @Body() body: UpdateProfileDto) {
+    async updateProfile(
+        @Req() req: IAuthInfoRequest,
+        @Body() body: UpdateProfileDto,
+        @UploadedFile() file?: { filename: string },
+    ) {
         const updatedUser = await this.usersService.updateProfile(req.user.sub, {
             firstName: body.first_name,
             lastName: body.last_name,
@@ -58,7 +86,7 @@ export class UsersController {
             city: body.city,
             bio: body.bio,
             birthDate: new Date(body.birth_date),
-            profilePhotoUrl: body.profile_photo_url,
+            profilePhotoUrl: this.getProfilePhotoUpdate(body, file),
         });
 
         return {
@@ -83,15 +111,20 @@ export class UsersController {
     }
 
     @UseGuards(AuthGuard)
+    @UseInterceptors(FileInterceptor('profile_photo', profilePhotoUploadOptions))
     @Patch('me/complete-profile')
-    async completeProfile(@Req() req: IAuthInfoRequest, @Body() body: CompleteProfileDto) {
+    async completeProfile(
+        @Req() req: IAuthInfoRequest,
+        @Body() body: CompleteProfileDto,
+        @UploadedFile() file?: { filename: string },
+    ) {
         const updatedUser = await this.usersService.completeProfile(req.user.sub, {
             country: body.country,
             city: body.city,
             birthDate: new Date(body.birth_date),
             pseudo: body.pseudo,
             bio: body.bio,
-            profilePhotoUrl: body.profile_photo_url,
+            profilePhotoUrl: this.getProfilePhotoUpdate(body, file),
         });
         return {
             success: true,

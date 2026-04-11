@@ -12,6 +12,7 @@ import DatePickerField from "@/components/DatePicker";
 export default function InscriptionPage() {
   const searchParams = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const objectUrlRef = useRef<string | null>(null);
   const [formData, setFormData] = useState({
     email: "",
     password_hash: "",
@@ -22,9 +23,10 @@ export default function InscriptionPage() {
     birth_date: "",
     pseudo: "",
     bio: "",
-    profile_photo_url: "",
   });
   const [showOptional, setShowOptional] = useState(false);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState("");
+  const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
 
   useEffect(() => {
     const reason = searchParams.get("reason");
@@ -38,6 +40,14 @@ export default function InscriptionPage() {
       localStorage.removeItem("oauth_flow");
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    return () => {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+      }
+    };
+  }, []);
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -64,34 +74,29 @@ export default function InscriptionPage() {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result !== "string") {
-        toast.error("Impossible de lire cette image.");
-        return;
-      }
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+    }
 
-      const imageDataUrl = reader.result;
-
-      setFormData((prev) => ({
-        ...prev,
-        profile_photo_url: imageDataUrl,
-      }));
-    };
-
-    reader.onerror = () => {
-      toast.error("Impossible de charger cette image.");
-    };
-
-    reader.readAsDataURL(file);
+    const previewUrl = URL.createObjectURL(file);
+    objectUrlRef.current = previewUrl;
+    setSelectedPhotoFile(file);
+    setPhotoPreviewUrl(previewUrl);
     event.target.value = "";
   };
 
   const handleRemovePhoto = () => {
-    setFormData((prev) => ({
-      ...prev,
-      profile_photo_url: "",
-    }));
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
+
+    setSelectedPhotoFile(null);
+    setPhotoPreviewUrl("");
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -106,7 +111,22 @@ export default function InscriptionPage() {
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      await axios.post(`${apiUrl}/auth/inscription`, formData);
+      const payload = new FormData();
+      payload.append("email", formData.email);
+      payload.append("password_hash", formData.password_hash);
+      payload.append("first_name", formData.first_name);
+      payload.append("last_name", formData.last_name);
+      payload.append("country", formData.country);
+      payload.append("city", formData.city);
+      payload.append("birth_date", formData.birth_date);
+      payload.append("pseudo", formData.pseudo.trim());
+      payload.append("bio", formData.bio.trim());
+
+      if (selectedPhotoFile) {
+        payload.append("profile_photo", selectedPhotoFile);
+      }
+
+      await axios.post(`${apiUrl}/auth/inscription`, payload);
 
       toast.success("Compte créé. Vérifie ton email pour l'activer ✅");
 
@@ -120,8 +140,13 @@ export default function InscriptionPage() {
         birth_date: "",
         pseudo: "",
         bio: "",
-        profile_photo_url: "",
       });
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
+      setSelectedPhotoFile(null);
+      setPhotoPreviewUrl("");
       setShowOptional(false);
 
     } catch (err: unknown) {
@@ -302,19 +327,19 @@ export default function InscriptionPage() {
                           className={styles.uploadButton}
                           onClick={handleSelectPhoto}
                         >
-                          {formData.profile_photo_url
+                          {photoPreviewUrl
                             ? "Changer la photo"
                             : "Télécharger une image"}
                         </button>
 
                         <p className={styles.uploadHint}>
-                          {formData.profile_photo_url
+                          {photoPreviewUrl
                             ? "Une photo est prête à être envoyée avec l’inscription."
                             : "PNG, JPG ou WebP depuis votre ordinateur."}
                         </p>
                       </div>
 
-                      {formData.profile_photo_url && (
+                      {photoPreviewUrl && (
                         <div className={styles.uploadPreview}>
                           <span className={styles.uploadPreviewBadge}>Image ajoutée</span>
                           <button

@@ -1,5 +1,6 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Get, Query, UseGuards, Req, Res, Patch } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Get, Query, UseGuards, Req, Res, Patch, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { AuthGuard as PassportAuthGuard } from '@nestjs/passport';
+import { FileInterceptor } from '@nestjs/platform-express';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { Public } from './public.decorator';
@@ -8,16 +9,40 @@ import { AuthProvider } from '../users/users.entity';
 import { GoogleAuthGuard } from './google-auth.guard';
 import { AuthGuard } from './auth.guard';
 import type { IAuthInfoRequest } from './auth.guard';
+import { buildProfilePhotoUrl, profilePhotoUploadOptions } from '../uploads/profile-photo-upload';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  private getProfilePhotoUpdate(
+    body: { profile_photo_url?: string; remove_profile_photo?: string },
+    file?: { filename: string },
+  ) {
+    if (file?.filename) {
+      return buildProfilePhotoUrl(file.filename);
+    }
+
+    if (body.remove_profile_photo === 'true') {
+      return null;
+    }
+
+    if (body.profile_photo_url !== undefined) {
+      return body.profile_photo_url;
+    }
+
+    return undefined;
+  }
+
   @Public()
   @HttpCode(HttpStatus.CREATED)
+  @UseInterceptors(FileInterceptor('profile_photo', profilePhotoUploadOptions))
   @Post('inscription')
-  async inscription(@Body() userDto: InscriptionDto) {
-    return this.authService.inscription(userDto);
+  async inscription(@Body() userDto: InscriptionDto, @UploadedFile() file?: { filename: string }) {
+    return this.authService.inscription({
+      ...userDto,
+      profile_photo_url: this.getProfilePhotoUpdate(userDto, file) ?? undefined,
+    });
   }
 
   @Public()
@@ -133,8 +158,9 @@ export class AuthController {
 
   @Public()
   @HttpCode(HttpStatus.OK)
+  @UseInterceptors(FileInterceptor('profile_photo', profilePhotoUploadOptions))
   @Post('oauth/complete')
-  async oauthComplete(@Body() body: OAuthCompleteDto) {
+  async oauthComplete(@Body() body: OAuthCompleteDto, @UploadedFile() file?: { filename: string }) {
     return this.authService.completeOAuthProfile({
       pendingToken: body.pending_token,
       email: body.email,
@@ -145,7 +171,7 @@ export class AuthController {
       birthDate: new Date(body.birth_date),
       pseudo: body.pseudo,
       bio: body.bio,
-      profilePhotoUrl: body.profile_photo_url,
+      profilePhotoUrl: this.getProfilePhotoUpdate(body, file) ?? undefined,
     });
   }
 

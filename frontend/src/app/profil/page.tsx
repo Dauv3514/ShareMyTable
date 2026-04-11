@@ -27,7 +27,6 @@ type ProfileFormData = {
   city: string;
   bio: string;
   birth_date: string;
-  profile_photo_url: string;
 };
 
 function toDateInputValue(value: string | null | undefined) {
@@ -41,8 +40,12 @@ function toDateInputValue(value: string | null | undefined) {
 export default function ProfilPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const objectUrlRef = useRef<string | null>(null);
   const { isLoggedIn, loading, user, refreshUser } = useAuth();
   const [saving, setSaving] = useState(false);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState("");
+  const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
+  const [removeProfilePhoto, setRemoveProfilePhoto] = useState(false);
   const [formData, setFormData] = useState<ProfileFormData>({
     first_name: "",
     last_name: "",
@@ -53,7 +56,6 @@ export default function ProfilPage() {
     city: "",
     bio: "",
     birth_date: "",
-    profile_photo_url: "",
   });
 
   useEffect(() => {
@@ -77,9 +79,19 @@ export default function ProfilPage() {
       city: user.city ?? "",
       bio: user.bio ?? "",
       birth_date: toDateInputValue(user.birthDate),
-      profile_photo_url: user.profilePhotoUrl ?? "",
     });
+    setPhotoPreviewUrl(user.profilePhotoUrl ?? "");
+    setSelectedPhotoFile(null);
+    setRemoveProfilePhoto(false);
   }, [user]);
+
+  useEffect(() => {
+    return () => {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+      }
+    };
+  }, []);
 
   const fullName = useMemo(() => {
     return [formData.first_name, formData.last_name].filter(Boolean).join(" ").trim();
@@ -108,32 +120,31 @@ export default function ProfilPage() {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result !== "string") {
-        toast.error("Impossible de lire cette image.");
-        return;
-      }
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+    }
 
-      setFormData((prev) => ({
-        ...prev,
-        profile_photo_url: reader.result as string,
-      }));
-    };
-
-    reader.onerror = () => {
-      toast.error("Impossible de charger cette image.");
-    };
-
-    reader.readAsDataURL(file);
+    const previewUrl = URL.createObjectURL(file);
+    objectUrlRef.current = previewUrl;
+    setSelectedPhotoFile(file);
+    setRemoveProfilePhoto(false);
+    setPhotoPreviewUrl(previewUrl);
     event.target.value = "";
   };
 
   const handleRemovePhoto = () => {
-    setFormData((prev) => ({
-      ...prev,
-      profile_photo_url: "",
-    }));
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
+
+    setSelectedPhotoFile(null);
+    setRemoveProfilePhoto(true);
+    setPhotoPreviewUrl("");
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -148,19 +159,20 @@ export default function ProfilPage() {
       return;
     }
 
-    const payload: Record<string, string> = {
-      first_name: formData.first_name,
-      last_name: formData.last_name,
-      country: formData.country,
-      city: formData.city,
-      birth_date: formData.birth_date,
-    };
+    const payload = new FormData();
+    payload.append("first_name", formData.first_name);
+    payload.append("last_name", formData.last_name);
+    payload.append("phone", formData.phone.trim());
+    payload.append("pseudo", formData.pseudo.trim());
+    payload.append("country", formData.country);
+    payload.append("city", formData.city);
+    payload.append("bio", formData.bio.trim());
+    payload.append("birth_date", formData.birth_date);
 
-    if (formData.phone.trim()) payload.phone = formData.phone.trim();
-    if (formData.pseudo.trim()) payload.pseudo = formData.pseudo.trim();
-    if (formData.bio.trim()) payload.bio = formData.bio.trim();
-    if (formData.profile_photo_url.trim()) {
-      payload.profile_photo_url = formData.profile_photo_url.trim();
+    if (selectedPhotoFile) {
+      payload.append("profile_photo", selectedPhotoFile);
+    } else if (removeProfilePhoto) {
+      payload.append("remove_profile_photo", "true");
     }
 
     try {
@@ -206,7 +218,7 @@ export default function ProfilPage() {
             <div className={styles.avatarWrap}>
               <div className={styles.avatarFrame}>
                 <UserAvatar
-                  src={formData.profile_photo_url}
+                  src={photoPreviewUrl}
                   alt="Photo de profil"
                   size={112}
                   priority
@@ -249,10 +261,10 @@ export default function ProfilPage() {
               className={styles.secondaryButton}
               onClick={handleSelectPhoto}
             >
-              {formData.profile_photo_url ? "Changer la photo" : "Ajouter une photo"}
+              {photoPreviewUrl ? "Changer la photo" : "Ajouter une photo"}
             </button>
 
-            {formData.profile_photo_url && (
+            {photoPreviewUrl && (
               <button
                 type="button"
                 className={styles.textButton}

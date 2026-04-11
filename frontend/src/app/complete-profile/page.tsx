@@ -13,6 +13,7 @@ export default function CompleteProfilePage() {
   const { login } = useAuth();
   const searchParams = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const objectUrlRef = useRef<string | null>(null);
 
   const pendingToken = searchParams.get("pending");
   const missingEmail = searchParams.get("missingEmail") === "1";
@@ -30,9 +31,10 @@ export default function CompleteProfilePage() {
     birth_date: "",
     pseudo: "",
     bio: "",
-    profile_photo_url: "",
   });
   const [showOptional, setShowOptional] = useState(false);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState("");
+  const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
   const [oauthFlow] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
     return localStorage.getItem("oauth_flow");
@@ -47,6 +49,14 @@ export default function CompleteProfilePage() {
     localStorage.removeItem("oauth_flow");
     router.replace("/inscription");
   }, [shouldRedirectToRegister, router]);
+
+  useEffect(() => {
+    return () => {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+      }
+    };
+  }, []);
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -70,34 +80,29 @@ export default function CompleteProfilePage() {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result !== "string") {
-        toast.error("Impossible de lire cette image.");
-        return;
-      }
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+    }
 
-      const imageDataUrl = reader.result;
-
-      setFormData((prev) => ({
-        ...prev,
-        profile_photo_url: imageDataUrl,
-      }));
-    };
-
-    reader.onerror = () => {
-      toast.error("Impossible de charger cette image.");
-    };
-
-    reader.readAsDataURL(file);
+    const previewUrl = URL.createObjectURL(file);
+    objectUrlRef.current = previewUrl;
+    setSelectedPhotoFile(file);
+    setPhotoPreviewUrl(previewUrl);
     event.target.value = "";
   };
 
   const handleRemovePhoto = () => {
-    setFormData((prev) => ({
-      ...prev,
-      profile_photo_url: "",
-    }));
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
+
+    setSelectedPhotoFile(null);
+    setPhotoPreviewUrl("");
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -111,21 +116,18 @@ export default function CompleteProfilePage() {
       }
 
       if (isPendingFlow) {
-        const payload: Record<string, string> = {
-          pending_token: pendingToken as string,
-          country: formData.country,
-          city: formData.city,
-          birth_date: formData.birth_date,
-        };
+        const payload = new FormData();
+        payload.append("pending_token", pendingToken as string);
+        payload.append("country", formData.country);
+        payload.append("city", formData.city);
+        payload.append("birth_date", formData.birth_date);
+        payload.append("pseudo", formData.pseudo.trim());
+        payload.append("bio", formData.bio.trim());
 
-        if (missingEmail) payload.email = formData.email;
-        if (missingFirstName) payload.first_name = formData.first_name;
-        if (missingLastName) payload.last_name = formData.last_name;
-        if (formData.pseudo.trim()) payload.pseudo = formData.pseudo.trim();
-        if (formData.bio.trim()) payload.bio = formData.bio.trim();
-        if (formData.profile_photo_url.trim()) {
-          payload.profile_photo_url = formData.profile_photo_url.trim();
-        }
+        if (missingEmail) payload.append("email", formData.email);
+        if (missingFirstName) payload.append("first_name", formData.first_name);
+        if (missingLastName) payload.append("last_name", formData.last_name);
+        if (selectedPhotoFile) payload.append("profile_photo", selectedPhotoFile);
 
         const res = await axios.post(`${apiUrl}/auth/oauth/complete`, payload);
 
@@ -155,7 +157,17 @@ export default function CompleteProfilePage() {
         return;
       }
 
-      await axios.patch(`${apiUrl}/users/me/complete-profile`, formData, {
+      const payload = new FormData();
+      payload.append("country", formData.country);
+      payload.append("city", formData.city);
+      payload.append("birth_date", formData.birth_date);
+      payload.append("pseudo", formData.pseudo.trim());
+      payload.append("bio", formData.bio.trim());
+      if (selectedPhotoFile) {
+        payload.append("profile_photo", selectedPhotoFile);
+      }
+
+      await axios.patch(`${apiUrl}/users/me/complete-profile`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -331,19 +343,19 @@ export default function CompleteProfilePage() {
                           className={styles.uploadButton}
                           onClick={handleSelectPhoto}
                         >
-                          {formData.profile_photo_url
+                          {photoPreviewUrl
                             ? "Changer la photo"
                             : "Télécharger une image"}
                         </button>
 
                         <p className={styles.uploadHint}>
-                          {formData.profile_photo_url
+                          {photoPreviewUrl
                             ? "Une photo est prête à être envoyée avec votre profil."
                             : "PNG, JPG ou WebP depuis votre ordinateur."}
                         </p>
                       </div>
 
-                      {formData.profile_photo_url && (
+                      {photoPreviewUrl && (
                         <div className={styles.uploadPreview}>
                           <span className={styles.uploadPreviewBadge}>Image ajoutée</span>
                           <button

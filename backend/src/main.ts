@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import * as express from 'express';
+import { join } from 'path';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -10,6 +11,7 @@ async function bootstrap() {
   });
   // Needed for Apple form_post callbacks (x-www-form-urlencoded)
   app.use(express.urlencoded({ extended: true }));
+  app.use('/uploads', express.static(join(process.cwd(), 'uploads')));
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

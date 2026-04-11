@@ -17,6 +17,9 @@ export class InscriptionDto {
   @Length(0, 255, { message: "L'avatar ne peut pas dÃ©passer 255 caractÃ¨res" })
   profile_photo_url?: string;
 
+  @IsOptional()
+  remove_profile_photo?: string;
+
   @IsNotEmpty({ message: "L'email est obligatoire" })
   @IsEmail({}, { message: "L'email est invalide" })
   email: string;
@@ -114,4 +117,7 @@ export class OAuthCompleteDto {
   @IsOptional()
   @Length(1, 255, { message: "La photo ne peut pas dépasser 255 caractères" })
   profile_photo_url?: string;
+
+  @IsOptional()
+  remove_profile_photo?: string;
 }
