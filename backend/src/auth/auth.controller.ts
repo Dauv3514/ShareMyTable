@@ -1,11 +1,13 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Get, Query, UseGuards, Req, Res } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Get, Query, UseGuards, Req, Res, Patch } from '@nestjs/common';
 import { AuthGuard as PassportAuthGuard } from '@nestjs/passport';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { Public } from './public.decorator';
-import { InscriptionDto, ConnexionDto, ForgotPasswordDto, ResetPasswordDto, OAuthCompleteDto } from '../auth/auth.dto';
+import { InscriptionDto, ConnexionDto, ForgotPasswordDto, ResetPasswordDto, OAuthCompleteDto, ChangePasswordDto } from '../auth/auth.dto';
 import { AuthProvider } from '../users/users.entity';
 import { GoogleAuthGuard } from './google-auth.guard';
+import { AuthGuard } from './auth.guard';
+import type { IAuthInfoRequest } from './auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -147,6 +149,14 @@ export class AuthController {
     });
   }
 
+  @UseGuards(AuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Patch('change-password')
+  async changePassword(@Req() req: IAuthInfoRequest, @Body() body: ChangePasswordDto) {
+    return this.authService.changePassword(req.user.sub, body);
+  }
+
+  @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('deconnexion')
   async deconnexion() {

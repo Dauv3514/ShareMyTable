@@ -3,6 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/app/providers/AuthProvider";
+import ProfileMenu from "./ProfileMenu";
+import UserAvatar from "./UserAvatar";
 import "./navbar.scss";
 
 const navItems = [
@@ -13,7 +15,7 @@ const navItems = [
 ];
 
 export default function Navbar() {
-    const { isLoggedIn } = useAuth();
+    const { isLoggedIn, loading, user } = useAuth();
     return (
         <header className="navbar">
             <div className="navbar__inner">
@@ -37,33 +39,40 @@ export default function Navbar() {
                     ))}
                 </nav>
 
-                {!isLoggedIn && (
+                {loading && <div className="navbar__auth-placeholder" aria-hidden="true" />}
+
+                {!loading && !isLoggedIn && (
                     <div className="navbar__actions">
                         <Link href="/connexion" className="navbar__btn navbar__btn--ghost">
                             Connexion
                         </Link>
                         <Link href="/inscription" className="navbar__btn navbar__btn--primary">
-                            S'inscrire
+                            S&apos;inscrire
                         </Link>
                     </div>
                 )}
 
-                {isLoggedIn && (
-                    <div className="navbar__profile">
-                        <div className="navbar__avatar">
-                            <Image
-                                src="/homme-profil.jpg"
-                                alt="Profil"
-                                width={42}
-                                height={42}
-                                priority
-                            />
-                        </div>
-                        <div className="navbar__profile-text">
-                            <span className="navbar__profile-title">Title</span>
-                            <span className="navbar__profile-subtitle">Description</span>
-                        </div>
-                    </div>
+                {!loading && isLoggedIn && (
+                    <ProfileMenu>
+                        {(open) => (
+                            <button
+                                type="button"
+                                className={`navbar__profile-button ${open ? "navbar__profile-button--open" : ""}`}
+                                aria-label="Ouvrir le menu profil"
+                            >
+                                <div className="navbar__profile">
+                                    <div className="navbar__avatar">
+                                        <UserAvatar
+                                            src={user?.profilePhotoUrl}
+                                            alt="Profil"
+                                            size={42}
+                                            priority
+                                        />
+                                    </div>
+                                </div>
+                            </button>
+                        )}
+                    </ProfileMenu>
                 )}
             </div>
         </header>

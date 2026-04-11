@@ -12,7 +12,7 @@ import {
 import { AuthGuard } from '../auth/auth.guard';
 import type { IAuthInfoRequest } from '../auth/auth.guard';
 import { UsersService } from './users.service';
-import { CompleteProfileDto } from './users.dto';
+import { CompleteProfileDto, UpdateProfileDto } from './users.dto';
 
 @Controller('users')
 @Dependencies(UsersService)
@@ -38,10 +38,47 @@ export class UsersController {
             email: user.email,
             profilePhotoUrl: user.profilePhotoUrl,
             role: user.role.name,
+            authProvider: user.authProvider,
             biographie: user.bio,
             birthDate: user.birthDate,
             ville: user.city,
             isProfileComplete: user.isProfileComplete,
+        };
+    }
+
+    @UseGuards(AuthGuard)
+    @Patch('me')
+    async updateProfile(@Req() req: IAuthInfoRequest, @Body() body: UpdateProfileDto) {
+        const updatedUser = await this.usersService.updateProfile(req.user.sub, {
+            firstName: body.first_name,
+            lastName: body.last_name,
+            phone: body.phone,
+            pseudo: body.pseudo,
+            country: body.country,
+            city: body.city,
+            bio: body.bio,
+            birthDate: new Date(body.birth_date),
+            profilePhotoUrl: body.profile_photo_url,
+        });
+
+        return {
+            success: true,
+            user: {
+                userId: updatedUser.id,
+                phone: updatedUser.phone,
+                pseudo: updatedUser.pseudo,
+                pays: updatedUser.country,
+                prenom: updatedUser.firstName,
+                nom: updatedUser.lastName,
+                email: updatedUser.email,
+                profilePhotoUrl: updatedUser.profilePhotoUrl,
+                role: updatedUser.role.name,
+                authProvider: updatedUser.authProvider,
+                biographie: updatedUser.bio,
+                birthDate: updatedUser.birthDate,
+                ville: updatedUser.city,
+                isProfileComplete: updatedUser.isProfileComplete,
+            },
         };
     }
 

@@ -13,6 +13,27 @@
   line-height: 1.2;
   color: #a58a3d;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.date-picker__trigger-label {
+  min-width: 0;
+}
+
+.date-picker__trigger-icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #514b1e;
+}
+
+.date-picker__trigger-icon svg {
+  width: 18px;
+  height: 18px;
 }
 
 .date-picker__popover {
@@ -314,6 +335,31 @@
   visibility: hidden;
 }
 
+.date-picker--input .date-picker__trigger {
+  min-height: 56px;
+  border: 1px solid #dfd3b1;
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 0 16px;
+  font-size: 15px;
+  color: #312914;
+  box-shadow: 0 8px 18px rgba(59, 45, 18, 0.06);
+}
+
+.date-picker--input .date-picker__trigger:hover {
+  border-color: #cab35a;
+}
+
+.date-picker--input .date-picker__trigger:focus-visible {
+  outline: none;
+  border-color: #cab35a;
+  box-shadow: 0 0 0 4px rgba(225, 236, 121, 0.25);
+}
+
+.date-picker--input .date-picker__trigger-label {
+  color: #312914;
+}
+
 @media (max-width: 640px) {
   .date-picker__popover {
     width: min(292px, calc(100vw - 28px));
@@ -408,5 +454,12 @@
 
   .dp-weekday {
     font-size: 11px;
+  }
+
+  .date-picker--input .date-picker__trigger {
+    min-height: 50px;
+    border-radius: 14px;
+    padding: 0 14px;
+    font-size: 14px;
   }
 }

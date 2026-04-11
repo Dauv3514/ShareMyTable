@@ -219,4 +219,38 @@ export class UsersService {
     if (!updatedUser) throw new NotFoundException('Utilisateur non trouvé');
     return updatedUser;
   }
+
+  async updateProfile(
+    userId: number,
+    data: {
+      firstName: string;
+      lastName: string;
+      phone?: string;
+      pseudo?: string;
+      country: string;
+      city: string;
+      bio?: string;
+      birthDate: Date;
+      profilePhotoUrl?: string;
+    },
+  ) {
+    await this.usersRepository.update(
+      { id: userId },
+      {
+        firstName: data.firstName.trim(),
+        lastName: data.lastName.trim(),
+        phone: this.normalizeNullableString(data.phone),
+        pseudo: this.normalizeNullableString(data.pseudo),
+        country: data.country.trim(),
+        city: data.city.trim(),
+        bio: this.normalizeNullableString(data.bio),
+        birthDate: data.birthDate,
+        profilePhotoUrl: this.normalizeNullableString(data.profilePhotoUrl),
+      },
+    );
+
+    const updatedUser = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!updatedUser) throw new NotFoundException('Utilisateur non trouvé');
+    return updatedUser;
+  }
 }

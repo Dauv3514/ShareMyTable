@@ -5,9 +5,9 @@ import { toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import axios from "axios";
 import styles from "./inscription.module.scss";
-import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import DatePickerField from "@/components/DatePicker";
 
 export default function InscriptionPage() {
   const searchParams = useSearchParams();
@@ -77,10 +77,10 @@ export default function InscriptionPage() {
       });
       setShowOptional(false);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       let message = "Erreur inconnue 😅";
 
-      if (err.response?.data?.message) {
+      if (axios.isAxiosError(err) && err.response?.data?.message) {
         if (Array.isArray(err.response.data.message)) {
           message = err.response.data.message.join(", ");
         } else if (typeof err.response.data.message === "string") {
@@ -162,14 +162,17 @@ export default function InscriptionPage() {
           onChange={handleChange}
           required
         />
-        <input
-          className={styles.input}
-          type="date"
-          name="birth_date"
-          placeholder="Date de naissance"
+        <DatePickerField
           value={formData.birth_date}
-          onChange={handleChange}
-          required
+          onChange={(value) =>
+            setFormData((prev) => ({
+              ...prev,
+              birth_date: value,
+            }))
+          }
+          placeholder="Date de naissance"
+          variant="input"
+          ariaLabel="Choisir une date de naissance"
         />
 
         <button
