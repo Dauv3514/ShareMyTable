@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import axios from "axios";
@@ -11,6 +11,7 @@ import DatePickerField from "@/components/DatePicker";
 
 export default function InscriptionPage() {
   const searchParams = useSearchParams();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [formData, setFormData] = useState({
     email: "",
     password_hash: "",
@@ -39,12 +40,58 @@ export default function InscriptionPage() {
   }, [searchParams]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
+  };
+
+  const handleSelectPhoto = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handlePhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Choisis une image valide.");
+      event.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== "string") {
+        toast.error("Impossible de lire cette image.");
+        return;
+      }
+
+      const imageDataUrl = reader.result;
+
+      setFormData((prev) => ({
+        ...prev,
+        profile_photo_url: imageDataUrl,
+      }));
+    };
+
+    reader.onerror = () => {
+      toast.error("Impossible de charger cette image.");
+    };
+
+    reader.readAsDataURL(file);
+    event.target.value = "";
+  };
+
+  const handleRemovePhoto = () => {
+    setFormData((prev) => ({
+      ...prev,
+      profile_photo_url: "",
+    }));
   };
 
   const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -105,145 +152,231 @@ export default function InscriptionPage() {
 
   return (
     <main className={styles.container}>
-      <h2 className={styles.title}>Créez votre compte</h2>
-
-      <form className={styles.form} onSubmit={handleSubmit}>
-        <input
-          className={styles.input}
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
-        <input
-          className={styles.input}
-          type="password"
-          name="password_hash"
-          placeholder="Mot de passe"
-          value={formData.password_hash}
-          onChange={handleChange}
-          required
-        />
-        <input
-          className={styles.input}
-          type="text"
-          name="first_name"
-          placeholder="Prénom"
-          value={formData.first_name}
-          onChange={handleChange}
-          required
-        />
-        <input
-          className={styles.input}
-          type="text"
-          name="last_name"
-          placeholder="Nom"
-          value={formData.last_name}
-          onChange={handleChange}
-          required
-        />
-        <input
-          className={styles.input}
-          type="text"
-          name="country"
-          placeholder="Pays"
-          value={formData.country}
-          onChange={handleChange}
-          required
-        />
-        <input
-          className={styles.input}
-          type="text"
-          name="city"
-          placeholder="Ville"
-          value={formData.city}
-          onChange={handleChange}
-          required
-        />
-        <DatePickerField
-          value={formData.birth_date}
-          onChange={(value) =>
-            setFormData((prev) => ({
-              ...prev,
-              birth_date: value,
-            }))
-          }
-          placeholder="Date de naissance"
-          variant="input"
-          ariaLabel="Choisir une date de naissance"
-        />
-
-        <button
-          type="button"
-          className={styles.optionalToggle}
-          onClick={() => setShowOptional((prev) => !prev)}
-        >
-          {showOptional ? "Masquer les champs optionnels" : "Afficher les champs optionnels"}
-          <span className={showOptional ? styles.chevronUp : styles.chevronDown}>▾</span>
-        </button>
-
-        {showOptional && (
-          <div className={styles.optionalBlock}>
-            <input
-              className={styles.input}
-              type="text"
-              name="pseudo"
-              placeholder="Pseudo"
-              value={formData.pseudo}
-              onChange={handleChange}
-            />
-            <input
-              className={styles.input}
-              type="url"
-              name="profile_photo_url"
-              placeholder="Photo de profil"
-              value={formData.profile_photo_url}
-              onChange={handleChange}
-            />
-            <textarea
-              className={styles.textarea}
-              name="bio"
-              placeholder="Bio"
-              value={formData.bio}
-              onChange={handleChange}
-              rows={4}
-            />
+      <div className={styles.shell}>
+        <section className={styles.formCard}>
+          <div className={styles.formHeader}>
+            <h2 className={styles.title}>Créez votre compte</h2>
           </div>
-        )}
 
-        <button className={styles.button} type="submit">
-          Inscription
-        </button>
-      </form>
+          <form className={styles.form} onSubmit={handleSubmit}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className={styles.hiddenInput}
+              onChange={handlePhotoChange}
+            />
 
-      <div className={styles.oauthDivider}>ou</div>
+            <div className={styles.grid}>
+              <label className={styles.field}>
+                <span>Email</span>
+                <input
+                  className={styles.input}
+                  type="email"
+                  name="email"
+                  placeholder="exemple@email.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                />
+              </label>
 
-      <div className={styles.oauthGroup}>
-        <button
-          className={styles.oauthButton}
-          type="button"
-          onClick={() => handleOAuth("google")}
-        >
-          Continuer avec Google
-        </button>
-        <button
-          className={styles.oauthButton}
-          type="button"
-          disabled
-          title="Apple à configurer côté backend"
-        >
-          Continuer avec Apple
-        </button>
+              <label className={styles.field}>
+                <span>Mot de passe</span>
+                <input
+                  className={styles.input}
+                  type="password"
+                  name="password_hash"
+                  placeholder="Choisir un mot de passe"
+                  value={formData.password_hash}
+                  onChange={handleChange}
+                  required
+                />
+              </label>
+
+              <label className={styles.field}>
+                <span>Prénom</span>
+                <input
+                  className={styles.input}
+                  type="text"
+                  name="first_name"
+                  placeholder="Votre prénom"
+                  value={formData.first_name}
+                  onChange={handleChange}
+                  required
+                />
+              </label>
+
+              <label className={styles.field}>
+                <span>Nom</span>
+                <input
+                  className={styles.input}
+                  type="text"
+                  name="last_name"
+                  placeholder="Votre nom"
+                  value={formData.last_name}
+                  onChange={handleChange}
+                  required
+                />
+              </label>
+
+              <label className={styles.field}>
+                <span>Pays</span>
+                <input
+                  className={styles.input}
+                  type="text"
+                  name="country"
+                  placeholder="France"
+                  value={formData.country}
+                  onChange={handleChange}
+                  required
+                />
+              </label>
+
+              <label className={styles.field}>
+                <span>Ville</span>
+                <input
+                  className={styles.input}
+                  type="text"
+                  name="city"
+                  placeholder="Rennes"
+                  value={formData.city}
+                  onChange={handleChange}
+                  required
+                />
+              </label>
+            </div>
+
+            <label className={`${styles.field} ${styles.dateField}`}>
+              <span>Date de naissance</span>
+              <DatePickerField
+                value={formData.birth_date}
+                onChange={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    birth_date: value,
+                  }))
+                }
+                placeholder="Date de naissance"
+                variant="input"
+                ariaLabel="Choisir une date de naissance"
+              />
+            </label>
+
+            <button
+              type="button"
+              className={styles.optionalToggle}
+              onClick={() => setShowOptional((prev) => !prev)}
+            >
+              <span>
+                {showOptional
+                  ? "Masquer les champs optionnels"
+                  : "Afficher les champs optionnels"}
+              </span>
+              <span className={showOptional ? styles.chevronUp : styles.chevronDown}>
+                ▾
+              </span>
+            </button>
+
+            {showOptional && (
+              <div className={styles.optionalBlock}>
+                <div className={styles.grid}>
+                  <label className={styles.field}>
+                    <span>Pseudo</span>
+                    <input
+                      className={`${styles.input} ${styles.optionalInput}`}
+                      type="text"
+                      name="pseudo"
+                      placeholder="Choisir un pseudo"
+                      value={formData.pseudo}
+                      onChange={handleChange}
+                    />
+                  </label>
+
+                  <label className={`${styles.field} ${styles.uploadField}`}>
+                    <span>Photo de profil</span>
+                    <div className={styles.uploadBox}>
+                      <div className={styles.uploadMain}>
+                        <button
+                          type="button"
+                          className={styles.uploadButton}
+                          onClick={handleSelectPhoto}
+                        >
+                          {formData.profile_photo_url
+                            ? "Changer la photo"
+                            : "Télécharger une image"}
+                        </button>
+
+                        <p className={styles.uploadHint}>
+                          {formData.profile_photo_url
+                            ? "Une photo est prête à être envoyée avec l’inscription."
+                            : "PNG, JPG ou WebP depuis votre ordinateur."}
+                        </p>
+                      </div>
+
+                      {formData.profile_photo_url && (
+                        <div className={styles.uploadPreview}>
+                          <span className={styles.uploadPreviewBadge}>Image ajoutée</span>
+                          <button
+                            type="button"
+                            className={styles.uploadRemove}
+                            onClick={handleRemovePhoto}
+                          >
+                            Retirer la photo
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </label>
+                </div>
+
+                <label className={`${styles.field} ${styles.bioField}`}>
+                  <span>Bio</span>
+                  <textarea
+                    className={styles.textarea}
+                    name="bio"
+                    placeholder="Quelques mots sur vous, votre cuisine, vos envies..."
+                    value={formData.bio}
+                    onChange={handleChange}
+                    rows={4}
+                  />
+                </label>
+              </div>
+            )}
+
+            <button className={styles.button} type="submit">
+              S&apos;inscrire
+            </button>
+          </form>
+
+          <div className={styles.oauthDivider}>ou</div>
+
+          <div className={styles.oauthGroup}>
+            <button
+              className={styles.oauthButton}
+              type="button"
+              onClick={() => handleOAuth("google")}
+            >
+              Continuer avec Google
+            </button>
+            <button
+              className={styles.oauthButton}
+              type="button"
+              disabled
+              title="Apple à configurer côté backend"
+            >
+              Continuer avec Apple
+            </button>
+          </div>
+
+          <p className={styles.bottomText}>
+            Vous avez déjà un compte ?{" "}
+            <Link href="/connexion" className={styles.link}>
+              Connectez-vous !
+            </Link>
+          </p>
+        </section>
       </div>
-
-      <p className={styles.bottomText}>
-        Vous avez déjà un compte ?{" "}
-        <Link href="/connexion" className={styles.link}>
-          Connectez-vous !
-        </Link>
-      </p>
     </main>
   );
 }

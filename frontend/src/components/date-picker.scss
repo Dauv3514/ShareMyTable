@@ -36,6 +36,14 @@
   height: 18px;
 }
 
+.date-picker__trigger-label--placeholder {
+  color: #9c916d;
+}
+
+.date-picker__trigger-icon--placeholder {
+  color: #9c916d;
+}
+
 .date-picker__popover {
   z-index: 40;
   width: min(360px, calc(100vw - 32px));
@@ -358,6 +366,11 @@
 
 .date-picker--input .date-picker__trigger-label {
   color: #312914;
+}
+
+.date-picker--input .date-picker__trigger-label--placeholder,
+.date-picker--input .date-picker__trigger-icon--placeholder {
+  color: #9c916d;
 }
 
 @media (max-width: 640px) {

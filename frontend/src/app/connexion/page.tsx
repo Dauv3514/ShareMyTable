@@ -37,11 +37,15 @@ export default function ConnexionPage() {
       toast.success("Connexion réussie !");
       router.push("/");
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       let message = "Email ou mot de passe incorrect";
 
-      if (err.response?.data?.message) {
-        message = err.response.data.message;
+      if (axios.isAxiosError(err) && err.response?.data?.message) {
+        if (Array.isArray(err.response.data.message)) {
+          message = err.response.data.message.join(", ");
+        } else if (typeof err.response.data.message === "string") {
+          message = err.response.data.message;
+        }
       }
 
       toast.error(message);
@@ -69,64 +73,78 @@ export default function ConnexionPage() {
 
   return (
     <main className={styles.container}>
-      <h2 className={styles.title}>Se connecter</h2>
+      <div className={styles.shell}>
+        <section className={styles.formCard}>
+          <div className={styles.formHeader}>
+            <h2 className={styles.title}>Se connecter</h2>
+          </div>
 
-      <form className={styles.form} onSubmit={handleSubmit}>
-        <input
-          className={styles.input}
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
+          <form className={styles.form} onSubmit={handleSubmit}>
+            <label className={styles.field}>
+              <span>Email</span>
+              <input
+                className={styles.input}
+                type="email"
+                name="email"
+                placeholder="exemple@email.com"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+            </label>
 
-        <input
-          className={styles.input}
-          type="password"
-          name="password_hash"
-          placeholder="Mot de passe"
-          value={formData.password_hash}
-          onChange={handleChange}
-          required
-        />
+            <label className={styles.field}>
+              <span>Mot de passe</span>
+              <input
+                className={styles.input}
+                type="password"
+                name="password_hash"
+                placeholder="Votre mot de passe"
+                value={formData.password_hash}
+                onChange={handleChange}
+                required
+              />
+            </label>
 
-        <Link href="/mot-de-passe-oublie" className={styles.forgotLink}>
-          Mot de passe oublié ?
-        </Link>
+            <div className={styles.formMeta}>
+              <Link href="/mot-de-passe-oublie" className={styles.forgotLink}>
+                Mot de passe oublié ?
+              </Link>
+            </div>
 
-        <button className={styles.button} type="submit">
-          Connexion
-        </button>
-      </form>
+            <button className={styles.button} type="submit">
+              Connexion
+            </button>
+          </form>
 
-      <div className={styles.oauthDivider}>ou</div>
+          <div className={styles.oauthDivider}>ou</div>
 
-      <div className={styles.oauthGroup}>
-        <button
-          className={styles.oauthButton}
-          type="button"
-          onClick={() => handleOAuth("google")}
-        >
-          Continuer avec Google
-        </button>
-        <button
-          className={styles.oauthButton}
-          type="button"
-          disabled
-          title="Apple à configurer côté backend"
-        >
-          Continuer avec Apple
-        </button>
+          <div className={styles.oauthGroup}>
+            <button
+              className={styles.oauthButton}
+              type="button"
+              onClick={() => handleOAuth("google")}
+            >
+              Continuer avec Google
+            </button>
+            <button
+              className={styles.oauthButton}
+              type="button"
+              disabled
+              title="Apple à configurer côté backend"
+            >
+              Continuer avec Apple
+            </button>
+          </div>
+
+          <p className={styles.bottomText}>
+            Vous n’avez pas de compte ?{" "}
+            <Link href="/inscription" className={styles.link}>
+              Je m’inscris !
+            </Link>
+          </p>
+        </section>
       </div>
-
-      <p className={styles.bottomText}>
-        Vous n’avez pas de compte ?{" "}
-        <Link href="/inscription" className={styles.link}>
-          Je m’inscris !
-        </Link>
-      </p>
     </main>
   );
 }
