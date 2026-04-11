@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { createHash, randomBytes } from 'crypto';
-import { ForgotPasswordDto, InscriptionDto, ResetPasswordDto } from '../auth/auth.dto';
+import { ChangePasswordDto, ForgotPasswordDto, InscriptionDto, ResetPasswordDto } from '../auth/auth.dto';
 import { MailService } from '../mail/mail.service';
 import { UsersService } from '../users/users.service';
 import { AuthProvider, Utilisateur } from '../users/users.entity';
@@ -399,6 +399,34 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(new_password, 10);
     await this.usersService.updatePasswordHash(user.id, hashedPassword);
     await this.usersService.clearPasswordResetToken(user.id);
+
+    return { success: true, message: 'Mot de passe mis a jour' };
+  }
+
+  async changePassword(userId: number, dto: ChangePasswordDto) {
+    const user = await this.usersService.findOneUser(userId);
+    if (!user) {
+      throw new UnauthorizedException('Utilisateur introuvable');
+    }
+
+    if (user.authProvider !== AuthProvider.LOCAL || !user.passwordHash) {
+      throw new BadRequestException(
+        'Ce compte utilise un fournisseur externe. Le mot de passe se gère aupres de ce fournisseur.',
+      );
+    }
+
+    const isCurrentPasswordValid = await bcrypt.compare(dto.current_password, user.passwordHash);
+    if (!isCurrentPasswordValid) {
+      throw new UnauthorizedException('Mot de passe actuel incorrect');
+    }
+
+    const isSamePassword = await bcrypt.compare(dto.new_password, user.passwordHash);
+    if (isSamePassword) {
+      throw new BadRequestException('Le nouveau mot de passe doit etre different de l ancien');
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.new_password, 10);
+    await this.usersService.updatePasswordHash(user.id, hashedPassword);
 
     return { success: true, message: 'Mot de passe mis a jour' };
   }

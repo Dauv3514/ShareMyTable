@@ -8,6 +8,18 @@
   box-shadow: 0 24px 46px rgba(42, 33, 17, 0.18);
 }
 
+.profile-menu__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .profile-menu__overlay {
   position: fixed;
   inset: 0;

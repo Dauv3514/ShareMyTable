@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import {
+  useCallback,
   createContext,
   useContext,
   useEffect,
@@ -21,6 +22,7 @@ type AuthUser = {
   bio: string | null;
   profilePhotoUrl: string | null;
   role: string | null;
+  authProvider: "local" | "google" | "apple" | null;
   birthDate: string | null;
   isProfileComplete: boolean;
 };
@@ -31,6 +33,7 @@ type AuthContextType = {
   user: AuthUser | null;
   login: (token: string) => void;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -76,57 +79,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const loading = !hydrated;
 
+  const fetchCurrentUser = useCallback(async (): Promise<AuthUser | null> => {
+    if (!hydrated || !isLoggedIn) {
+      return null;
+    }
+
+    const token = localStorage.getItem("token");
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+    if (!token || !apiUrl) {
+      return null;
+    }
+
+    const response = await axios.get(`${apiUrl}/users/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return {
+      id: response.data.userId,
+      firstName: response.data.prenom ?? "",
+      lastName: response.data.nom ?? "",
+      email: response.data.email ?? "",
+      phone: response.data.phone ?? null,
+      pseudo: response.data.pseudo ?? null,
+      country: response.data.pays ?? null,
+      city: response.data.ville ?? null,
+      bio: response.data.biographie ?? null,
+      profilePhotoUrl: response.data.profilePhotoUrl ?? null,
+      role: response.data.role ?? null,
+      authProvider: response.data.authProvider ?? null,
+      birthDate: response.data.birthDate ?? null,
+      isProfileComplete: Boolean(response.data.isProfileComplete),
+    };
+  }, [hydrated, isLoggedIn]);
+
   useEffect(() => {
     let cancelled = false;
 
     const syncCurrentUser = async () => {
-      if (!hydrated) {
-        return;
-      }
-
-      if (!isLoggedIn) {
-        if (!cancelled) {
-          setUser(null);
-        }
-        return;
-      }
-
-      const token = localStorage.getItem("token");
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-      if (!token || !apiUrl) {
-        if (!cancelled) {
-          setUser(null);
-        }
-        return;
-      }
-
       try {
-        const response = await axios.get(`${apiUrl}/users/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const nextUser = await fetchCurrentUser();
 
         if (cancelled) {
           return;
         }
 
-        setUser({
-          id: response.data.userId,
-          firstName: response.data.prenom ?? "",
-          lastName: response.data.nom ?? "",
-          email: response.data.email ?? "",
-          phone: response.data.phone ?? null,
-          pseudo: response.data.pseudo ?? null,
-          country: response.data.pays ?? null,
-          city: response.data.ville ?? null,
-          bio: response.data.biographie ?? null,
-          profilePhotoUrl: response.data.profilePhotoUrl ?? null,
-          role: response.data.role ?? null,
-          birthDate: response.data.birthDate ?? null,
-          isProfileComplete: Boolean(response.data.isProfileComplete),
-        });
+        setUser(nextUser);
       } catch {
         if (!cancelled) {
           setUser(null);
@@ -139,7 +139,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [hydrated, isLoggedIn]);
+  }, [fetchCurrentUser]);
+
+  const refreshUser = useCallback(async () => {
+    try {
+      const nextUser = await fetchCurrentUser();
+      setUser(nextUser);
+    } catch {
+      setUser(null);
+    }
+  }, [fetchCurrentUser]);
 
   const login = (token: string) => {
     localStorage.setItem("token", token);
@@ -152,7 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, user, login, logout, loading }}>
+    <AuthContext.Provider value={{ isLoggedIn, user, login, logout, loading, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

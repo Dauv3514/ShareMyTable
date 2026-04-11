@@ -66,6 +66,15 @@ export class ResetPasswordDto {
   new_password: string;
 }
 
+export class ChangePasswordDto {
+  @IsNotEmpty({ message: 'Le mot de passe actuel est obligatoire' })
+  current_password: string;
+
+  @IsNotEmpty({ message: 'Le nouveau mot de passe est obligatoire' })
+  @Length(8, 255, { message: 'Le mot de passe doit contenir au moins 8 caractÃ¨res' })
+  new_password: string;
+}
+
 export class OAuthCompleteDto {
   @IsNotEmpty({ message: 'Token OAuth manquant' })
   pending_token: string;

@@ -1,4 +1,4 @@
-import { IsNotEmpty, Length, IsDateString, IsOptional } from 'class-validator';
+import { IsDateString, IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
 
 export class CompleteProfileDto {
   @IsNotEmpty({ message: "Le pays est obligatoire" })
@@ -22,6 +22,44 @@ export class CompleteProfileDto {
   bio?: string;
 
   @IsOptional()
-  @Length(1, 255, { message: "La photo ne peut pas dépasser 255 caractères" })
+  @IsString({ message: "La photo de profil est invalide" })
+  profile_photo_url?: string;
+}
+
+export class UpdateProfileDto {
+  @IsNotEmpty({ message: 'Le prénom est obligatoire' })
+  @Length(1, 80, { message: 'Le prénom ne peut pas dépasser 80 caractères' })
+  first_name: string;
+
+  @IsNotEmpty({ message: 'Le nom est obligatoire' })
+  @Length(1, 80, { message: 'Le nom ne peut pas dépasser 80 caractères' })
+  last_name: string;
+
+  @IsOptional()
+  @Length(1, 30, { message: 'Le numéro de téléphone ne peut pas dépasser 30 caractères' })
+  phone?: string;
+
+  @IsOptional()
+  @Length(1, 50, { message: 'Le pseudo ne peut pas dépasser 50 caractères' })
+  pseudo?: string;
+
+  @IsNotEmpty({ message: 'Le pays est obligatoire' })
+  @Length(1, 50, { message: 'Le pays ne peut pas dépasser 50 caractères' })
+  country: string;
+
+  @IsNotEmpty({ message: 'La ville est obligatoire' })
+  @Length(1, 120, { message: 'La ville ne peut pas dépasser 120 caractères' })
+  city: string;
+
+  @IsOptional()
+  @Length(1, 500, { message: 'La bio ne peut pas dépasser 500 caractères' })
+  bio?: string;
+
+  @IsNotEmpty({ message: 'La date de naissance est obligatoire' })
+  @IsDateString({}, { message: 'La date de naissance est invalide' })
+  birth_date: string;
+
+  @IsOptional()
+  @IsString({ message: 'La photo de profil est invalide' })
   profile_photo_url?: string;
 }

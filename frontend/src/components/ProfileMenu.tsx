@@ -44,7 +44,7 @@ function ProfileMenuContent({
       label: "Mon profil",
       icon: UserRound,
       onClick: () => {
-        toast.info("La page profil arrive bientôt.");
+        router.push("/profil");
         onClose();
       },
     },
@@ -53,7 +53,7 @@ function ProfileMenuContent({
       label: "Paramètres",
       icon: Settings,
       onClick: () => {
-        toast.info("Les paramètres arrivent bientôt.");
+        router.push("/parametres");
         onClose();
       },
     },
@@ -146,6 +146,9 @@ export default function ProfileMenu({ children }: ProfileMenuProps) {
         <DialogPrimitive.Portal>
           <DialogPrimitive.Overlay className="profile-menu__overlay" />
           <DialogPrimitive.Content className="profile-menu__sheet">
+            <DialogPrimitive.Title className="profile-menu__sr-only">
+              Menu profil
+            </DialogPrimitive.Title>
             <div className="profile-menu__sheet-handle" aria-hidden="true" />
 
             <DialogPrimitive.Close asChild>

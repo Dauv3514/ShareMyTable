@@ -17,7 +17,7 @@ const items = [
 export default function BottomMenu() {
   const pathname = usePathname();
   const { isLoggedIn, loading, user } = useAuth();
-  const isMeActive = pathname === "/me";
+  const isMeActive = pathname === "/profil";
   const isAuthActive = pathname === "/connexion" || pathname === "/inscription";
 
   return (
