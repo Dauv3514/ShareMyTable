@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { RoleName } from '../users/role.entity';
 import { UsersService } from '../users/users.service';
 import { Utilisateur } from '../users/users.entity';
@@ -58,6 +58,7 @@ type HostProfileAdminResponse = HostProfileResponse & {
 @Injectable()
 export class HostProfilesService {
   constructor(
+    private readonly dataSource: DataSource,
     @InjectRepository(HostProfile)
     private readonly hostProfilesRepository: Repository<HostProfile>,
     @InjectRepository(Utilisateur)
@@ -169,21 +170,35 @@ export class HostProfilesService {
   // Validation admin :
   // le profil devient actif et le role principal du user passe a HOST.
   async approve(id: number): Promise<HostProfileAdminResponse> {
-    const hostProfile = await this.findEntityById(id);
+    const savedHostProfile = await this.dataSource.transaction(async (manager) => {
+      const hostProfilesRepository = manager.getRepository(HostProfile);
 
-    if (hostProfile.validationStatus === HostValidationStatus.APPROVED) {
-      throw new BadRequestException('La demande hote est deja approuvee');
-    }
+      const hostProfile = await hostProfilesRepository.findOne({
+        where: { id },
+        relations: ['user'],
+      });
 
-    hostProfile.validationStatus = HostValidationStatus.APPROVED;
-    hostProfile.isActive = true;
-    hostProfile.activatedAt = new Date();
+      if (!hostProfile) {
+        throw new NotFoundException('Profil hote introuvable');
+      }
 
-    const savedHostProfile = await this.hostProfilesRepository.save(hostProfile);
-    savedHostProfile.user = await this.usersService.setRole(
-      savedHostProfile.user.id,
-      RoleName.HOST,
-    );
+      if (hostProfile.validationStatus === HostValidationStatus.APPROVED) {
+        throw new BadRequestException('La demande hote est deja approuvee');
+      }
+
+      hostProfile.validationStatus = HostValidationStatus.APPROVED;
+      hostProfile.isActive = true;
+      hostProfile.activatedAt = new Date();
+
+      const updatedHostProfile = await hostProfilesRepository.save(hostProfile);
+      updatedHostProfile.user = await this.usersService.setRoleWithManager(
+        manager,
+        updatedHostProfile.user.id,
+        RoleName.HOST,
+      );
+
+      return updatedHostProfile;
+    });
 
     return this.toAdminHostProfileResponse(savedHostProfile);
   }
