@@ -1,6 +1,6 @@
 .profile-menu__popover {
   z-index: 60;
-  width: min(340px, calc(100vw - 32px));
+  width: min(420px, calc(100vw - 32px));
   padding: 0;
   border: 1px solid #e3dbc9;
   border-radius: 28px;
@@ -157,6 +157,11 @@
   gap: 12px;
   font-size: 15px;
   font-weight: 600;
+  min-width: 0;
+}
+
+.profile-menu__action-left span {
+  text-align: left;
 }
 
 .profile-menu__action-icon,

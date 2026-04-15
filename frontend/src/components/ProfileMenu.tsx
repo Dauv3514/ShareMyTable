@@ -3,14 +3,18 @@
 import { useEffect, useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import {
+  Activity,
   Bell,
   ChevronRight,
+  LockKeyhole,
   LogOut,
-  Settings,
+  ShieldCheck,
   UserRound,
+  UtensilsCrossed,
+  Wallet,
   X,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { useAuth } from "../app/providers/AuthProvider";
@@ -24,10 +28,15 @@ type ProfileMenuProps = {
 type ProfileAction = {
   key: string;
   label: string;
-  icon: typeof UserRound;
+  icon: typeof Activity;
   onClick: () => void;
   tone?: "default" | "danger";
 };
+
+type ProfileSection = "overview" | "preferences" | "activity" | "payments" | "notifications";
+type ProfilePanel = "profile" | "password";
+
+const PROFILE_NAVIGATE_EVENT = "profile-menu:navigate";
 
 function ProfileMenuContent({
   onClose,
@@ -35,26 +44,90 @@ function ProfileMenuContent({
   onClose: () => void;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { logout, user } = useAuth();
   const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim();
 
+  const navigateToProfile = ({
+    section,
+    panel,
+  }: {
+    section?: ProfileSection;
+    panel?: ProfilePanel;
+  }) => {
+    const params = new URLSearchParams();
+
+    if (section) {
+      params.set("section", section);
+    }
+
+    if (panel) {
+      params.set("panel", panel);
+    }
+
+    const href = params.toString() ? `/profil?${params.toString()}` : "/profil";
+
+    if (pathname === "/profil") {
+      router.replace(href, { scroll: false });
+      window.dispatchEvent(
+        new CustomEvent(PROFILE_NAVIGATE_EVENT, {
+          detail: { section, panel },
+        })
+      );
+    } else {
+      router.push(href);
+    }
+
+    onClose();
+  };
+
   const actions: ProfileAction[] = [
     {
-      key: "profile",
+      key: "overview",
       label: "Mon profil",
       icon: UserRound,
       onClick: () => {
-        router.push("/profil");
-        onClose();
+        navigateToProfile({ section: "overview" });
       },
     },
     {
-      key: "settings",
-      label: "Paramètres",
-      icon: Settings,
+      key: "preferences",
+      label: "Préférences alimentaires",
+      icon: UtensilsCrossed,
       onClick: () => {
-        router.push("/parametres");
-        onClose();
+        navigateToProfile({ section: "preferences" });
+      },
+    },
+    {
+      key: "activity",
+      label: "Activité",
+      icon: Activity,
+      onClick: () => {
+        navigateToProfile({ section: "activity" });
+      },
+    },
+    {
+      key: "payments",
+      label: "Paiements & Portefeuille",
+      icon: Wallet,
+      onClick: () => {
+        navigateToProfile({ section: "payments" });
+      },
+    },
+    {
+      key: "profile-edit",
+      label: "Modifier mon profil",
+      icon: ShieldCheck,
+      onClick: () => {
+        navigateToProfile({ panel: "profile" });
+      },
+    },
+    {
+      key: "password-edit",
+      label: "Modifier mon mot de passe",
+      icon: LockKeyhole,
+      onClick: () => {
+        navigateToProfile({ panel: "password" });
       },
     },
     {
@@ -62,8 +135,7 @@ function ProfileMenuContent({
       label: "Notifications",
       icon: Bell,
       onClick: () => {
-        toast.info("La gestion des notifications arrive bientôt.");
-        onClose();
+        navigateToProfile({ section: "notifications" });
       },
     },
     {
