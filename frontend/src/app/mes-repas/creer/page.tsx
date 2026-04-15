@@ -19,10 +19,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import DatePickerField from "@/components/DatePicker";
+import TimePickerField from "@/components/TimePicker";
 import { useAuth } from "../../providers/AuthProvider";
 import styles from "./creer-repas.module.scss";
 
-type WizardStep = 0 | 1 | 2 | 3 | 4 | 5;
+type WizardStep = 0 | 1 | 2 | 3 | 4;
+type MealStatus = "draft" | "published" | "cancelled" | "done";
 
 type HostProfileSummary = {
   address: string;
@@ -33,8 +35,20 @@ type HostProfileSummary = {
   isActive: boolean;
 };
 
-type MealDraftForm = {
+type MealDetails = {
+  id: number;
+  title: string | null;
+  mealType: string | null;
+  menuDescription: string | null;
+  dateTime: string;
   seatsTotal: number;
+  pricePerSeatCents: number;
+  houseRules: string | null;
+  status: MealStatus;
+};
+
+type MealDraftForm = {
+  seatsTotal: string;
   date: string;
   time: string;
   title: string;
@@ -47,36 +61,26 @@ type MealDraftForm = {
 const STEP_LABELS = [
   "Bienvenue",
   "Convives",
-  "Date",
-  "Heure",
+  "Date et heure",
   "Lieu",
-  "Détails",
+  "Details",
 ] as const;
 
 const MEAL_TYPE_PRESETS = [
   "Brunch",
-  "Déjeuner",
-  "Dîner",
-  "Apéro",
-  "Goûter",
-  "Petit-déjeuner",
+  "Dejeuner",
+  "Diner",
+  "Apero",
+  "Gouter",
+  "Petit-dejeuner",
 ] as const;
 
 const HOUSE_RULE_PRESETS = [
-  "Merci d'arriver à l'heure.",
-  "Préviens-moi en cas d'allergie.",
-  "Repas convivial, ambiance détendue.",
+  "Merci d'arriver a l'heure.",
+  "Previens-moi en cas d'allergie.",
+  "Repas convivial, ambiance detendue.",
   "Apporte ta bonne humeur.",
 ] as const;
-
-const TIME_OPTIONS = Array.from({ length: 24 }, (_, index) => {
-  const totalMinutes = 11 * 60 + index * 30;
-  const hours = Math.floor(totalMinutes / 60)
-    .toString()
-    .padStart(2, "0");
-  const minutes = (totalMinutes % 60).toString().padStart(2, "0");
-  return `${hours}:${minutes}`;
-});
 
 function formatSelectedDate(value: string) {
   if (!value) {
@@ -88,6 +92,20 @@ function formatSelectedDate(value: string) {
 
 function combineDateAndTime(date: string, time: string) {
   return new Date(`${date}T${time}:00`);
+}
+
+function parseSeatsTotal(value: string) {
+  if (!value.trim()) {
+    return 0;
+  }
+
+  const parsedValue = Number(value);
+
+  if (!Number.isInteger(parsedValue) || parsedValue < 0) {
+    return 0;
+  }
+
+  return parsedValue;
 }
 
 function appendPreset(existingValue: string, preset: string) {
@@ -104,20 +122,54 @@ function appendPreset(existingValue: string, preset: string) {
   return `${trimmedExistingValue} ${preset}`;
 }
 
+function formatStepQueryValue(value: string | null) {
+  if (!value) {
+    return 0;
+  }
+
+  const parsedValue = Number(value);
+  if (!Number.isInteger(parsedValue)) {
+    return 0;
+  }
+
+  return Math.min(4, Math.max(0, parsedValue));
+}
+
+function getMealQueryParams() {
+  if (typeof window === "undefined") {
+    return {
+      mealId: null as number | null,
+      step: 0 as WizardStep,
+    };
+  }
+
+  const searchParams = new URLSearchParams(window.location.search);
+  const mealIdValue = searchParams.get("mealId");
+  const parsedMealId = mealIdValue ? Number(mealIdValue) : Number.NaN;
+
+  return {
+    mealId: Number.isInteger(parsedMealId) && parsedMealId > 0 ? parsedMealId : null,
+    step: formatStepQueryValue(searchParams.get("step")) as WizardStep,
+  };
+}
+
 export default function CreerRepasPage() {
   const router = useRouter();
   const { isLoggedIn, loading } = useAuth();
   const [step, setStep] = useState<WizardStep>(0);
+  const [editingMealId, setEditingMealId] = useState<number | null>(null);
+  const [isEditingMeal, setIsEditingMeal] = useState(false);
+  const [loadingMeal, setLoadingMeal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [hostProfile, setHostProfile] = useState<HostProfileSummary | null>(null);
   const [hostProfileLoading, setHostProfileLoading] = useState(true);
   const [hostProfileError, setHostProfileError] = useState<string | null>(null);
   const [form, setForm] = useState<MealDraftForm>({
-    seatsTotal: 1,
+    seatsTotal: "1",
     date: "",
     time: "19:30",
     title: "",
-    mealType: "Dîner",
+    mealType: "Diner",
     menuDescription: "",
     pricePerSeat: "18",
     houseRules: "",
@@ -130,6 +182,13 @@ export default function CreerRepasPage() {
   }, [isLoggedIn, loading, router]);
 
   useEffect(() => {
+    const { mealId, step: initialStep } = getMealQueryParams();
+    setEditingMealId(mealId);
+    setIsEditingMeal(Boolean(mealId));
+    setStep(mealId ? initialStep : 0);
+  }, []);
+
+  useEffect(() => {
     if (loading || !isLoggedIn) {
       return;
     }
@@ -139,7 +198,7 @@ export default function CreerRepasPage() {
 
     if (!token || !apiUrl) {
       setHostProfileLoading(false);
-      setHostProfileError("Impossible de récupérer ton profil hôte.");
+      setHostProfileError("Impossible de recuperer ton profil hote.");
       return;
     }
 
@@ -168,8 +227,8 @@ export default function CreerRepasPage() {
         }
 
         const message = axios.isAxiosError(error)
-          ? error.response?.data?.message ?? "Profil hôte introuvable."
-          : "Profil hôte introuvable.";
+          ? error.response?.data?.message ?? "Profil hote introuvable."
+          : "Profil hote introuvable.";
 
         setHostProfileError(Array.isArray(message) ? message.join(", ") : message);
         setHostProfile(null);
@@ -187,6 +246,70 @@ export default function CreerRepasPage() {
     };
   }, [isLoggedIn, loading]);
 
+  useEffect(() => {
+    if (loading || !isLoggedIn || !editingMealId) {
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+    if (!token || !apiUrl) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadMeal = async () => {
+      try {
+        setLoadingMeal(true);
+
+        const response = await axios.get<MealDetails>(
+          `${apiUrl}/meals/me/${editingMealId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        if (cancelled) {
+          return;
+        }
+
+        const meal = response.data;
+        const dateObject = new Date(meal.dateTime);
+
+        setForm({
+          seatsTotal: String(meal.seatsTotal),
+          date: meal.dateTime.split("T")[0] ?? "",
+          time: format(dateObject, "HH:mm"),
+          title: meal.title ?? "",
+          mealType: meal.mealType ?? "Diner",
+          menuDescription: meal.menuDescription ?? "",
+          pricePerSeat: String(meal.pricePerSeatCents / 100),
+          houseRules: meal.houseRules ?? "",
+        });
+      } catch (error: unknown) {
+        const message = axios.isAxiosError(error)
+          ? error.response?.data?.message ?? "Impossible de charger ce repas."
+          : "Impossible de charger ce repas.";
+        toast.error(Array.isArray(message) ? message.join(", ") : message);
+        router.replace("/mes-repas");
+      } finally {
+        if (!cancelled) {
+          setLoadingMeal(false);
+        }
+      }
+    };
+
+    void loadMeal();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [editingMealId, isLoggedIn, loading, router]);
+
   const progressPercent = ((step + 1) / STEP_LABELS.length) * 100;
   const composedDateTime = useMemo(() => {
     if (!form.date || !form.time) {
@@ -195,6 +318,10 @@ export default function CreerRepasPage() {
 
     return combineDateAndTime(form.date, form.time);
   }, [form.date, form.time]);
+  const seatsTotalValue = useMemo(
+    () => parseSeatsTotal(form.seatsTotal),
+    [form.seatsTotal],
+  );
 
   const locationReady = Boolean(
     hostProfile?.address &&
@@ -206,12 +333,14 @@ export default function CreerRepasPage() {
 
   const stepCanContinue = useMemo(() => {
     if (step === 0) return true;
-    if (step === 1) return form.seatsTotal > 0;
-    if (step === 2) return Boolean(form.date);
-    if (step === 3) return Boolean(form.time);
-    if (step === 4) return locationReady;
+    if (step === 1) return seatsTotalValue > 0;
+    if (step === 2) {
+      return Boolean(form.date && form.time);
+    }
+    if (step === 3) return locationReady;
 
     return (
+      seatsTotalValue > 0 &&
       form.title.trim().length > 0 &&
       form.mealType.trim().length > 0 &&
       form.menuDescription.trim().length > 0 &&
@@ -219,20 +348,37 @@ export default function CreerRepasPage() {
       Number(form.pricePerSeat.replace(",", ".")) >= 0 &&
       Boolean(composedDateTime)
     );
-  }, [composedDateTime, form, locationReady, step]);
+  }, [composedDateTime, form, locationReady, seatsTotalValue, step]);
 
   const selectedDateLabel = formatSelectedDate(form.date);
 
+  const goToStep = (nextStep: WizardStep) => {
+    setStep(nextStep);
+
+    if (typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search);
+      if (editingMealId) {
+        searchParams.set("mealId", String(editingMealId));
+      }
+      searchParams.set("step", String(nextStep));
+      window.history.replaceState(
+        null,
+        "",
+        `${window.location.pathname}?${searchParams.toString()}`,
+      );
+    }
+  };
+
   const handlePrevious = () => {
-    setStep((previousStep) => Math.max(0, previousStep - 1) as WizardStep);
+    goToStep(Math.max(0, step - 1) as WizardStep);
   };
 
   const handleNext = () => {
-    if (!stepCanContinue || step === 5) {
+    if (!stepCanContinue || step === 4) {
       return;
     }
 
-    setStep((previousStep) => Math.min(5, previousStep + 1) as WizardStep);
+    goToStep(Math.min(4, step + 1) as WizardStep);
   };
 
   const handleSubmit = async () => {
@@ -252,42 +398,51 @@ export default function CreerRepasPage() {
     try {
       setSubmitting(true);
 
-      await axios.post(
-        `${apiUrl}/meals`,
-        {
-          title: form.title.trim(),
-          mealType: form.mealType.trim(),
-          menuDescription: form.menuDescription.trim(),
-          dateTime: composedDateTime.toISOString(),
-          seatsTotal: form.seatsTotal,
-          pricePerSeatCents: Math.round(
-            Number(form.pricePerSeat.replace(",", ".")) * 100,
-          ),
-          houseRules: form.houseRules.trim(),
-        },
-        {
+      const payload = {
+        title: form.title.trim(),
+        mealType: form.mealType.trim(),
+        menuDescription: form.menuDescription.trim(),
+        dateTime: composedDateTime.toISOString(),
+        seatsTotal: seatsTotalValue,
+        pricePerSeatCents: Math.round(
+          Number(form.pricePerSeat.replace(",", ".")) * 100,
+        ),
+        houseRules: form.houseRules.trim(),
+      };
+
+      if (editingMealId) {
+        await axios.patch(`${apiUrl}/meals/me/${editingMealId}`, payload, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        },
-      );
+        });
+        toast.success("Le repas a ete mis a jour.");
+      } else {
+        await axios.post(`${apiUrl}/meals`, payload, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        toast.success("Ton repas a ete cree en brouillon.");
+      }
 
-      toast.success("Ton repas a été créé en brouillon.");
       router.push("/mes-repas");
     } catch (error: unknown) {
       const message = axios.isAxiosError(error)
-        ? error.response?.data?.message ?? "La création du repas a échoué."
-        : "La création du repas a échoué.";
+        ? error.response?.data?.message ?? "L'enregistrement du repas a echoue."
+        : "L'enregistrement du repas a echoue.";
       toast.error(Array.isArray(message) ? message.join(", ") : message);
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading) {
+  if (loading || loadingMeal) {
     return (
       <section className={styles.page}>
-        <div className={styles.loadingState}>Préparation du créateur de repas...</div>
+        <div className={styles.loadingState}>
+          {loadingMeal ? "Chargement du repas..." : "Preparation du createur de repas..."}
+        </div>
       </section>
     );
   }
@@ -301,12 +456,18 @@ export default function CreerRepasPage() {
       <div className={styles.layout}>
         <aside className={styles.sidebar}>
           <div className={styles.sidebarCard}>
-            <p className={styles.sidebarKicker}>Création de repas</p>
-            <h1>Organiser un repas devient plus simple, étape par étape.</h1>
+            <p className={styles.sidebarKicker}>
+              {isEditingMeal ? "Modification de repas" : "Creation de repas"}
+            </p>
+            <h1>
+              {isEditingMeal
+                ? "Reprends ton repas et ajuste seulement ce qui compte."
+                : "Organiser un repas devient plus simple, etape par etape."}
+            </h1>
             <p className={styles.sidebarDescription}>
               Compose d&apos;abord l&apos;essentiel, puis ajoute les informations qui
-              rassurent tes futurs invités. Le repas sera créé en brouillon pour te
-              laisser la main avant publication.
+              rassurent tes futurs invites. Le repas restera brouillon tant que tu
+              ne le publies pas.
             </p>
 
             <div className={styles.progressTrack} aria-hidden="true">
@@ -322,23 +483,25 @@ export default function CreerRepasPage() {
                 const isDone = index < step;
 
                 return (
-                  <div
+                  <button
                     key={label}
+                    type="button"
                     className={`${styles.progressItem} ${
                       isCurrent ? styles["progressItem--current"] : ""
                     } ${isDone ? styles["progressItem--done"] : ""}`}
+                    onClick={() => goToStep(index as WizardStep)}
                   >
                     <span className={styles.progressIndex}>
                       {isDone ? <Check /> : index + 1}
                     </span>
                     <span>{label}</span>
-                  </div>
+                  </button>
                 );
               })}
             </div>
 
             <div className={styles.summaryCard}>
-              <h2>Aperçu</h2>
+              <h2>Apercu</h2>
 
               <dl className={styles.summaryList}>
                 <div>
@@ -346,7 +509,7 @@ export default function CreerRepasPage() {
                     <Users />
                     Convives
                   </dt>
-                  <dd>{form.seatsTotal}</dd>
+                  <dd>{seatsTotalValue > 0 ? seatsTotalValue : "A definir"}</dd>
                 </div>
                 <div>
                   <dt>
@@ -360,14 +523,14 @@ export default function CreerRepasPage() {
                     <Clock3 />
                     Heure
                   </dt>
-                  <dd>{form.time || "À définir"}</dd>
+                  <dd>{form.time || "A definir"}</dd>
                 </div>
                 <div>
                   <dt>
                     <MapPin />
                     Adresse
                   </dt>
-                  <dd>{hostProfile?.city || "Profil hôte requis"}</dd>
+                  <dd>{hostProfile?.city || "Profil hote requis"}</dd>
                 </div>
               </dl>
             </div>
@@ -380,8 +543,22 @@ export default function CreerRepasPage() {
               <span style={{ width: `${progressPercent}%` }} />
             </div>
             <p>
-              Étape {step + 1} sur {STEP_LABELS.length}
+              Etape {step + 1} sur {STEP_LABELS.length}
             </p>
+            <div className={styles.mobileSteps}>
+              {STEP_LABELS.map((label, index) => (
+                <button
+                  key={label}
+                  type="button"
+                  className={`${styles.mobileStepButton} ${
+                    step === index ? styles["mobileStepButton--active"] : ""
+                  }`}
+                  onClick={() => goToStep(index as WizardStep)}
+                >
+                  {index + 1}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className={styles.stageBody}>
@@ -389,14 +566,15 @@ export default function CreerRepasPage() {
               <div className={styles.centerStage}>
                 <div className={styles.stageIntroBadge}>
                   <Sparkles />
-                  Nouveau repas
+                  {isEditingMeal ? "Modifier le repas" : "Nouveau repas"}
                 </div>
-                <h2>Organiser un repas</h2>
+                <h2>{isEditingMeal ? "Modifier ton repas" : "Organiser un repas"}</h2>
                 <strong>*wording*</strong>
                 <p>
-                  Vous souhaitez cuisiner et accueillir des gens ? On construit
-                  d&apos;abord l&apos;essentiel, puis on affine les détails pour rassurer
-                  vos invités.
+                  {isEditingMeal
+                    ? "Toutes les informations deja saisies sont reprises pour que tu puisses ajuster ton repas sans recommencer."
+                    : "Vous souhaitez cuisiner et accueillir des gens ? On construit d'abord l'essentiel, puis on affine les details pour rassurer vos invites."}
+                    
                 </p>
               </div>
             ) : null}
@@ -410,17 +588,41 @@ export default function CreerRepasPage() {
                     type="button"
                     className={styles.counterButton}
                     onClick={() =>
-                      setForm((previousForm) => ({
-                        ...previousForm,
-                        seatsTotal: Math.max(1, previousForm.seatsTotal - 1),
-                      }))
+                      setForm((previousForm) => {
+                        const nextValue = Math.max(
+                          1,
+                          parseSeatsTotal(previousForm.seatsTotal) - 1,
+                        );
+
+                        return {
+                          ...previousForm,
+                          seatsTotal: String(nextValue),
+                        };
+                      })
                     }
                     aria-label="Retirer une place"
                   >
-                    –
+                    -
                   </button>
 
-                  <span className={styles.counterValue}>{form.seatsTotal}</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    className={styles.counterInput}
+                    value={form.seatsTotal}
+                    onChange={(event) =>
+                      setForm((previousForm) => {
+                        const nextValue = event.target.value.replace(/\D+/g, "");
+
+                        return {
+                          ...previousForm,
+                          seatsTotal: nextValue,
+                        };
+                      })
+                    }
+                    aria-label="Nombre de convives"
+                  />
 
                   <button
                     type="button"
@@ -428,7 +630,7 @@ export default function CreerRepasPage() {
                     onClick={() =>
                       setForm((previousForm) => ({
                         ...previousForm,
-                        seatsTotal: previousForm.seatsTotal + 1,
+                        seatsTotal: String(parseSeatsTotal(previousForm.seatsTotal) + 1),
                       }))
                     }
                     aria-label="Ajouter une place"
@@ -438,7 +640,7 @@ export default function CreerRepasPage() {
                 </div>
 
                 <p className={styles.helperText}>
-                  Ajuste le nombre de places disponibles avant publication.
+                  Utilise les boutons ou saisis directement le nombre de convives.
                 </p>
               </div>
             ) : null}
@@ -447,65 +649,54 @@ export default function CreerRepasPage() {
               <div className={styles.centerStage}>
                 <h2>Quand souhaitez-vous organiser le repas ?</h2>
 
-                <div className={styles.datePickerWrap}>
-                  <DatePickerField
-                    value={form.date}
-                    onChange={(value) =>
-                      setForm((previousForm) => ({
-                        ...previousForm,
-                        date: value,
-                      }))
-                    }
-                    placeholder="Choisir une date"
-                    variant="input"
-                    ariaLabel="Choisir une date pour le repas"
-                  />
+                <div className={styles.dateTimeGrid}>
+                  <div className={styles.datePickerWrap}>
+                    <DatePickerField
+                      value={form.date}
+                      onChange={(value) =>
+                        setForm((previousForm) => ({
+                          ...previousForm,
+                          date: value,
+                        }))
+                      }
+                      placeholder="Choisir une date"
+                      variant="input"
+                      ariaLabel="Choisir une date pour le repas"
+                    />
+                  </div>
+
+                  <label className={styles.timeField}>
+                    <span>Heure d&apos;arrivee</span>
+                    <TimePickerField
+                      value={form.time}
+                      onChange={(value) =>
+                        setForm((previousForm) => ({
+                          ...previousForm,
+                          time: value,
+                        }))
+                      }
+                      placeholder="Choisir une horaire"
+                      ariaLabel="Choisir une heure d'arrivee"
+                    />
+                  </label>
                 </div>
 
                 <div className={styles.selectionPreview}>
                   <CalendarDays />
-                  <span>{selectedDateLabel}</span>
+                  <span>
+                    {selectedDateLabel}
+                    {form.time ? ` - ${form.time}` : ""}
+                  </span>
                 </div>
               </div>
             ) : null}
 
             {step === 3 ? (
               <div className={styles.centerStage}>
-                <h2>À quelle heure les invités doivent-ils arriver ?</h2>
-
-                <div className={styles.selectionPreview}>
-                  <Clock3 />
-                  <span>{form.time}</span>
-                </div>
-
-                <div className={styles.timeGrid}>
-                  {TIME_OPTIONS.map((timeOption) => (
-                    <button
-                      key={timeOption}
-                      type="button"
-                      className={`${styles.timeChip} ${
-                        form.time === timeOption ? styles["timeChip--selected"] : ""
-                      }`}
-                      onClick={() =>
-                        setForm((previousForm) => ({
-                          ...previousForm,
-                          time: timeOption,
-                        }))
-                      }
-                    >
-                      {timeOption}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            {step === 4 ? (
-              <div className={styles.centerStage}>
-                <h2>Où les invités doivent-ils se rendre ?</h2>
+                <h2>Ou les invites doivent-ils se rendre ?</h2>
 
                 {hostProfileLoading ? (
-                  <p>Chargement de l&apos;adresse du profil hôte...</p>
+                  <p>Chargement de l&apos;adresse du profil hote...</p>
                 ) : hostProfileError ? (
                   <div className={styles.locationErrorCard}>
                     <p>{hostProfileError}</p>
@@ -514,13 +705,13 @@ export default function CreerRepasPage() {
                       className={styles.inlineActionButton}
                       onClick={() => router.push("/profil")}
                     >
-                      Compléter mon profil
+                      Completer mon profil
                     </button>
                   </div>
                 ) : (
                   <div className={styles.locationCard}>
                     <label className={styles.field}>
-                      <span>Numéro et nom de voie</span>
+                      <span>Numero et nom de voie</span>
                       <input type="text" value={hostProfile?.address || ""} readOnly />
                     </label>
 
@@ -550,20 +741,20 @@ export default function CreerRepasPage() {
                       className={styles.inlineActionButton}
                       onClick={() => router.push("/profil")}
                     >
-                      Mettre à jour mon profil hôte
+                      Mettre a jour mon profil hote
                     </button>
                   </div>
                 )}
               </div>
             ) : null}
 
-            {step === 5 ? (
+            {step === 4 ? (
               <div className={styles.detailsStage}>
                 <div className={styles.sectionTitle}>
-                  <h2>Quelques informations supplémentaires</h2>
+                  <h2>Quelques informations supplementaires</h2>
                   <p>
                     Afin d&apos;organiser correctement votre repas, nous avons besoin
-                    de quelques détails.
+                    de quelques details.
                   </p>
                 </div>
 
@@ -571,7 +762,7 @@ export default function CreerRepasPage() {
                   <div className={styles.formSectionHead}>
                     <NotebookText />
                     <div>
-                      <h3>Informations générales</h3>
+                      <h3>Informations generales</h3>
                       <p>Donne envie en quelques lignes claires et accueillantes.</p>
                     </div>
                   </div>
@@ -588,7 +779,7 @@ export default function CreerRepasPage() {
                             title: event.target.value,
                           }))
                         }
-                        placeholder="Ex. Dîner italien entre voisins"
+                        placeholder="Ex. Diner italien entre voisins"
                       />
                     </label>
 
@@ -608,18 +799,16 @@ export default function CreerRepasPage() {
                           }
                           placeholder="18"
                         />
-                        <span>€</span>
+                        <span>EUR</span>
                       </div>
                     </label>
                   </div>
-                </div>
 
-                <div className={styles.formSection}>
                   <div className={styles.formSectionHead}>
                     <CookingPot />
                     <div>
                       <h3>Au menu</h3>
-                      <p>Choisis le type de moment que tu proposes, puis décris le menu.</p>
+                      <p>Choisis le type de moment que tu proposes, puis decris le menu.</p>
                     </div>
                   </div>
 
@@ -654,7 +843,7 @@ export default function CreerRepasPage() {
                           mealType: event.target.value,
                         }))
                       }
-                      placeholder="Déjeuner, dîner, brunch..."
+                      placeholder="Dejeuner, diner, brunch..."
                     />
                   </label>
 
@@ -669,7 +858,7 @@ export default function CreerRepasPage() {
                           menuDescription: event.target.value,
                         }))
                       }
-                      placeholder="Décris les plats, l'ambiance et ce que les invités peuvent attendre."
+                      placeholder="Decris les plats, l'ambiance et ce que les invites peuvent attendre."
                     />
                   </label>
                 </div>
@@ -678,10 +867,10 @@ export default function CreerRepasPage() {
                   <div className={styles.formSectionHead}>
                     <Users />
                     <div>
-                      <h3>Pour bien accueillir tes hôtes</h3>
+                      <h3>Pour bien accueillir tes hotes</h3>
                       <p>
-                        Quelques règles simples évitent les malentendus et rassurent
-                        les invités dès la publication.
+                        Quelques regles simples evitent les malentendus et rassurent
+                        les invites des la publication.
                       </p>
                     </div>
                   </div>
@@ -705,7 +894,7 @@ export default function CreerRepasPage() {
                   </div>
 
                   <label className={styles.field}>
-                    <span>Règles de la maison</span>
+                    <span>Regles de la maison</span>
                     <textarea
                       rows={4}
                       value={form.houseRules}
@@ -715,7 +904,7 @@ export default function CreerRepasPage() {
                           houseRules: event.target.value,
                         }))
                       }
-                      placeholder="Ex. Merci d'arriver à l'heure, prévenir en cas d'allergie, ambiance conviviale."
+                      placeholder="Ex. Merci d'arriver a l'heure, prevenir en cas d'allergie, ambiance conviviale."
                     />
                   </label>
                 </div>
@@ -730,10 +919,10 @@ export default function CreerRepasPage() {
               onClick={step === 0 ? () => router.push("/mes-repas") : handlePrevious}
             >
               <ChevronLeft />
-              {step === 0 ? "Retour en arrière" : "Étape précédente"}
+              {step === 0 ? "Retour en arriere" : "Etape precedente"}
             </button>
 
-            {step < 5 ? (
+            {step < 4 ? (
               <button
                 type="button"
                 className={styles.footerPrimaryButton}
@@ -750,7 +939,13 @@ export default function CreerRepasPage() {
                 onClick={() => void handleSubmit()}
                 disabled={!stepCanContinue || submitting}
               >
-                {submitting ? "Création..." : "Créer"}
+                {submitting
+                  ? isEditingMeal
+                    ? "Mise a jour..."
+                    : "Creation..."
+                  : isEditingMeal
+                    ? "Enregistrer"
+                    : "Creer"}
                 <Check />
               </button>
             )}

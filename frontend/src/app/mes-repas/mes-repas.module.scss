@@ -54,6 +54,13 @@
   gap: 12px;
 }
 
+.filtersBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.filterButton,
 .primaryButton,
 .secondaryButton,
 .warningButton {
@@ -75,6 +82,20 @@
   cursor: pointer;
 }
 
+.filterButton {
+  min-height: 42px;
+  padding: 0 18px;
+  background: rgba(255, 255, 255, 0.74);
+  border-color: #ddd1ae;
+  color: #675d3d;
+}
+
+.filterButton--active {
+  background: #2b2b2b;
+  border-color: #2b2b2b;
+  color: #ffffff;
+}
+
 .primaryButton {
   background: #e6f06f;
   border-color: #c9ba56;
@@ -94,6 +115,7 @@
   color: #925037;
 }
 
+.filterButton:hover,
 .primaryButton:hover,
 .secondaryButton:hover,
 .warningButton:hover {
@@ -410,10 +432,12 @@
 
   .heroActions,
   .hostGuardActions,
-  .mealActions {
+  .mealActions,
+  .filtersBar {
     flex-direction: column;
   }
 
+  .filterButton,
   .primaryButton,
   .secondaryButton,
   .warningButton {

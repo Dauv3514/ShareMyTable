@@ -21,6 +21,7 @@ import { useAuth } from "../providers/AuthProvider";
 import styles from "./mes-repas.module.scss";
 
 type MealStatus = "draft" | "published" | "cancelled" | "done";
+type MealsFilter = "upcoming" | "past" | "cancelled";
 
 type MealHostSummary = {
   userId: number;
@@ -44,15 +45,21 @@ type MealItem = {
   host: MealHostSummary;
 };
 
+const FILTER_OPTIONS: Array<{ key: MealsFilter; label: string }> = [
+  { key: "upcoming", label: "Prochains repas" },
+  { key: "past", label: "Repas passes" },
+  { key: "cancelled", label: "Repas annules" },
+];
+
 function getStatusLabel(status: MealStatus) {
-  if (status === "published") return "Publié";
-  if (status === "cancelled") return "Annulé";
-  if (status === "done") return "Terminé";
+  if (status === "published") return "Publie";
+  if (status === "cancelled") return "Annule";
+  if (status === "done") return "Termine";
   return "Brouillon";
 }
 
 function formatMealDate(dateTime: string) {
-  return format(new Date(dateTime), "EEEE d MMMM yyyy 'à' HH:mm", {
+  return format(new Date(dateTime), "EEEE d MMMM yyyy 'a' HH:mm", {
     locale: fr,
   });
 }
@@ -64,6 +71,14 @@ function formatPrice(cents: number) {
   }).format(cents / 100);
 }
 
+function isUpcomingMeal(meal: MealItem) {
+  return meal.status !== "cancelled" && new Date(meal.dateTime).getTime() >= Date.now();
+}
+
+function isPastMeal(meal: MealItem) {
+  return meal.status !== "cancelled" && new Date(meal.dateTime).getTime() < Date.now();
+}
+
 export default function MesRepasPage() {
   const router = useRouter();
   const { isLoggedIn, loading } = useAuth();
@@ -71,6 +86,7 @@ export default function MesRepasPage() {
   const [fetching, setFetching] = useState(true);
   const [screenError, setScreenError] = useState<string | null>(null);
   const [activeMealId, setActiveMealId] = useState<number | null>(null);
+  const [activeFilter, setActiveFilter] = useState<MealsFilter>("upcoming");
 
   useEffect(() => {
     if (!loading && !isLoggedIn) {
@@ -114,7 +130,7 @@ export default function MesRepasPage() {
         }
 
         const fallbackMessage =
-          "Ton espace repas sera disponible dès que ton profil hôte sera approuvé et actif.";
+          "Ton espace repas sera disponible des que ton profil hote sera approuve et actif.";
 
         const message = axios.isAxiosError(error)
           ? error.response?.data?.message ?? fallbackMessage
@@ -139,10 +155,7 @@ export default function MesRepasPage() {
   const stats = useMemo(() => {
     const draftCount = meals.filter((meal) => meal.status === "draft").length;
     const publishedCount = meals.filter((meal) => meal.status === "published").length;
-    const upcomingCount = meals.filter(
-      (meal) =>
-        meal.status === "published" && new Date(meal.dateTime).getTime() > Date.now(),
-    ).length;
+    const upcomingCount = meals.filter((meal) => isUpcomingMeal(meal)).length;
 
     return {
       total: meals.length,
@@ -151,6 +164,31 @@ export default function MesRepasPage() {
       upcomingCount,
     };
   }, [meals]);
+
+  const filteredMeals = useMemo(() => {
+    const nextMeals = meals.filter((meal) => {
+      if (activeFilter === "cancelled") {
+        return meal.status === "cancelled";
+      }
+
+      if (activeFilter === "past") {
+        return isPastMeal(meal);
+      }
+
+      return isUpcomingMeal(meal);
+    });
+
+    return nextMeals.sort((firstMeal, secondMeal) => {
+      const firstTimestamp = new Date(firstMeal.dateTime).getTime();
+      const secondTimestamp = new Date(secondMeal.dateTime).getTime();
+
+      if (activeFilter === "past" || activeFilter === "cancelled") {
+        return secondTimestamp - firstTimestamp;
+      }
+
+      return firstTimestamp - secondTimestamp;
+    });
+  }, [activeFilter, meals]);
 
   const updateMealInState = (nextMeal: MealItem) => {
     setMeals((previousMeals) =>
@@ -187,13 +225,13 @@ export default function MesRepasPage() {
       updateMealInState(response.data);
       toast.success(
         action === "publish"
-          ? "Le repas est maintenant publié."
-          : "Le repas a bien été annulé.",
+          ? "Le repas est maintenant publie."
+          : "Le repas a bien ete annule.",
       );
     } catch (error: unknown) {
       const message = axios.isAxiosError(error)
-        ? error.response?.data?.message ?? "L'action n'a pas pu être effectuée."
-        : "L'action n'a pas pu être effectuée.";
+        ? error.response?.data?.message ?? "L'action n'a pas pu etre effectuee."
+        : "L'action n'a pas pu etre effectuee.";
       toast.error(Array.isArray(message) ? message.join(", ") : message);
     } finally {
       setActiveMealId(null);
@@ -216,18 +254,18 @@ export default function MesRepasPage() {
     <section className={styles.page}>
       <div className={styles.hero}>
         <div className={styles.heroCopy}>
-          <p className={styles.kicker}>Espace hôte</p>
-          <h1>Gère tes repas et prépare tes prochaines tablées.</h1>
+          <p className={styles.kicker}>Espace hote</p>
+          <h1>Gere tes repas et prepare tes prochaines tablees.</h1>
           <p className={styles.description}>
-            Retrouve tes brouillons, publie un repas quand tout est prêt et suis
-            ton activité depuis un espace pensé pour l&apos;organisation.
+            Retrouve tes brouillons, publie un repas quand tout est pret et suis
+            ton activite depuis un espace pense pour l&apos;organisation.
           </p>
         </div>
 
         <div className={styles.heroActions}>
           <Link href="/mes-repas/creer" className={styles.primaryButton}>
             <CirclePlus />
-            Créer un repas
+            Creer un repas
           </Link>
           <Link href="/" className={styles.secondaryButton}>
             Voir les repas publics
@@ -241,7 +279,7 @@ export default function MesRepasPage() {
             <FileText />
           </span>
           <strong>{stats.total}</strong>
-          <span>repas créés</span>
+          <span>repas crees</span>
         </article>
 
         <article className={styles.statCard}>
@@ -249,7 +287,7 @@ export default function MesRepasPage() {
             <Rocket />
           </span>
           <strong>{stats.publishedCount}</strong>
-          <span>publiés</span>
+          <span>publies</span>
         </article>
 
         <article className={styles.statCard}>
@@ -265,7 +303,7 @@ export default function MesRepasPage() {
             <CalendarDays />
           </span>
           <strong>{stats.upcomingCount}</strong>
-          <span>à venir</span>
+          <span>a venir</span>
         </article>
       </div>
 
@@ -275,7 +313,7 @@ export default function MesRepasPage() {
             <CircleAlert />
           </div>
           <div className={styles.hostGuardContent}>
-            <h2>Ton espace hôte n&apos;est pas encore complètement disponible</h2>
+            <h2>Ton espace hote n&apos;est pas encore completement disponible</h2>
             <p>{screenError}</p>
           </div>
           <div className={styles.hostGuardActions}>
@@ -283,15 +321,32 @@ export default function MesRepasPage() {
               Voir mon profil
             </Link>
             <Link href="/mes-repas/creer" className={styles.primaryButton}>
-              Ouvrir la création
+              Ouvrir la creation
             </Link>
           </div>
         </div>
       ) : null}
 
+      {!screenError ? (
+        <div className={styles.filtersBar}>
+          {FILTER_OPTIONS.map((filterOption) => (
+            <button
+              key={filterOption.key}
+              type="button"
+              className={`${styles.filterButton} ${
+                activeFilter === filterOption.key ? styles["filterButton--active"] : ""
+              }`}
+              onClick={() => setActiveFilter(filterOption.key)}
+            >
+              {filterOption.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
       {fetching ? (
         <div className={styles.loadingPanel}>Chargement de tes repas...</div>
-      ) : meals.length === 0 ? (
+      ) : filteredMeals.length === 0 ? (
         <div className={styles.emptyState}>
           <div className={styles.emptyPlate}>
             <span className={styles.emptyPlateRing} />
@@ -299,10 +354,17 @@ export default function MesRepasPage() {
           </div>
 
           <div className={styles.emptyCopy}>
-            <h2>Ton premier repas commence ici</h2>
+            <h2>
+              {activeFilter === "upcoming"
+                ? "Aucun prochain repas pour l&apos;instant"
+                : activeFilter === "past"
+                  ? "Aucun repas passe a afficher"
+                  : "Aucun repas annule a afficher"}
+            </h2>
             <p>
-              Crée un brouillon en quelques étapes, puis publie-le quand la date,
-              le menu et les règles sont prêts.
+              {activeFilter === "upcoming"
+                ? "Cree un brouillon, finalise-le puis publie-le quand tout est pret."
+                : "Change de filtre ou retourne dans l'espace hote pour continuer l'organisation."}
             </p>
           </div>
 
@@ -313,10 +375,11 @@ export default function MesRepasPage() {
         </div>
       ) : (
         <div className={styles.mealsGrid}>
-          {meals.map((meal) => {
+          {filteredMeals.map((meal) => {
             const statusLabel = getStatusLabel(meal.status);
             const canPublish = meal.status === "draft";
             const canCancel = meal.status === "published";
+            const canEdit = meal.status === "draft" || meal.status === "cancelled";
             const isBusy = activeMealId === meal.id;
 
             return (
@@ -368,15 +431,20 @@ export default function MesRepasPage() {
 
                 {meal.houseRules ? (
                   <div className={styles.rulesBlock}>
-                    <span>Règles de la maison</span>
+                    <span>Regles de la maison</span>
                     <p>{meal.houseRules}</p>
                   </div>
                 ) : null}
 
                 <div className={styles.mealActions}>
-                  <Link href="/mes-repas/creer" className={styles.secondaryButton}>
-                    Nouveau repas
-                  </Link>
+                  {canEdit ? (
+                    <Link
+                      href={`/mes-repas/creer?mealId=${meal.id}&step=4`}
+                      className={styles.secondaryButton}
+                    >
+                      Modifier
+                    </Link>
+                  ) : null}
 
                   {canPublish ? (
                     <button
