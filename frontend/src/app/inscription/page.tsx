@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, Suspense, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import axios from "axios";
@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import DatePickerField from "@/components/DatePicker";
 
-export default function InscriptionPage() {
+function InscriptionPageContent() {
   const searchParams = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const objectUrlRef = useRef<string | null>(null);
@@ -403,5 +403,23 @@ export default function InscriptionPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+export default function InscriptionPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className={styles.container}>
+          <div className={styles.shell}>
+            <section className={styles.formCard}>
+              <p className={styles.bottomText}>Chargement...</p>
+            </section>
+          </div>
+        </main>
+      }
+    >
+      <InscriptionPageContent />
+    </Suspense>
   );
 }

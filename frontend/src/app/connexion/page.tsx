@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import styles from "./connexion.module.scss";
@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/app/providers/AuthProvider";
 
-export default function ConnexionPage() {
+function ConnexionPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuth();
@@ -146,5 +146,23 @@ export default function ConnexionPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+export default function ConnexionPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className={styles.container}>
+          <div className={styles.shell}>
+            <section className={styles.formCard}>
+              <p className={styles.bottomText}>Chargement...</p>
+            </section>
+          </div>
+        </main>
+      }
+    >
+      <ConnexionPageContent />
+    </Suspense>
   );
 }

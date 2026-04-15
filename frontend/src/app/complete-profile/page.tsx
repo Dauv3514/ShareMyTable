@@ -1,14 +1,14 @@
 "use client";
 
-import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
+import { ChangeEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-toastify";
 import DatePickerField from "@/components/DatePicker";
-import styles from "./complete-profile.module.scss";
 import { useAuth } from "@/app/providers/AuthProvider";
+import styles from "./complete-profile.module.scss";
 
-export default function CompleteProfilePage() {
+function CompleteProfileContent() {
   const router = useRouter();
   const { login } = useAuth();
   const searchParams = useSearchParams();
@@ -36,7 +36,10 @@ export default function CompleteProfilePage() {
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState("");
   const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
   const [oauthFlow] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
+    if (typeof window === "undefined") {
+      return null;
+    }
+
     return localStorage.getItem("oauth_flow");
   });
 
@@ -44,7 +47,10 @@ export default function CompleteProfilePage() {
     isPendingFlow && oauthFlow === "login" && reason === "not_registered";
 
   useEffect(() => {
-    if (!shouldRedirectToRegister) return;
+    if (!shouldRedirectToRegister) {
+      return;
+    }
+
     toast.info("Compte introuvable. Inscris-toi pour continuer.");
     localStorage.removeItem("oauth_flow");
     router.replace("/inscription");
@@ -58,10 +64,11 @@ export default function CompleteProfilePage() {
     };
   }, []);
 
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData((previousValue) => ({
+      ...previousValue,
+      [event.target.name]: event.target.value,
+    }));
   };
 
   const handleSelectPhoto = () => {
@@ -105,8 +112,8 @@ export default function CompleteProfilePage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -129,16 +136,16 @@ export default function CompleteProfilePage() {
         if (missingLastName) payload.append("last_name", formData.last_name);
         if (selectedPhotoFile) payload.append("profile_photo", selectedPhotoFile);
 
-        const res = await axios.post(`${apiUrl}/auth/oauth/complete`, payload);
+        const response = await axios.post(`${apiUrl}/auth/oauth/complete`, payload);
 
-        if (res.data?.verification_required) {
+        if (response.data?.verification_required) {
           localStorage.removeItem("oauth_flow");
           toast.info("Vérifie ton email pour activer ton compte.");
           router.push("/connexion?verify=1");
           return;
         }
 
-        const token = res.data.access_token;
+        const token = response.data.access_token;
         if (!token) {
           toast.error("Token manquant");
           return;
@@ -146,7 +153,7 @@ export default function CompleteProfilePage() {
 
         login(token);
         localStorage.removeItem("oauth_flow");
-        toast.success("Profil complété 🎉");
+        toast.success("Profil complété");
         router.push("/");
         return;
       }
@@ -172,11 +179,11 @@ export default function CompleteProfilePage() {
       });
 
       localStorage.removeItem("oauth_flow");
-      toast.success("Profil complété 🎉");
+      toast.success("Profil complété");
       router.push("/");
-    } catch (err: unknown) {
-      const message = axios.isAxiosError(err)
-        ? err.response?.data?.message ?? "Erreur lors de la mise à jour"
+    } catch (error: unknown) {
+      const message = axios.isAxiosError(error)
+        ? error.response?.data?.message ?? "Erreur lors de la mise à jour"
         : "Erreur lors de la mise à jour";
 
       toast.error(Array.isArray(message) ? message.join(", ") : message);
@@ -202,7 +209,8 @@ export default function CompleteProfilePage() {
           <div className={styles.formHeader}>
             <h2 className={styles.title}>Finaliser votre profil</h2>
             <p className={styles.subtitle}>
-              Quelques informations supplémentaires sont nécessaires pour terminer votre inscription.
+              Quelques informations supplémentaires sont nécessaires pour terminer
+              votre inscription.
             </p>
           </div>
 
@@ -293,8 +301,8 @@ export default function CompleteProfilePage() {
               <DatePickerField
                 value={formData.birth_date}
                 onChange={(value) =>
-                  setFormData((prev) => ({
-                    ...prev,
+                  setFormData((previousValue) => ({
+                    ...previousValue,
                     birth_date: value,
                   }))
                 }
@@ -307,7 +315,7 @@ export default function CompleteProfilePage() {
             <button
               type="button"
               className={styles.optionalToggle}
-              onClick={() => setShowOptional((prev) => !prev)}
+              onClick={() => setShowOptional((previousValue) => !previousValue)}
             >
               <span>
                 {showOptional
@@ -392,5 +400,23 @@ export default function CompleteProfilePage() {
         </section>
       </div>
     </main>
+  );
+}
+
+export default function CompleteProfilePage() {
+  return (
+    <Suspense
+      fallback={
+        <main className={styles.container}>
+          <div className={styles.shell}>
+            <section className={styles.formCard}>
+              <p className={styles.text}>Chargement du profil...</p>
+            </section>
+          </div>
+        </main>
+      }
+    >
+      <CompleteProfileContent />
+    </Suspense>
   );
 }

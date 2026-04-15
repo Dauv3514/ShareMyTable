@@ -2,11 +2,11 @@
 // Variables
 // =========================
 
-$primary: #0346C9;
-$secondary: #FF956E;
-$gray: #F6F7F6;
+$primary: #0346c9;
+$secondary: #ff956e;
+$gray: #f6f7f6;
 $black: #000000;
-$white: #FFFFFF;
+$white: #ffffff;
 
 // =========================
 // Global
@@ -26,7 +26,7 @@ body {
   overflow-y: hidden;
   background-color: $white;
   color: $black;
-  font-family: var(--font-merriweather-sans), sans-serif;
+  font-family: "Merriweather Sans", "Trebuchet MS", sans-serif;
 }
 
 // =========================
@@ -67,7 +67,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-open-sans), sans-serif;
+  font-family: "Open Sans", "Avenir Next", "Segoe UI", sans-serif;
 }
 
 // =========================

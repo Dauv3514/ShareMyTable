@@ -2,9 +2,9 @@
 
 import axios from "axios";
 import {
-  useCallback,
   createContext,
   useContext,
+  useCallback,
   useEffect,
   useState,
   useSyncExternalStore,
@@ -77,7 +77,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const hydrated = useSyncExternalStore(subscribe, getHydrationSnapshot, getServerSnapshot);
   const isLoggedIn = useSyncExternalStore(subscribe, getAuthSnapshot, getServerSnapshot);
   const [user, setUser] = useState<AuthUser | null>(null);
-  const loading = !hydrated;
+  const [isFetchingUser, setIsFetchingUser] = useState(false);
+  const loading = !hydrated || isFetchingUser;
+
+  const clearSession = useCallback(() => {
+    localStorage.removeItem("token");
+    window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
+  }, []);
 
   const fetchCurrentUser = useCallback(async (): Promise<AuthUser | null> => {
     if (!hydrated || !isLoggedIn) {
@@ -91,35 +97,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return null;
     }
 
-    const response = await axios.get(`${apiUrl}/users/me`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    try {
+      const response = await axios.get(`${apiUrl}/users/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    return {
-      id: response.data.userId,
-      firstName: response.data.prenom ?? "",
-      lastName: response.data.nom ?? "",
-      email: response.data.email ?? "",
-      phone: response.data.phone ?? null,
-      pseudo: response.data.pseudo ?? null,
-      country: response.data.pays ?? null,
-      city: response.data.ville ?? null,
-      bio: response.data.biographie ?? null,
-      profilePhotoUrl: response.data.profilePhotoUrl ?? null,
-      role: response.data.role ?? null,
-      authProvider: response.data.authProvider ?? null,
-      birthDate: response.data.birthDate ?? null,
-      isProfileComplete: Boolean(response.data.isProfileComplete),
-    };
-  }, [hydrated, isLoggedIn]);
+      return {
+        id: response.data.userId,
+        firstName: response.data.prenom ?? "",
+        lastName: response.data.nom ?? "",
+        email: response.data.email ?? "",
+        phone: response.data.phone ?? null,
+        pseudo: response.data.pseudo ?? null,
+        country: response.data.pays ?? null,
+        city: response.data.ville ?? null,
+        bio: response.data.biographie ?? null,
+        profilePhotoUrl: response.data.profilePhotoUrl ?? null,
+        role: response.data.role ?? null,
+        authProvider: response.data.authProvider ?? null,
+        birthDate: response.data.birthDate ?? null,
+        isProfileComplete: Boolean(response.data.isProfileComplete),
+      };
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        clearSession();
+        return null;
+      }
+
+      throw error;
+    }
+  }, [clearSession, hydrated, isLoggedIn]);
 
   useEffect(() => {
     let cancelled = false;
 
     const syncCurrentUser = async () => {
       try {
+        if (hydrated && isLoggedIn) {
+          setIsFetchingUser(true);
+        }
+
         const nextUser = await fetchCurrentUser();
 
         if (cancelled) {
@@ -131,6 +150,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!cancelled) {
           setUser(null);
         }
+      } finally {
+        if (!cancelled) {
+          setIsFetchingUser(false);
+        }
       }
     };
 
@@ -139,14 +162,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [fetchCurrentUser]);
+  }, [fetchCurrentUser, hydrated, isLoggedIn]);
 
   const refreshUser = useCallback(async () => {
     try {
+      setIsFetchingUser(true);
       const nextUser = await fetchCurrentUser();
       setUser(nextUser);
     } catch {
       setUser(null);
+    } finally {
+      setIsFetchingUser(false);
     }
   }, [fetchCurrentUser]);
 
@@ -156,8 +182,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
-    window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
+    clearSession();
   };
 
   return (
