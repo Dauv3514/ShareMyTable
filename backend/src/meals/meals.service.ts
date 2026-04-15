@@ -38,6 +38,24 @@ type MealResponse = {
   host: MealHostSummary;
 };
 
+type PublishedMealsQuery = {
+  page?: number;
+  limit?: number;
+  mealType?: string;
+  city?: string;
+  country?: string;
+  dateFrom?: string;
+  dateTo?: string;
+};
+
+type PaginatedMealsResponse = {
+  items: MealResponse[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
 // Service metier de gestion des repas.
 // Il verifie qu'un user est bien host actif et approuve avant toute action privee.
 @Injectable()
@@ -71,14 +89,59 @@ export class MealsService {
     return this.toMealResponse(reloadedMeal);
   }
 
-  async findAllPublished(): Promise<MealResponse[]> {
-    const meals = await this.mealsRepository.find({
-      where: { status: MealStatus.PUBLISHED },
-      relations: ['host'],
-      order: { dateTime: 'ASC' },
-    });
+  async findAllPublished(
+    query: PublishedMealsQuery,
+  ): Promise<PaginatedMealsResponse> {
+    const page = this.normalizePositiveInteger(query.page, 1);
+    const limit = Math.min(this.normalizePositiveInteger(query.limit, 10), 50);
 
-    return meals.map((meal) => this.toMealResponse(meal));
+    const queryBuilder = this.mealsRepository
+      .createQueryBuilder('meal')
+      .leftJoinAndSelect('meal.host', 'host')
+      .where('meal.status = :status', { status: MealStatus.PUBLISHED });
+
+    if (query.mealType?.trim()) {
+      queryBuilder.andWhere('LOWER(meal.meal_type) = LOWER(:mealType)', {
+        mealType: query.mealType.trim(),
+      });
+    }
+
+    if (query.city?.trim()) {
+      queryBuilder.andWhere('LOWER(host.city) = LOWER(:city)', {
+        city: query.city.trim(),
+      });
+    }
+
+    if (query.country?.trim()) {
+      queryBuilder.andWhere('LOWER(host.country) = LOWER(:country)', {
+        country: query.country.trim(),
+      });
+    }
+
+    const dateFrom = this.parseOptionalQueryDate(query.dateFrom, 'dateFrom');
+    if (dateFrom) {
+      queryBuilder.andWhere('meal.date_time >= :dateFrom', { dateFrom });
+    }
+
+    const dateTo = this.parseOptionalQueryDate(query.dateTo, 'dateTo');
+    if (dateTo) {
+      queryBuilder.andWhere('meal.date_time <= :dateTo', { dateTo });
+    }
+
+    queryBuilder
+      .orderBy('meal.date_time', 'ASC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const [meals, total] = await queryBuilder.getManyAndCount();
+
+    return {
+      items: meals.map((meal) => this.toMealResponse(meal)),
+      page,
+      limit,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+    };
   }
 
   async findOnePublished(id: number): Promise<MealResponse> {
@@ -289,9 +352,27 @@ export class MealsService {
       );
     }
 
+    if (!meal.mealType || meal.mealType.trim().length === 0) {
+      throw new BadRequestException(
+        'Le type de repas est obligatoire pour publier un repas',
+      );
+    }
+
+    if (!meal.menuDescription || meal.menuDescription.trim().length === 0) {
+      throw new BadRequestException(
+        'La description du menu est obligatoire pour publier un repas',
+      );
+    }
+
     if (!meal.dateTime) {
       throw new BadRequestException(
         'La date du repas est obligatoire pour publier',
+      );
+    }
+
+    if (meal.dateTime.getTime() <= Date.now()) {
+      throw new BadRequestException(
+        'Un repas dans le passe ne peut pas etre publie',
       );
     }
 
@@ -304,6 +385,12 @@ export class MealsService {
     if (meal.pricePerSeatCents < 0) {
       throw new BadRequestException(
         'Le prix par place ne peut pas etre negatif',
+      );
+    }
+
+    if (!meal.houseRules || meal.houseRules.trim().length === 0) {
+      throw new BadRequestException(
+        'Les regles de la maison sont obligatoires pour publier un repas',
       );
     }
   }
@@ -337,5 +424,34 @@ export class MealsService {
 
     const normalizedValue = value.trim();
     return normalizedValue.length > 0 ? normalizedValue : null;
+  }
+
+  private normalizePositiveInteger(
+    value: number | undefined,
+    fallback: number,
+  ): number {
+    if (value === undefined || !Number.isFinite(value) || value <= 0) {
+      return fallback;
+    }
+
+    return Math.floor(value);
+  }
+
+  private parseOptionalQueryDate(
+    value: string | undefined,
+    fieldName: string,
+  ): Date | null {
+    if (!value) {
+      return null;
+    }
+
+    const parsedDate = new Date(value);
+    if (Number.isNaN(parsedDate.getTime())) {
+      throw new BadRequestException(
+        `${fieldName} doit etre une date ISO valide`,
+      );
+    }
+
+    return parsedDate;
   }
 }

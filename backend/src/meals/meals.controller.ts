@@ -6,6 +6,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -81,8 +82,24 @@ export class MealsController {
   }
 
   @Get()
-  async findPublishedMeals() {
-    return this.mealsService.findAllPublished();
+  async findPublishedMeals(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('mealType') mealType?: string,
+    @Query('city') city?: string,
+    @Query('country') country?: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+  ) {
+    return this.mealsService.findAllPublished({
+      page: page ? Number(page) : undefined,
+      limit: limit ? Number(limit) : undefined,
+      mealType,
+      city,
+      country,
+      dateFrom,
+      dateTo,
+    });
   }
 
   @Get(':id')

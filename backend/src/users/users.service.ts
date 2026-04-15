@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeepPartial, Repository } from 'typeorm';
+import { DeepPartial, EntityManager, Repository } from 'typeorm';
 import { InscriptionDto } from '../auth/auth.dto';
 import { Role, RoleName } from './role.entity';
 import { AccountStatus, Utilisateur, AuthProvider } from './users.entity';
@@ -73,6 +73,32 @@ export class UsersService {
 
     user.role = await this.findOrCreateRole(roleName);
     return this.usersRepository.save(user);
+  }
+
+  async setRoleWithManager(
+    manager: EntityManager,
+    userId: number,
+    roleName: RoleName,
+  ): Promise<Utilisateur> {
+    const userRepository = manager.getRepository(Utilisateur);
+    const roleRepository = manager.getRepository(Role);
+
+    const user = await userRepository.findOne({
+      where: { id: userId },
+      relations: ['role'],
+    });
+
+    if (!user) {
+      throw new NotFoundException('Utilisateur non trouve');
+    }
+
+    let role = await roleRepository.findOne({ where: { name: roleName } });
+    if (!role) {
+      role = await roleRepository.save(roleRepository.create({ name: roleName }));
+    }
+
+    user.role = role;
+    return userRepository.save(user);
   }
 
   async updateEmailVerifiedAt(userId: number, verifiedAt: Date) {
