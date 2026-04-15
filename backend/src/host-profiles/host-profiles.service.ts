@@ -12,9 +12,12 @@ import { Utilisateur } from '../users/users.entity';
 import { CreateHostProfileDto } from './dto/create-host-profile.dto';
 import { UpdateHostProfileDto } from './dto/update-host-profile.dto';
 import {
+  HostPhotoSafeSearch,
+  HostPhotoVisionLabel,
   HostProfile,
   HostValidationStatus,
 } from './host-profile.entity';
+import { HostProfileVerificationService } from './host-profile-verification.service';
 
 type HostProfileUserSummary = {
   userId: number;
@@ -35,12 +38,23 @@ type HostProfileResponse = {
   city: string;
   districtLabel: string;
   address: string;
+  addressVerified: boolean;
+  homePhotoVerified: boolean;
+  verificationScore: number;
+  autoReviewNotes: string | null;
+  lastAutoReviewedAt: Date | null;
+  homePhotoVisionLabels: HostPhotoVisionLabel[];
+  homePhotoSafeSearch: HostPhotoSafeSearch;
+  verificationRiskFlags: string[];
+  manualReviewRequired: boolean;
 };
 
 type HostProfileAdminResponse = HostProfileResponse & {
   user: HostProfileUserSummary;
 };
 
+// Service metier du parcours de candidature hote.
+// Il orchestre la creation, la moderation admin et l'auto-review niveau 1.
 @Injectable()
 export class HostProfilesService {
   constructor(
@@ -49,6 +63,7 @@ export class HostProfilesService {
     @InjectRepository(Utilisateur)
     private readonly usersRepository: Repository<Utilisateur>,
     private readonly usersService: UsersService,
+    private readonly hostProfileVerificationService: HostProfileVerificationService,
   ) {}
 
   // Cree la premiere demande hote d'un utilisateur.
@@ -87,7 +102,18 @@ export class HostProfilesService {
       validationStatus: HostValidationStatus.PENDING,
       hostLevel: 1,
       activatedAt: null,
+      addressVerified: false,
+      homePhotoVerified: false,
+      verificationScore: 0,
+      autoReviewNotes: null,
+      lastAutoReviewedAt: null,
+      homePhotoVisionLabels: [],
+      homePhotoSafeSearch: null,
+      verificationRiskFlags: [],
+      manualReviewRequired: false,
     });
+
+    await this.hostProfileVerificationService.runAutoReview(hostProfile);
 
     const savedHostProfile = await this.hostProfilesRepository.save(hostProfile);
     return this.toHostProfileResponse(savedHostProfile);
@@ -114,6 +140,7 @@ export class HostProfilesService {
     }
 
     this.applyUpdatableFields(hostProfile, updateHostProfileDto);
+    await this.hostProfileVerificationService.runAutoReview(hostProfile);
 
     const updatedHostProfile = await this.hostProfilesRepository.save(hostProfile);
     return this.toHostProfileResponse(updatedHostProfile);
@@ -132,6 +159,8 @@ export class HostProfilesService {
     hostProfile.validationStatus = HostValidationStatus.PENDING;
     hostProfile.isActive = false;
     hostProfile.activatedAt = null;
+
+    await this.hostProfileVerificationService.runAutoReview(hostProfile);
 
     const updatedHostProfile = await this.hostProfilesRepository.save(hostProfile);
     return this.toHostProfileResponse(updatedHostProfile);
@@ -294,6 +323,15 @@ export class HostProfilesService {
       city: hostProfile.city,
       districtLabel: hostProfile.districtLabel,
       address: hostProfile.address,
+      addressVerified: hostProfile.addressVerified,
+      homePhotoVerified: hostProfile.homePhotoVerified,
+      verificationScore: hostProfile.verificationScore,
+      autoReviewNotes: hostProfile.autoReviewNotes,
+      lastAutoReviewedAt: hostProfile.lastAutoReviewedAt,
+      homePhotoVisionLabels: hostProfile.homePhotoVisionLabels,
+      homePhotoSafeSearch: hostProfile.homePhotoSafeSearch,
+      verificationRiskFlags: hostProfile.verificationRiskFlags,
+      manualReviewRequired: hostProfile.manualReviewRequired,
     };
   }
 
