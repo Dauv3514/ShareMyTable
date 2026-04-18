@@ -3,12 +3,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/app/providers/AuthProvider";
-import ProfileMenu from "./ProfileMenu";
-import UserAvatar from "./UserAvatar";
+import ProfileMenu from "../ProfileMenu";
+import UserAvatar from "../UserAvatar";
 import "./navbar.scss";
 
 const navItems = [
-    { label: "Rechercher", href: "#" },
+    { label: "Rechercher", href: "/rechercher" },
     { label: "Mes repas", href: "#" },
     { label: "Créer un événement", href: "#" },
     { label: "Messagerie", href: "#" },

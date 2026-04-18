@@ -54,7 +54,7 @@ export default function Home() {
                 Connexion
               </Link>
               <Link className={styles.btnPrimary} href="/inscription">
-                S'inscrire
+                S&apos;inscrire
               </Link>
             </div>
           </div>
