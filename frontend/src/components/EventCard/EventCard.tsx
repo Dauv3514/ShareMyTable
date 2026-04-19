@@ -9,6 +9,7 @@ type EventCardProps = {
   dateLabel: string;
   host: string;
   variant?: "default" | "veggie" | "nearby";
+  layout?: "tile" | "wide";
 };
 export default function EventCard({
   title,
@@ -16,9 +17,10 @@ export default function EventCard({
   dateLabel,
   host,
   variant = "default",
+  layout = "tile",
 }: EventCardProps) {
   return (
-    <article className={`event-card event-card--${variant}`}>
+    <article className={`event-card event-card--${variant} event-card--${layout}`}>
       <div className="event-card__media" aria-hidden="true">
         <div className="event-card__plate">
           <Image

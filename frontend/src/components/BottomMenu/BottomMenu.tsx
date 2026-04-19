@@ -3,9 +3,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import "./bottom-menu.scss";
-import { useAuth } from "../app/providers/AuthProvider";
-import ProfileMenu from "./ProfileMenu";
-import UserAvatar from "./UserAvatar";
+import { useAuth } from "../../app/providers/AuthProvider";
+import ProfileMenu from "../ProfileMenu";
+import UserAvatar from "../UserAvatar";
 
 const items = [
   { key: "home", href: "/", icon: "/home.svg", size: 26 },

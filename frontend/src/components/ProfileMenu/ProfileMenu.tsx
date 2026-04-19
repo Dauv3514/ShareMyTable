@@ -16,9 +16,9 @@ import {
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { useAuth } from "../app/providers/AuthProvider";
-import UserAvatar from "./UserAvatar";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { useAuth } from "../../app/providers/AuthProvider";
+import UserAvatar from "../UserAvatar";
 import "./profile-menu.scss";
 
 type ProfileMenuProps = {
