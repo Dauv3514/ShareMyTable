@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import EventCard from "@/components/EventCard";
 import SearchResultCard from "@/components/SearchResultCard";
 import SearchBar from "@/components/SearchBar";
+import SearchMap from "@/components/SearchMap";
 import { filterMealEvents, mealEvents, mealFilterById } from "@/lib/search-data";
 import styles from "./rechercher.module.scss";
 
@@ -60,6 +61,7 @@ export default function SearchResultsPage() {
     () => filterMealEvents({ location, date, filters }),
     [date, filters, location],
   );
+  const shouldShowMap = location.trim().length > 0;
   const recommendedEvents = useMemo(() => {
     const resultIds = new Set(events.map((event) => event.id));
     const recommendations = mealEvents.filter((event) => !resultIds.has(event.id));
@@ -95,6 +97,10 @@ export default function SearchResultsPage() {
         initialDate={date}
         initialFilters={filters}
       />
+
+      {shouldShowMap && (
+        <SearchMap key={location} location={location} eventCount={events.length} />
+      )}
 
       <section className={styles.filters} aria-label="Filtres actifs">
         {location && (
@@ -135,7 +141,7 @@ export default function SearchResultsPage() {
             <X aria-hidden="true" />
           </button>
         ))}
-        {!hasCriteria && <span className={styles.filterHint}>Tous les repas</span>}
+        {!hasCriteria && <span className={styles.filterHint}>Tous les événements</span>}
       </section>
 
       <section className={styles.results} aria-label="Événements">
@@ -143,7 +149,7 @@ export default function SearchResultsPage() {
           <div>
             <h1>Recherche</h1>
             <p>
-              {events.length} {events.length > 1 ? "repas trouvés" : "repas trouvé"}
+              {events.length} {events.length > 1 ? "événements trouvés" : "événement trouvé"}
             </p>
           </div>
         </div>
@@ -166,7 +172,7 @@ export default function SearchResultsPage() {
         <div className={styles.suggestionsHead}>
           <div>
             <h2>Vous aimeriez aussi</h2>
-            <p>Les autres repas près de chez vous</p>
+            <p>Les autres événements près de chez vous</p>
           </div>
         </div>
 

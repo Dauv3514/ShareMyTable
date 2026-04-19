@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.scss";
+import "leaflet/dist/leaflet.css";
 import Navbar from "../components/Navbar";
 import BottomMenu from "../components/BottomMenu";
 import { Open_Sans, Merriweather_Sans } from "next/font/google";

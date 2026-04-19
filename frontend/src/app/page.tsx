@@ -9,7 +9,7 @@ import styles from "./page.module.scss";
 const homeSections = [
   {
     title: "Prochainement",
-    description: "Ne manquez pas les prochains repas !",
+    description: "Ne manquez pas les prochains événements !",
     cards: [
       { title: "Brunch du samedi", city: "Rennes", dateLabel: "Ven. 3 avr.", host: "Antoine GREGE", variant: "default" as const },
       { title: "Pasta party", city: "Rennes", dateLabel: "Sam. 4 avr.", host: "Claire DUMAS", variant: "default" as const },
@@ -29,7 +29,7 @@ const homeSections = [
   },
   {
     title: "Autour de moi",
-    description: "Les meilleurs repas près de chez vous",
+    description: "Les meilleurs événements près de chez vous",
     cards: [
       { title: "Apéro tapas", city: "Rennes", dateLabel: "Jeu. 9 avr.", host: "Maxime PETIT", variant: "nearby" as const },
       { title: "Dîner de quartier", city: "Rennes", dateLabel: "Ven. 10 avr.", host: "Sarah BERNARD", variant: "nearby" as const },
