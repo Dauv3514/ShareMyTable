@@ -10,7 +10,6 @@ import {
   CookingPot,
   MapPin,
   NotebookText,
-  Sparkles,
   Users,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
@@ -157,6 +156,7 @@ export default function CreerRepasPage() {
   const router = useRouter();
   const { isLoggedIn, loading } = useAuth();
   const [step, setStep] = useState<WizardStep>(0);
+  const [maxUnlockedStep, setMaxUnlockedStep] = useState<WizardStep>(0);
   const [editingMealId, setEditingMealId] = useState<number | null>(null);
   const [isEditingMeal, setIsEditingMeal] = useState(false);
   const [loadingMeal, setLoadingMeal] = useState(false);
@@ -186,6 +186,7 @@ export default function CreerRepasPage() {
     setEditingMealId(mealId);
     setIsEditingMeal(Boolean(mealId));
     setStep(mealId ? initialStep : 0);
+    setMaxUnlockedStep(mealId ? 4 : 0);
   }, []);
 
   useEffect(() => {
@@ -352,7 +353,11 @@ export default function CreerRepasPage() {
 
   const selectedDateLabel = formatSelectedDate(form.date);
 
-  const goToStep = (nextStep: WizardStep) => {
+  const goToStep = (nextStep: WizardStep, options?: { force?: boolean }) => {
+    if (!options?.force && !isEditingMeal && nextStep > maxUnlockedStep) {
+      return;
+    }
+
     setStep(nextStep);
 
     if (typeof window !== "undefined") {
@@ -378,7 +383,15 @@ export default function CreerRepasPage() {
       return;
     }
 
-    goToStep(Math.min(4, step + 1) as WizardStep);
+    const nextStep = Math.min(4, step + 1) as WizardStep;
+
+    if (!isEditingMeal) {
+      setMaxUnlockedStep((previousStep) =>
+        (nextStep > previousStep ? nextStep : previousStep) as WizardStep,
+      );
+    }
+
+    goToStep(nextStep, { force: true });
   };
 
   const handleSubmit = async () => {
@@ -481,6 +494,7 @@ export default function CreerRepasPage() {
               {STEP_LABELS.map((label, index) => {
                 const isCurrent = index === step;
                 const isDone = index < step;
+                const isLocked = !isEditingMeal && index > maxUnlockedStep;
 
                 return (
                   <button
@@ -490,6 +504,7 @@ export default function CreerRepasPage() {
                       isCurrent ? styles["progressItem--current"] : ""
                     } ${isDone ? styles["progressItem--done"] : ""}`}
                     onClick={() => goToStep(index as WizardStep)}
+                    disabled={isLocked}
                   >
                     <span className={styles.progressIndex}>
                       {isDone ? <Check /> : index + 1}
@@ -554,6 +569,7 @@ export default function CreerRepasPage() {
                     step === index ? styles["mobileStepButton--active"] : ""
                   }`}
                   onClick={() => goToStep(index as WizardStep)}
+                  disabled={!isEditingMeal && index > maxUnlockedStep}
                 >
                   {index + 1}
                 </button>
@@ -561,20 +577,20 @@ export default function CreerRepasPage() {
             </div>
           </div>
 
-          <div className={styles.stageBody}>
+          <div
+            className={`${styles.stageBody} ${
+              step === 0 ? styles.stageBodyIntro : ""
+            }`}
+          >
             {step === 0 ? (
-              <div className={styles.centerStage}>
-                <div className={styles.stageIntroBadge}>
-                  <Sparkles />
-                  {isEditingMeal ? "Modifier le repas" : "Nouveau repas"}
-                </div>
-                <h2>{isEditingMeal ? "Modifier ton repas" : "Organiser un repas"}</h2>
-                <strong>*wording*</strong>
-                <p>
+              <div className={`${styles.centerStage} ${styles.introStage}`}>
+                <h2 className={styles.introTitle}>
+                  {isEditingMeal ? "Modifier ton repas" : "Organiser un repas"}
+                </h2>
+                <p className={styles.introDescription}>
                   {isEditingMeal
                     ? "Toutes les informations deja saisies sont reprises pour que tu puisses ajuster ton repas sans recommencer."
                     : "Vous souhaitez cuisiner et accueillir des gens ? On construit d'abord l'essentiel, puis on affine les details pour rassurer vos invites."}
-                    
                 </p>
               </div>
             ) : null}
