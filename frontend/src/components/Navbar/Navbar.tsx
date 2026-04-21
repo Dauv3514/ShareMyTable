@@ -3,14 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/app/providers/AuthProvider";
-import ProfileMenu from "./ProfileMenu";
-import UserAvatar from "./UserAvatar";
+import ProfileMenu from "../ProfileMenu";
+import UserAvatar from "../UserAvatar";
 import "./navbar.scss";
 
 const navItems = [
-  { label: "Rechercher", href: "/" },
+  { label: "Rechercher", href: "/rechercher" },
   { label: "Mes repas", href: "/mes-repas" },
-  { label: "Créer un événement", href: "/mes-repas/creer" },
+  { label: "Creer un evenement", href: "/mes-repas/creer" },
   { label: "Messagerie", href: "#" },
 ];
 
@@ -20,11 +20,11 @@ export default function Navbar() {
   return (
     <header className="navbar">
       <div className="navbar__inner">
-        <Link href="/" className="navbar__logo" aria-label="RamèneTaPoire">
+        <Link href="/" className="navbar__logo" aria-label="RameneTaPoire">
           <div className="navbar__logoRTP">
             <Image
               src="/ramenetapoire.svg"
-              alt="RamèneTaPoire"
+              alt="RameneTaPoire"
               width={40}
               height={40}
               priority
@@ -58,7 +58,9 @@ export default function Navbar() {
             {(open) => (
               <button
                 type="button"
-                className={`navbar__profile-button ${open ? "navbar__profile-button--open" : ""}`}
+                className={`navbar__profile-button ${
+                  open ? "navbar__profile-button--open" : ""
+                }`}
                 aria-label="Ouvrir le menu profil"
               >
                 <div className="navbar__profile">

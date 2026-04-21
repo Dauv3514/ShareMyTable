@@ -1,11 +1,27 @@
 "use client";
 
 import axios from "axios";
-import { Camera, Mail, MapPin, Phone } from "lucide-react";
-import { useRouter } from "next/navigation";
+import {
+  Bell,
+  CalendarDays,
+  Camera,
+  CreditCard,
+  History,
+  LockKeyhole,
+  Mail,
+  Plus,
+  ShieldCheck,
+  TriangleAlert,
+  Users,
+  UtensilsCrossed,
+  Wallet,
+  X,
+} from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ChangeEvent,
   FormEvent,
+  ReactNode,
   useEffect,
   useMemo,
   useRef,
@@ -29,19 +45,140 @@ type ProfileFormData = {
   birth_date: string;
 };
 
-function toDateInputValue(value: string | null | undefined) {
+type PasswordFormData = {
+  current_password: string;
+  new_password: string;
+  confirm_password: string;
+};
+
+type ExpandablePanel = "profile" | "password" | null;
+type ProfileSection = "overview" | "preferences" | "activity" | "payments" | "notifications";
+
+const PROFILE_NAVIGATE_EVENT = "profile-menu:navigate";
+
+const toDateInputValue = (value: string | null | undefined) => {
   if (!value) {
     return "";
   }
 
   return value.includes("T") ? value.split("T")[0] : value;
-}
+};
 
-export default function ProfilPage() {
+const getProviderLabel = (
+  provider: "local" | "google" | "apple" | null | undefined
+) => {
+  if (provider === "google") {
+    return "Google";
+  }
+
+  if (provider === "apple") {
+    return "Apple";
+  }
+
+  return "Email";
+};
+
+const StatCard = ({
+  label,
+  value,
+  valueClassName,
+}: {
+  label: string;
+  value: ReactNode;
+  valueClassName?: string;
+}) => {
+  return (
+    <article className={styles.statCard}>
+      <span className={styles.statLabel}>{label}</span>
+      <strong className={`${styles.statValue} ${valueClassName ?? ""}`}>{value}</strong>
+    </article>
+  );
+};
+
+const PreferenceGroup = ({
+  title,
+  items,
+}: {
+  title: string;
+  items: string[];
+}) => {
+  return (
+    <div className={styles.preferenceGroup}>
+      <span className={styles.preferenceTitle}>{title}</span>
+      <div className={styles.preferenceBox}>
+        <div className={styles.chipList}>
+        {items.map((item) => (
+          <span key={item} className={styles.chip}>
+            <span>{item}</span>
+            <X className={styles.chipRemove} aria-hidden="true" />
+          </span>
+        ))}
+        </div>
+        <span className={styles.addChip} aria-hidden="true">
+          <Plus />
+        </span>
+      </div>
+    </div>
+  );
+};
+
+const ActionRow = ({
+  icon: Icon,
+  label,
+  value,
+  expanded = false,
+  interactive = true,
+  onClick,
+}: {
+  icon: typeof Bell;
+  label: string;
+  value?: string;
+  expanded?: boolean;
+  interactive?: boolean;
+  onClick?: () => void;
+}) => {
+  const content = (
+    <>
+      <span className={styles.actionLeft}>
+        <span className={styles.actionIconWrap}>
+          <Icon className={styles.actionIcon} />
+        </span>
+        <span className={styles.actionLabel}>{label}</span>
+      </span>
+
+      <span className={styles.actionRight}>
+        {value ? <span className={styles.actionValue}>{value}</span> : null}
+        {interactive ? <span className={styles.sectionLink} aria-hidden="true" /> : null}
+      </span>
+    </>
+  );
+
+  if (!interactive) {
+    return <div className={`${styles.actionRow} ${styles.actionRowStatic}`}>{content}</div>;
+  }
+
+  return (
+    <button
+      type="button"
+      className={`${styles.actionRow} ${expanded ? styles.actionRowExpanded : ""}`}
+      onClick={onClick}
+    >
+      {content}
+    </button>
+  );
+};
+
+const ProfileEditForm = ({
+  user,
+  onClose,
+}: {
+  user: NonNullable<ReturnType<typeof useAuth>["user"]>;
+  onClose: () => void;
+}) => {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const objectUrlRef = useRef<string | null>(null);
-  const { isLoggedIn, loading, user, refreshUser } = useAuth();
+  const { refreshUser } = useAuth();
   const [saving, setSaving] = useState(false);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState("");
   const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
@@ -59,16 +196,6 @@ export default function ProfilPage() {
   });
 
   useEffect(() => {
-    if (!loading && !isLoggedIn) {
-      router.replace("/connexion");
-    }
-  }, [isLoggedIn, loading, router]);
-
-  useEffect(() => {
-    if (!user) {
-      return;
-    }
-
     setFormData({
       first_name: user.firstName ?? "",
       last_name: user.lastName ?? "",
@@ -92,10 +219,6 @@ export default function ProfilPage() {
       }
     };
   }, []);
-
-  const fullName = useMemo(() => {
-    return [formData.first_name, formData.last_name].filter(Boolean).join(" ").trim();
-  }, [formData.first_name, formData.last_name]);
 
   const handleChange = (
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -186,6 +309,7 @@ export default function ProfilPage() {
 
       await refreshUser();
       toast.success("Profil mis à jour");
+      onClose();
     } catch (error: unknown) {
       const message = axios.isAxiosError(error)
         ? error.response?.data?.message ?? "La mise à jour du profil a échoué."
@@ -196,66 +320,33 @@ export default function ProfilPage() {
     }
   };
 
-  if (loading || (!user && isLoggedIn)) {
-    return (
-      <section className={styles.page}>
-        <div className={styles.card}>
-          <p className={styles.loading}>Chargement du profil...</p>
-        </div>
-      </section>
-    );
-  }
-
-  if (!isLoggedIn) {
-    return null;
-  }
-
   return (
-    <section className={styles.page}>
-      <div className={styles.card}>
-        <div className={styles.header}>
-          <div className={styles.identityBlock}>
-            <div className={styles.avatarWrap}>
-              <div className={styles.avatarFrame}>
-                <UserAvatar
-                  src={photoPreviewUrl}
-                  alt="Photo de profil"
-                  size={112}
-                  priority
-                />
-              </div>
+    <form className={styles.formPanel} onSubmit={handleSubmit}>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className={styles.hiddenInput}
+        onChange={handlePhotoChange}
+      />
 
-              <button
-                type="button"
-                className={styles.avatarEdit}
-                onClick={handleSelectPhoto}
-                aria-label="Modifier la photo de profil"
-              >
-                <Camera />
-              </button>
-            </div>
+      <div className={styles.formPanelHead}>
+        <div>
+          <p className={styles.panelEyebrow}>Profil</p>
+          <h3>Modifier mon profil</h3>
+        </div>
 
-            <div className={styles.identityText}>
-              <h1>{fullName || "Mon profil"}</h1>
-              <p>{formData.email || "Compte connecté"}</p>
-              <div className={styles.badges}>
-                {formData.city && (
-                  <span className={styles.badge}>
-                    <MapPin />
-                    {formData.city}
-                  </span>
-                )}
-                {formData.phone && (
-                  <span className={styles.badge}>
-                    <Phone />
-                    {formData.phone}
-                  </span>
-                )}
-              </div>
-            </div>
+        <div className={styles.formAvatarBlock}>
+          <div className={styles.formAvatarFrame}>
+            <UserAvatar
+              src={photoPreviewUrl}
+              alt="Photo de profil"
+              size={84}
+              priority
+            />
           </div>
 
-          <div className={styles.headerActions}>
+          <div className={styles.formAvatarActions}>
             <button
               type="button"
               className={styles.secondaryButton}
@@ -264,157 +355,705 @@ export default function ProfilPage() {
               {photoPreviewUrl ? "Changer la photo" : "Ajouter une photo"}
             </button>
 
-            {photoPreviewUrl && (
+            {photoPreviewUrl ? (
               <button
                 type="button"
-                className={styles.textButton}
+                className={styles.ghostButton}
                 onClick={handleRemovePhoto}
               >
                 Retirer la photo
               </button>
-            )}
+            ) : null}
           </div>
         </div>
+      </div>
 
-        <div className={styles.separator} aria-hidden="true" />
-
-        <form className={styles.form} onSubmit={handleSubmit}>
+      <div className={styles.formGrid}>
+        <label className={styles.field}>
+          <span>Prénom</span>
           <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className={styles.hiddenInput}
-            onChange={handlePhotoChange}
+            name="first_name"
+            type="text"
+            value={formData.first_name}
+            onChange={handleChange}
+            required
           />
+        </label>
 
-          <div className={styles.gridTwo}>
-            <label className={styles.field}>
-              <span>Prénom</span>
-              <input
-                name="first_name"
-                type="text"
-                value={formData.first_name}
-                onChange={handleChange}
-                required
-              />
-            </label>
+        <label className={styles.field}>
+          <span>Nom</span>
+          <input
+            name="last_name"
+            type="text"
+            value={formData.last_name}
+            onChange={handleChange}
+            required
+          />
+        </label>
+      </div>
 
-            <label className={styles.field}>
-              <span>Nom</span>
-              <input
-                name="last_name"
-                type="text"
-                value={formData.last_name}
-                onChange={handleChange}
-                required
-              />
-            </label>
-          </div>
+      <label className={styles.field}>
+        <span>
+          <Mail />
+          Email
+        </span>
+        <input name="email" type="email" value={formData.email} readOnly disabled />
+        <small>L&apos;email se modifie via un parcours dédié.</small>
+      </label>
 
+      <div className={styles.formGrid}>
+        <label className={styles.field}>
+          <span>Téléphone</span>
+          <input
+            name="phone"
+            type="tel"
+            value={formData.phone}
+            onChange={handleChange}
+            placeholder="Ajouter un numéro"
+          />
+        </label>
+
+        <label className={styles.field}>
+          <span>Pseudo</span>
+          <input
+            name="pseudo"
+            type="text"
+            value={formData.pseudo}
+            onChange={handleChange}
+            placeholder="Choisir un pseudo"
+          />
+        </label>
+      </div>
+
+      <div className={styles.formGrid}>
+        <label className={styles.field}>
+          <span>Pays</span>
+          <input
+            name="country"
+            type="text"
+            value={formData.country}
+            onChange={handleChange}
+            required
+          />
+        </label>
+
+        <label className={styles.field}>
+          <span>Ville</span>
+          <input
+            name="city"
+            type="text"
+            value={formData.city}
+            onChange={handleChange}
+            required
+          />
+        </label>
+      </div>
+
+      <label className={styles.field}>
+        <span>Date de naissance</span>
+        <DatePickerField
+          value={formData.birth_date}
+          onChange={(value) =>
+            setFormData((prev) => ({
+              ...prev,
+              birth_date: value,
+            }))
+          }
+          placeholder="Date de naissance"
+          variant="input"
+          ariaLabel="Choisir une date de naissance"
+        />
+      </label>
+
+      <label className={styles.field}>
+        <span>Bio</span>
+        <textarea
+          name="bio"
+          value={formData.bio}
+          onChange={handleChange}
+          rows={5}
+          placeholder="Parle un peu de toi, de tes goûts, de ta cuisine..."
+        />
+      </label>
+
+      <div className={styles.formActions}>
+        <button type="button" className={styles.ghostButton} onClick={onClose}>
+          Fermer
+        </button>
+        <button type="submit" className={styles.primaryButton} disabled={saving}>
+          {saving ? "Enregistrement..." : "Sauvegarder"}
+        </button>
+      </div>
+    </form>
+  );
+};
+
+const PasswordEditForm = ({
+  user,
+  onClose,
+}: {
+  user: NonNullable<ReturnType<typeof useAuth>["user"]>;
+  onClose: () => void;
+}) => {
+  const router = useRouter();
+  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState<PasswordFormData>({
+    current_password: "",
+    new_password: "",
+    confirm_password: "",
+  });
+
+  const isLocalAccount = user.authProvider === "local";
+  const providerLabel = useMemo(
+    () => getProviderLabel(user.authProvider),
+    [user.authProvider]
+  );
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!isLocalAccount) {
+      return;
+    }
+
+    if (formData.new_password !== formData.confirm_password) {
+      toast.error("Les mots de passe ne correspondent pas.");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+    if (!token || !apiUrl) {
+      toast.error("Session invalide. Reconnecte-toi.");
+      router.push("/connexion");
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      const response = await axios.patch(
+        `${apiUrl}/auth/change-password`,
+        {
+          current_password: formData.current_password,
+          new_password: formData.new_password,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      toast.success(response.data?.message ?? "Mot de passe mis à jour");
+      setFormData({
+        current_password: "",
+        new_password: "",
+        confirm_password: "",
+      });
+      onClose();
+    } catch (error: unknown) {
+      const message = axios.isAxiosError(error)
+        ? error.response?.data?.message ?? "La mise à jour du mot de passe a échoué."
+        : "La mise à jour du mot de passe a échoué.";
+      toast.error(Array.isArray(message) ? message.join(", ") : message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className={styles.formPanel}>
+      <div className={styles.formPanelHead}>
+        <div>
+          <p className={styles.panelEyebrow}>Sécurité</p>
+          <h3>Modifier mon mot de passe</h3>
+        </div>
+
+        <div className={styles.providerPill}>
+          <ShieldCheck />
+          <span>Connexion via {providerLabel}</span>
+        </div>
+      </div>
+
+      {isLocalAccount ? (
+        <form className={styles.passwordForm} onSubmit={handleSubmit}>
           <label className={styles.field}>
-            <span>
-              <Mail />
-              Email
-            </span>
+            <span>Mot de passe actuel</span>
             <input
-              name="email"
-              type="email"
-              value={formData.email}
-              readOnly
-              disabled
-            />
-            <small>L’email se modifie via un parcours dédié.</small>
-          </label>
-
-          <div className={styles.gridTwo}>
-            <label className={styles.field}>
-              <span>Téléphone</span>
-              <input
-                name="phone"
-                type="tel"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="Ajouter un numéro"
-              />
-            </label>
-
-            <label className={styles.field}>
-              <span>Pseudo</span>
-              <input
-                name="pseudo"
-                type="text"
-                value={formData.pseudo}
-                onChange={handleChange}
-                placeholder="Choisir un pseudo"
-              />
-            </label>
-          </div>
-
-          <div className={styles.gridTwo}>
-            <label className={styles.field}>
-              <span>Pays</span>
-              <input
-                name="country"
-                type="text"
-                value={formData.country}
-                onChange={handleChange}
-                required
-              />
-            </label>
-
-            <label className={styles.field}>
-              <span>Ville</span>
-              <input
-                name="city"
-                type="text"
-                value={formData.city}
-                onChange={handleChange}
-                required
-              />
-            </label>
-          </div>
-
-          <label className={styles.field}>
-            <span>Date de naissance</span>
-            <DatePickerField
-              value={formData.birth_date}
-              onChange={(value) =>
+              type="password"
+              value={formData.current_password}
+              onChange={(event) =>
                 setFormData((prev) => ({
                   ...prev,
-                  birth_date: value,
+                  current_password: event.target.value,
                 }))
               }
-              placeholder="Date de naissance"
-              variant="input"
-              ariaLabel="Choisir une date de naissance"
+              required
             />
           </label>
 
           <label className={styles.field}>
-            <span>Bio</span>
-            <textarea
-              name="bio"
-              value={formData.bio}
-              onChange={handleChange}
-              rows={5}
-              placeholder="Parle un peu de toi, de tes goûts, de ta cuisine..."
+            <span>Nouveau mot de passe</span>
+            <input
+              type="password"
+              value={formData.new_password}
+              onChange={(event) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  new_password: event.target.value,
+                }))
+              }
+              minLength={8}
+              required
+            />
+          </label>
+
+          <label className={styles.field}>
+            <span>Confirmer le nouveau mot de passe</span>
+            <input
+              type="password"
+              value={formData.confirm_password}
+              onChange={(event) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  confirm_password: event.target.value,
+                }))
+              }
+              minLength={8}
+              required
             />
           </label>
 
           <div className={styles.formActions}>
-            <button
-              type="button"
-              className={styles.secondaryButton}
-              onClick={() => router.push("/")}
-            >
-              Retour
-            </button>
-            <button type="submit" className={styles.primaryButton} disabled={saving}>
-              {saving ? "Enregistrement..." : "Sauvegarder"}
-            </button>
+            <p className={styles.helperText}>
+              Minimum 8 caractères.
+            </p>
+            <div className={styles.formButtons}>
+              <button type="button" className={styles.ghostButton} onClick={onClose}>
+                Fermer
+              </button>
+              <button type="submit" className={styles.primaryButton} disabled={saving}>
+                {saving ? "Enregistrement..." : "Mettre à jour"}
+              </button>
+            </div>
           </div>
         </form>
+      ) : (
+        <div className={styles.infoBox}>
+          <LockKeyhole />
+          <p>
+            Ton compte est connecté via {providerLabel}. Le mot de passe se gère
+            directement auprès de ce fournisseur.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ProfilPage = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { isLoggedIn, loading, user } = useAuth();
+  const [expandedPanel, setExpandedPanel] = useState<ExpandablePanel>(null);
+  const overviewSectionRef = useRef<HTMLElement | null>(null);
+  const preferencesSectionRef = useRef<HTMLElement | null>(null);
+  const activitySectionRef = useRef<HTMLElement | null>(null);
+  const paymentsSectionRef = useRef<HTMLElement | null>(null);
+  const notificationsSectionRef = useRef<HTMLDivElement | null>(null);
+  const profilePanelRef = useRef<HTMLDivElement | null>(null);
+  const passwordPanelRef = useRef<HTMLDivElement | null>(null);
+
+  const getSectionTarget = (section: string | null) => {
+    switch (section) {
+      case "overview":
+        return overviewSectionRef.current;
+      case "preferences":
+        return preferencesSectionRef.current;
+      case "activity":
+        return activitySectionRef.current;
+      case "payments":
+        return paymentsSectionRef.current;
+      case "notifications":
+        return notificationsSectionRef.current;
+      default:
+        return null;
+    }
+  };
+
+  const scrollToPanel = (
+    panel: Exclude<ExpandablePanel, null>,
+    attempt = 0
+  ) => {
+    window.requestAnimationFrame(() => {
+      const target =
+        panel === "profile" ? profilePanelRef.current : passwordPanelRef.current;
+
+      if (target) {
+        target.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+        return;
+      }
+
+      if (attempt < 8) {
+        scrollToPanel(panel, attempt + 1);
+      }
+    });
+  };
+
+  useEffect(() => {
+    if (!loading && !isLoggedIn) {
+      router.replace("/connexion");
+    }
+  }, [isLoggedIn, loading, router]);
+
+  useEffect(() => {
+    const panel = searchParams.get("panel");
+
+    if (panel === "profile" || panel === "password") {
+      setExpandedPanel(panel);
+      return;
+    }
+
+    setExpandedPanel(null);
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    const panel = searchParams.get("panel");
+    if (panel === "profile" || panel === "password") {
+      return;
+    }
+
+    const section = searchParams.get("section");
+    const target = getSectionTarget(section);
+
+    if (!target) {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      target.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [searchParams, user]);
+
+  useEffect(() => {
+    if (!expandedPanel || !user) {
+      return;
+    }
+
+    scrollToPanel(expandedPanel);
+  }, [expandedPanel, user]);
+
+  useEffect(() => {
+    const handleProfileNavigate = (event: Event) => {
+      const detail = (event as CustomEvent<{
+        panel?: Exclude<ExpandablePanel, null>;
+        section?: ProfileSection;
+      }>).detail;
+
+      if (!detail) {
+        return;
+      }
+
+      if (detail.panel) {
+        setExpandedPanel(detail.panel);
+      }
+
+      window.requestAnimationFrame(() => {
+        if (detail.panel) {
+          scrollToPanel(detail.panel);
+          return;
+        }
+
+        getSectionTarget(detail.section ?? null)?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
+    };
+
+    window.addEventListener(PROFILE_NAVIGATE_EVENT, handleProfileNavigate);
+
+    return () => {
+      window.removeEventListener(PROFILE_NAVIGATE_EVENT, handleProfileNavigate);
+    };
+  }, []);
+
+  const displayName = useMemo(() => {
+    if (!user) {
+      return "Mon profil";
+    }
+
+    return (
+      [user.firstName, user.lastName].filter(Boolean).join(" ").trim() ||
+      user.pseudo ||
+      "Mon profil"
+    );
+  }, [user]);
+
+  const overviewContact = useMemo(() => {
+    if (!user) {
+      return "Coordonnées à renseigner";
+    }
+
+    return user.email || user.phone || user.pseudo || "Coordonnées à renseigner";
+  }, [user]);
+
+  const updatePanelQuery = (nextPanel: ExpandablePanel) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (nextPanel) {
+      params.delete("section");
+      params.set("panel", nextPanel);
+    } else {
+      params.delete("panel");
+    }
+
+    const nextQuery = params.toString();
+    router.replace(nextQuery ? `/profil?${nextQuery}` : "/profil", {
+      scroll: false,
+    });
+  };
+
+  const handlePanelToggle = (panel: Exclude<ExpandablePanel, null>) => {
+    const nextPanel = expandedPanel === panel ? null : panel;
+    setExpandedPanel(nextPanel);
+    updatePanelQuery(nextPanel);
+  };
+
+  const handlePanelOpen = (panel: Exclude<ExpandablePanel, null>) => {
+    setExpandedPanel(panel);
+    updatePanelQuery(panel);
+    scrollToPanel(panel);
+  };
+
+  const handlePlaceholderClick = (label: string) => {
+    toast.info(`${label} sera ajouté plus tard.`);
+  };
+
+  if (loading || (!user && isLoggedIn)) {
+    return (
+      <section className={styles.page}>
+        <div className={styles.loadingCard}>
+          <p className={styles.loading}>Chargement du profil...</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (!isLoggedIn || !user) {
+    return null;
+  }
+
+  return (
+    <section className={styles.page}>
+      <div className={styles.layout}>
+        <div className={styles.contentColumn}>
+          <section ref={overviewSectionRef} className={styles.sectionCard}>
+            <div className={styles.sectionHead}>
+              <div>
+                <p className={styles.sectionEyebrow}>Vue d&apos;ensemble</p>
+              </div>
+            </div>
+
+            <div className={styles.overviewIdentityCard}>
+              <div className={styles.overviewIdentityText}>
+                <h3>{displayName}</h3>
+                <p>{overviewContact}</p>
+              </div>
+
+              <div className={styles.overviewAvatarStack}>
+                <div className={styles.overviewAvatarFrame}>
+                  <UserAvatar
+                    src={user.profilePhotoUrl}
+                    alt="Photo de profil"
+                    size={78}
+                    priority
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  className={`${styles.avatarEdit} ${styles.overviewAvatarEdit}`}
+                  aria-label="Modifier le profil"
+                  onClick={() => handlePanelOpen("profile")}
+                >
+                  <Camera />
+                </button>
+              </div>
+            </div>
+
+            <div className={styles.statsGrid}>
+              <StatCard label="Repas organisés" value="0" />
+              <StatCard label="Repas participés" value="0" />
+              <StatCard label="Note" value="-" />
+              <StatCard
+                label="Profil vérifié"
+                value={
+                  user.isProfileComplete ? (
+                    <ShieldCheck aria-hidden="true" />
+                  ) : (
+                    "En cours"
+                  )
+                }
+                valueClassName={user.isProfileComplete ? styles.statValueIcon : undefined}
+              />
+            </div>
+          </section>
+
+          <section ref={preferencesSectionRef} className={styles.sectionCard}>
+            <div className={styles.sectionHead}>
+              <h2>Préférences alimentaires</h2>
+            </div>
+
+            <PreferenceGroup title="Allergies" items={["Coriandre", "Noisette", "Crevettes"]} />
+            <PreferenceGroup title="Régime" items={["Végétarien(ne)", "Halal", "Sans gluten"]} />
+          </section>
+
+          <section ref={activitySectionRef} className={styles.sectionCard}>
+            <div className={styles.sectionHead}>
+              <h2>Activité</h2>
+            </div>
+
+            <div className={styles.activityGroup}>
+              <h3 className={styles.activitySubtitle}>Invité</h3>
+              <div className={styles.sectionList}>
+                <ActionRow
+                  icon={CalendarDays}
+                  label="Réservations à venir"
+                  value="0"
+                  interactive={false}
+                />
+                <ActionRow
+                  icon={History}
+                  label="Historique de repas"
+                  onClick={() => handlePlaceholderClick("Historique de repas invité")}
+                />
+              </div>
+            </div>
+
+            <div className={styles.activityGroup}>
+              <h3 className={styles.activitySubtitle}>Hôte</h3>
+              <div className={styles.sectionList}>
+                <ActionRow
+                  icon={UtensilsCrossed}
+                  label="Repas organisés"
+                  value="0"
+                  interactive={false}
+                />
+                <ActionRow
+                  icon={Users}
+                  label="Nombre de participants"
+                  value="0"
+                  interactive={false}
+                />
+                <ActionRow
+                  icon={History}
+                  label="Historique de repas"
+                  onClick={() => handlePlaceholderClick("Historique de repas hôte")}
+                />
+              </div>
+            </div>
+          </section>
+
+          <section ref={paymentsSectionRef} className={styles.sectionCard}>
+            <div className={styles.sectionHead}>
+              <h2>Paiements & Portefeuille</h2>
+            </div>
+
+            <div className={styles.sectionList}>
+              <ActionRow
+                icon={CreditCard}
+                label="Moyens de paiement"
+                onClick={() => handlePlaceholderClick("Moyens de paiement")}
+              />
+              <ActionRow
+                icon={History}
+                label="Historique des paiements"
+                onClick={() => handlePlaceholderClick("Historique des paiements")}
+              />
+              <ActionRow
+                icon={Wallet}
+                label="Portefeuille"
+                onClick={() => handlePlaceholderClick("Portefeuille")}
+              />
+              <ActionRow
+                icon={TriangleAlert}
+                label="Remboursements"
+                onClick={() => handlePlaceholderClick("Remboursements")}
+              />
+            </div>
+          </section>
+
+          <section className={styles.sectionCard}>
+            <div className={styles.sectionHead}>
+              <h2>Paramètres & sécurité</h2>
+            </div>
+
+            <div className={styles.sectionList}>
+              <ActionRow
+                icon={ShieldCheck}
+                label="Modifier mon profil"
+                expanded={expandedPanel === "profile"}
+                onClick={() => handlePanelToggle("profile")}
+              />
+
+              {expandedPanel === "profile" ? (
+                <div ref={profilePanelRef} className={styles.expandedPanel}>
+                  <ProfileEditForm user={user} onClose={() => handlePanelToggle("profile")} />
+                </div>
+              ) : null}
+
+              <ActionRow
+                icon={LockKeyhole}
+                label="Modifier le mot de passe"
+                expanded={expandedPanel === "password"}
+                onClick={() => handlePanelToggle("password")}
+              />
+
+              {expandedPanel === "password" ? (
+                <div ref={passwordPanelRef} className={styles.expandedPanel}>
+                  <PasswordEditForm
+                    user={user}
+                    onClose={() => handlePanelToggle("password")}
+                  />
+                </div>
+              ) : null}
+
+              <div ref={notificationsSectionRef}>
+                <ActionRow
+                  icon={Bell}
+                  label="Notifications"
+                  onClick={() => handlePlaceholderClick("Notifications")}
+                />
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className={styles.deleteButton}
+              onClick={() => handlePlaceholderClick("Suppression du compte")}
+            >
+              Supprimer le compte
+            </button>
+          </section>
+        </div>
       </div>
     </section>
   );
-}
+};
+
+export default ProfilPage;
