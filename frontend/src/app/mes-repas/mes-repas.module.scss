@@ -218,7 +218,6 @@
   font-weight: 800;
 }
 
-.infoBanner,
 .hostGuardCard,
 .loadingPanel,
 .emptyState {
@@ -226,21 +225,6 @@
   border-radius: 28px;
   border: 1px solid rgba(217, 202, 165, 0.85);
   background: rgba(255, 251, 241, 0.92);
-}
-
-.infoBanner {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  color: #5f553d;
-  line-height: 1.65;
-}
-
-.infoBanner svg {
-  width: 20px;
-  height: 20px;
-  flex: 0 0 auto;
-  color: #9f6220;
 }
 
 .hostGuardCard {

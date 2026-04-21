@@ -751,15 +751,6 @@ export default function MesRepasPage() {
         </>
       ) : (
         <div className={styles.sectionStack}>
-          <div className={styles.infoBanner}>
-            <CircleAlert />
-            <p>
-              Cette vue est ouverte a tous les comptes connectes. Elle accueillera
-              aussi le suivi complet des participations des que le module de
-              reservation sera branche au backend.
-            </p>
-          </div>
-
           <section className={styles.sectionCard}>
             <div className={styles.sectionHead}>
               <div>
