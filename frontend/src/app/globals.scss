@@ -26,7 +26,7 @@ body {
   overflow-y: hidden;
   background-color: $white;
   color: $black;
-  font-family: "Merriweather Sans", "Trebuchet MS", sans-serif;
+  font-family: var(--font-merriweather-sans), "Trebuchet MS", sans-serif;
 }
 
 // =========================
@@ -67,7 +67,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: "Open Sans", "Avenir Next", "Segoe UI", sans-serif;
+  font-family: var(--font-open-sans), "Avenir Next", "Segoe UI", sans-serif;
 }
 
 // =========================
