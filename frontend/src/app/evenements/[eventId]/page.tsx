@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronRight, House, ShieldCheck, Star } from "lucide-react";
+import { Dessert, Salad, ShieldCheck, Soup, Star, UtensilsCrossed, House } from "lucide-react";
 import UserAvatar from "@/components/UserAvatar";
 import {
   getMealFilterById,
@@ -20,6 +20,12 @@ type EventDetailPageProps = {
   }>;
 };
 
+const menuIcons = {
+  "Entrée": Salad,
+  "Plat": UtensilsCrossed,
+  "Dessert": Dessert,
+} as const;
+
 export default async function EventDetailPage({ params }: EventDetailPageProps) {
   const { eventId } = await params;
   const event = getMealEventById(eventId);
@@ -37,6 +43,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
   const selectedFilters = event.filters
     .map((filterId) => getMealFilterById(filterId)?.label)
     .filter(Boolean);
+  const hostFirstName = hostProfile.name.split(" ")[0] ?? hostProfile.name;
   const participationRatio = Math.min(
     100,
     Math.round((event.currentParticipants / event.maxParticipants) * 100),
@@ -111,7 +118,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
               className={styles.locationLink}
             >
               <span>Voir sur la carte</span>
-              <ChevronRight aria-hidden="true" />
+              <span className={styles.detailChevron} aria-hidden="true" />
             </Link>
           </section>
 
@@ -158,7 +165,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                 className={styles.hostProfileLink}
               >
                 <span>Voir le profil</span>
-                <ChevronRight aria-hidden="true" />
+                <span className={styles.detailChevron} aria-hidden="true" />
               </Link>
             </div>
           </section>
@@ -171,7 +178,15 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
             <div className={styles.menuGrid}>
               {event.menuSections.map((section) => (
                 <section key={section.title} className={styles.menuCourse}>
-                  <h3>{section.title}</h3>
+                  <div className={styles.menuCourseHead}>
+                    <span className={styles.menuCourseIcon} aria-hidden="true">
+                      {(() => {
+                        const Icon = menuIcons[section.title as keyof typeof menuIcons] ?? Soup;
+                        return <Icon />;
+                      })()}
+                    </span>
+                    <h3>{section.title}</h3>
+                  </div>
                   <ul>
                     {section.items.map((item) => (
                       <li key={item}>{item}</li>
@@ -181,6 +196,36 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
               ))}
             </div>
           </section>
+
+          <section className={styles.rulesSection} aria-label="Règles et conditions">
+            <div className={styles.rulesHead}>
+              <h2>Règles et conditions</h2>
+            </div>
+
+            <div className={styles.rulesList}>
+              <Link href="#" className={styles.ruleLink}>
+                <span>Règles de la maison</span>
+                <span className={styles.detailChevron} aria-hidden="true" />
+              </Link>
+              <Link href="#" className={styles.ruleLink}>
+                <span>Règlement de l&apos;application</span>
+                <span className={styles.detailChevron} aria-hidden="true" />
+              </Link>
+              <Link href="#" className={styles.ruleLink}>
+                <span>Politique d&apos;annulation</span>
+                <span className={styles.detailChevron} aria-hidden="true" />
+              </Link>
+            </div>
+          </section>
+
+          <div className={styles.detailActions}>
+            <Link href="/connexion" className={styles.contactButton}>
+              <span>Contacter {hostFirstName}</span>
+            </Link>
+            <Link href="/connexion" className={styles.registerButton}>
+              <span>S&apos;inscrire</span>
+            </Link>
+          </div>
         </section>
       </article>
     </div>

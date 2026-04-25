@@ -218,6 +218,24 @@
   stroke-width: 2.8;
 }
 
+.detailChevron {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 10px;
+  height: 12px;
+}
+
+.detailChevron::after {
+  content: "";
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 8px solid #8f752d;
+}
+
 .locationLink:hover,
 .locationLink:focus-visible {
   color: #4f5408;
@@ -373,7 +391,7 @@
 .menuSection {
   margin-top: 24px;
   display: grid;
-  gap: 16px;
+  gap: 28px;
 }
 
 .menuHead h2,
@@ -402,6 +420,31 @@
   gap: 10px;
 }
 
+.menuCourseHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.menuCourseIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid #e2d6b2;
+  background: #faf4df;
+  color: #8f752d;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.menuCourseIcon svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.1;
+}
+
 .menuCourse h3 {
   color: #201d11;
   font-size: 18px;
@@ -419,6 +462,105 @@
 .menuCourse li {
   font-size: 14px;
   line-height: 1.45;
+}
+
+.rulesSection {
+  margin-top: 28px;
+  display: grid;
+  gap: 10px;
+}
+
+.rulesHead h2,
+.ruleLink {
+  margin: 0;
+}
+
+.rulesHead h2 {
+  color: #201d11;
+  font-size: clamp(18px, 2.3vw, 24px);
+  line-height: 1.06;
+  font-weight: 800;
+}
+
+.rulesList {
+  display: grid;
+}
+
+.ruleLink {
+  min-height: 46px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #e8ddbe;
+  color: #2b2718;
+  text-decoration: none;
+  font-size: 13px;
+  line-height: 1.25;
+  font-weight: 500;
+}
+
+.ruleLink:last-child {
+  border-bottom: 0;
+}
+
+.ruleLink svg {
+  width: 18px;
+  height: 18px;
+  color: #8f752d;
+  stroke-width: 2.8;
+  flex: 0 0 auto;
+}
+
+.ruleLink:hover,
+.ruleLink:focus-visible {
+  color: #5a4c21;
+  outline: none;
+}
+
+.detailActions {
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.contactButton,
+.registerButton {
+  min-height: 52px;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+  text-decoration: none;
+  font-size: 16px;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.contactButton {
+  border: 2px solid #8f752d;
+  color: #6a700d;
+  background: #fffdf7;
+}
+
+.registerButton {
+  border: 2px solid #d4c34a;
+  color: #201d11;
+  background: linear-gradient(90deg, #e6f16d 0%, #e3ef67 100%);
+}
+
+.contactButton:hover,
+.contactButton:focus-visible {
+  background: #fbf7e7;
+  outline: none;
+}
+
+.registerButton:hover,
+.registerButton:focus-visible {
+  filter: brightness(0.98);
+  outline: none;
 }
 
 .filterChip {
@@ -564,7 +706,7 @@
 
   .menuSection {
     margin-top: 18px;
-    gap: 14px;
+    gap: 18px;
   }
 
   .menuHead h2 {
@@ -580,6 +722,21 @@
     gap: 8px;
   }
 
+  .menuCourseHead {
+    gap: 8px;
+  }
+
+  .menuCourseIcon {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+  }
+
+  .menuCourseIcon svg {
+    width: 16px;
+    height: 16px;
+  }
+
   .menuCourse h3 {
     font-size: 16px;
   }
@@ -591,6 +748,33 @@
   .menuCourse li {
     font-size: 13px;
     line-height: 1.4;
+  }
+
+  .rulesSection {
+    margin-top: 20px;
+    gap: 8px;
+  }
+
+  .rulesHead h2 {
+    font-size: 14px;
+  }
+
+  .ruleLink {
+    min-height: 38px;
+    font-size: 12px;
+  }
+
+  .detailActions {
+    margin-top: 22px;
+    gap: 12px;
+  }
+
+  .contactButton,
+  .registerButton {
+    min-height: 46px;
+    padding: 0 14px;
+    border-radius: 14px;
+    font-size: 14px;
   }
 }
 
