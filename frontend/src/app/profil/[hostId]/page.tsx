@@ -1,0 +1,132 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ArrowLeft, CalendarDays, ChevronRight, MapPin, Star } from "lucide-react";
+import UserAvatar from "@/components/UserAvatar";
+import {
+  buildMealEventHref,
+  getMealEventsByHostId,
+  getHostProfileById,
+} from "@/lib/meal-data";
+import styles from "./public-profile.module.scss";
+
+type PublicProfilePageProps = {
+  params: Promise<{
+    hostId: string;
+  }>;
+};
+
+export default async function PublicProfilePage({ params }: PublicProfilePageProps) {
+  const { hostId } = await params;
+  const host = getHostProfileById(hostId);
+
+  if (!host) {
+    notFound();
+  }
+
+  const hostEvents = getMealEventsByHostId(host.id);
+  const latestEvent = hostEvents[0];
+
+  return (
+    <div className={styles.page}>
+      <Link
+        href={latestEvent ? buildMealEventHref(latestEvent.id) : "/rechercher"}
+        className={styles.backLink}
+      >
+        <ArrowLeft aria-hidden="true" />
+        <span>Retour à l&apos;événement</span>
+      </Link>
+
+      <section className={styles.hero}>
+        <div className={styles.heroTop}>
+          <div className={styles.identity}>
+            <div className={styles.avatarFrame}>
+              <UserAvatar
+                src={host.photoUrl}
+                alt={host.name}
+                size={112}
+                priority
+              />
+            </div>
+
+            <div className={styles.identityText}>
+              <p className={styles.eyebrow}>Profil hôte</p>
+              <h1>{host.name}</h1>
+
+              <div className={styles.metaRow}>
+                <span>
+                  <MapPin />
+                  {host.city}
+                </span>
+                <span>
+                  <Star fill="currentColor" />
+                  {host.rating.toFixed(1)} · {host.reviewCount} avis
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {latestEvent && (
+            <Link href={buildMealEventHref(latestEvent.id)} className={styles.eventLink}>
+              <CalendarDays aria-hidden="true" />
+              <span>Voir l&apos;événement</span>
+              <ChevronRight aria-hidden="true" />
+            </Link>
+          )}
+        </div>
+
+        <div className={styles.quotePanel}>
+          <span className={styles.quoteMark} aria-hidden="true">
+            &ldquo;
+          </span>
+          <p className={styles.quote}>{host.quote}</p>
+        </div>
+
+        <div className={styles.stats}>
+          <article>
+            <strong>{host.completedEvents}</strong>
+            <span>événements organisés</span>
+          </article>
+          <article>
+            <strong>{host.responseRate}%</strong>
+            <span>taux de réponse</span>
+          </article>
+          <article>
+            <strong>{host.reviewCount}</strong>
+            <span>avis participants</span>
+          </article>
+        </div>
+      </section>
+
+      <section className={styles.reviews}>
+        <div className={styles.sectionHead}>
+          <div>
+            <p className={styles.eyebrow}>Avis</p>
+            <h2>Ce que disent les participants</h2>
+          </div>
+        </div>
+
+        <div className={styles.reviewGrid}>
+          {host.reviews.map((review) => (
+            <article key={review.id} className={styles.reviewCard}>
+              <div className={styles.reviewHead}>
+                <div>
+                  <strong>{review.author}</strong>
+                  <span>{review.dateLabel}</span>
+                </div>
+
+                <div className={styles.reviewStars} aria-label={`Note ${review.rating} sur 5`}>
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <Star key={index} fill="currentColor" />
+                  ))}
+                </div>
+              </div>
+
+              <p>{review.comment}</p>
+              <span className={styles.reviewEvent}>Repas : {review.eventTitle}</span>
+            </article>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}

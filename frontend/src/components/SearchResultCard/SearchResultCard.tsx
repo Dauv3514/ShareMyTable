@@ -3,7 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CalendarDays, MapPin, UserRound } from "lucide-react";
-import { buildMealEventHref, MealEvent, mealFilterById } from "@/lib/search-data";
+import { getMealFilterById } from "@/lib/search-data";
+import { buildMealEventHref } from "@/lib/meal-data";
+import type { MealEvent } from "@/lib/data/types";
 import "./search-result-card.scss";
 
 type SearchResultCardProps = {
@@ -12,7 +14,7 @@ type SearchResultCardProps = {
 
 export default function SearchResultCard({ event }: SearchResultCardProps) {
   const visibleFilters = event.filters
-    .map((filterId) => mealFilterById.get(filterId)?.label)
+    .map((filterId) => getMealFilterById(filterId)?.label)
     .filter(Boolean)
     .slice(0, 2);
 

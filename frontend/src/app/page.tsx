@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useAuth } from "./providers/AuthProvider";
 import SearchBar from "../components/SearchBar";
 import EventCard from "../components/EventCard";
-import { buildMealEventHref, mealEvents } from "../lib/search-data";
+import { buildMealEventHref, getMealEvents } from "../lib/meal-data";
 import styles from "./page.module.scss";
+
+const mealEvents = getMealEvents();
 
 const veggieHomeCards = mealEvents
   .filter(

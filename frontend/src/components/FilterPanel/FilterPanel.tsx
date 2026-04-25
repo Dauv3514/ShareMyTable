@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import { mealFilterGroups } from "@/lib/search-data";
+import { getMealFilterGroups } from "@/lib/search-data";
 import "./filter-panel.scss";
 
 type FilterPanelProps = {
@@ -24,6 +24,8 @@ export default function FilterPanel({
   if (!open) {
     return null;
   }
+
+  const mealFilterGroups = getMealFilterGroups();
 
   return (
     <div className="filter-panel" role="dialog" aria-modal="true" aria-label="Filtres">

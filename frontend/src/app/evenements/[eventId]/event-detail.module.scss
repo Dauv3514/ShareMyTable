@@ -224,6 +224,152 @@
   outline: none;
 }
 
+.hostSection {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: minmax(240px, 260px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+}
+
+.hostCard {
+  padding: 18px;
+  border: 1px solid #d8c791;
+  border-radius: 24px;
+  background: #fffdf7;
+  display: grid;
+  gap: 12px;
+}
+
+.hostCardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.hostAvatarFrame {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #ffffff;
+  border: 2px solid #ecd6a0;
+  display: grid;
+  place-items: center;
+}
+
+.hostBadge {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid #8f752d;
+  color: #8f752d;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+.hostBadge svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.3;
+}
+
+.hostCard h2,
+.hostCard p,
+.hostQuote {
+  margin: 0;
+}
+
+.hostCard h2 {
+  color: #201d11;
+  font-size: 16px;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.hostRating {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #2f2330;
+}
+
+.hostRating svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  stroke-width: 1.5;
+}
+
+.hostCard p {
+  color: #6e6038;
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 400;
+}
+
+.hostContent {
+  display: grid;
+  gap: 24px;
+  justify-items: start;
+}
+
+.hostQuotePanel {
+  padding: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.hostQuoteMark {
+  color: #8b7c47;
+  font-size: clamp(34px, 4.5vw, 50px);
+  line-height: 0.8;
+  font-weight: 800;
+  font-family: var(--font-open-sans), "Avenir Next", "Segoe UI", sans-serif;
+}
+
+.hostQuote {
+  color: #201d11;
+  font-size: clamp(24px, 3.2vw, 34px);
+  line-height: 1.12;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  max-width: 720px;
+}
+
+.hostProfileLink {
+  min-height: 44px;
+  padding: 0 28px;
+  border: 2px solid #6a700d;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #6a700d;
+  background: transparent;
+  text-decoration: none;
+  font-size: 16px;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.hostProfileLink svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.8;
+}
+
+.hostProfileLink:hover,
+.hostProfileLink:focus-visible {
+  background: #fbf7e7;
+  color: #4f5408;
+  outline: none;
+}
+
 .filterChip {
   min-height: 40px;
   border: 1px solid #d8c791;
@@ -306,6 +452,62 @@
   .locationText strong,
   .locationText span,
   .locationLink {
+    font-size: 14px;
+  }
+
+  .hostSection {
+    margin-top: 4px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+  }
+
+  .hostCard {
+    padding: 16px;
+    gap: 10px;
+  }
+
+  .hostAvatarFrame {
+    width: 58px;
+    height: 58px;
+  }
+
+  .hostBadge {
+    width: 30px;
+    height: 30px;
+  }
+
+  .hostCard h2 {
+    font-size: 14px;
+  }
+
+  .hostRating {
+    gap: 8px;
+  }
+
+  .hostRating svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .hostQuotePanel {
+    width: 100%;
+    gap: 10px;
+  }
+
+  .hostQuoteMark {
+    font-size: 30px;
+  }
+
+  .hostQuote {
+    font-size: 24px;
+    line-height: 1.16;
+    max-width: none;
+  }
+
+  .hostProfileLink {
+    min-height: 40px;
+    padding: 0 22px;
     font-size: 14px;
   }
 }

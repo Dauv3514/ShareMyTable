@@ -1,12 +1,17 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronRight, House } from "lucide-react";
+import { ChevronRight, House, ShieldCheck, Star } from "lucide-react";
+import UserAvatar from "@/components/UserAvatar";
 import {
-  buildMealEventMapHref,
-  getMealEventById,
-  mealFilterById,
+  getMealFilterById,
 } from "@/lib/search-data";
+import {
+  buildHostProfileHref,
+  buildMealEventMapHref,
+  getHostProfileById,
+  getMealEventById,
+} from "@/lib/meal-data";
 import styles from "./event-detail.module.scss";
 
 type EventDetailPageProps = {
@@ -23,8 +28,14 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
     notFound();
   }
 
+  const hostProfile = getHostProfileById(event.hostId);
+
+  if (!hostProfile) {
+    notFound();
+  }
+
   const selectedFilters = event.filters
-    .map((filterId) => mealFilterById.get(filterId)?.label)
+    .map((filterId) => getMealFilterById(filterId)?.label)
     .filter(Boolean);
   const participationRatio = Math.min(
     100,
@@ -102,6 +113,54 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
               <span>Voir sur la carte</span>
               <ChevronRight aria-hidden="true" />
             </Link>
+          </section>
+
+          <section className={styles.hostSection} aria-label="Profil de l'hôte">
+            <article className={styles.hostCard}>
+              <div className={styles.hostCardTop}>
+                <div className={styles.hostAvatarFrame}>
+                  <UserAvatar
+                    src={hostProfile.photoUrl}
+                    alt={hostProfile.name}
+                    size={72}
+                    priority
+                  />
+                </div>
+
+                <span className={styles.hostBadge} aria-hidden="true">
+                  <ShieldCheck />
+                </span>
+              </div>
+
+              <h2>{hostProfile.name}</h2>
+
+              <div className={styles.hostRating} aria-label={`Note ${hostProfile.rating} sur 5`}>
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <Star key={index} fill="currentColor" />
+                ))}
+              </div>
+
+              <p>{hostProfile.reviewCount} avis</p>
+            </article>
+
+            <div className={styles.hostContent}>
+              <div className={styles.hostQuotePanel}>
+                <span className={styles.hostQuoteMark} aria-hidden="true">
+                  &ldquo;
+                </span>
+                <blockquote className={styles.hostQuote}>
+                  {hostProfile.quote}
+                </blockquote>
+              </div>
+
+              <Link
+                href={buildHostProfileHref(hostProfile.id)}
+                className={styles.hostProfileLink}
+              >
+                <span>Voir le profil</span>
+                <ChevronRight aria-hidden="true" />
+              </Link>
+            </div>
           </section>
         </section>
       </article>

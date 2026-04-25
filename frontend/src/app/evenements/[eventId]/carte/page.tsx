@@ -6,7 +6,7 @@ import SearchMap from "@/components/SearchMap";
 import {
   buildMealEventHref,
   getMealEventById,
-} from "@/lib/search-data";
+} from "@/lib/meal-data";
 import styles from "./event-map.module.scss";
 
 type EventMapPageProps = {
