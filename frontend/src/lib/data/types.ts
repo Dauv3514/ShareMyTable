@@ -29,6 +29,12 @@ export type MealEvent = {
   pricePerPerson: number;
   currentParticipants: number;
   maxParticipants: number;
+  menuSections: MealMenuSection[];
+};
+
+export type MealMenuSection = {
+  title: string;
+  items: string[];
 };
 
 export type HostReview = {
@@ -47,6 +53,7 @@ export type HostProfile = {
   quote: string;
   bio: string;
   photoUrl?: string | null;
+  homePhotos: string[];
   reviewCount: number;
   rating: number;
   completedEvents: number;

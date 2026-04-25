@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, ChevronRight, MapPin, Star } from "lucide-react";
@@ -25,6 +26,11 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
 
   const hostEvents = getMealEventsByHostId(host.id);
   const latestEvent = hostEvents[0];
+  const firstName = host.name.split(" ")[0] ?? host.name;
+  const needsElision = /^[aeiouyàâäéèêëîïôöùûü]/i.test(firstName);
+  const homeTitle = needsElision
+    ? `La maison d'${firstName}`
+    : `La maison de ${firstName}`;
 
   return (
     <div className={styles.page}>
@@ -123,6 +129,29 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
 
               <p>{review.comment}</p>
               <span className={styles.reviewEvent}>Repas : {review.eventTitle}</span>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className={styles.homeSection}>
+        <div className={styles.sectionHead}>
+          <div>
+            <p className={styles.eyebrow}>Chez l&apos;hôte</p>
+            <h2>{homeTitle}</h2>
+          </div>
+        </div>
+
+        <div className={styles.homeGallery} aria-label={homeTitle}>
+          {host.homePhotos.map((photoSrc, index) => (
+            <article key={`${host.id}-home-${index}`} className={styles.homePhotoCard}>
+              <Image
+                src={photoSrc}
+                alt={`${homeTitle} ${index + 1}`}
+                fill
+                className={styles.homePhoto}
+                sizes="(max-width: 719px) 180px, 240px"
+              />
             </article>
           ))}
         </div>

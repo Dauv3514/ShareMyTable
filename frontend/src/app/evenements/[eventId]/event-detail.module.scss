@@ -144,7 +144,7 @@
 }
 
 .locationSection {
-  margin-top: 10px;
+  margin-top: 16px;
   padding-top: 18px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -225,7 +225,7 @@
 }
 
 .hostSection {
-  margin-top: 10px;
+  margin-top: 22px;
   display: grid;
   grid-template-columns: minmax(240px, 260px) minmax(0, 1fr);
   gap: 18px;
@@ -370,6 +370,57 @@
   outline: none;
 }
 
+.menuSection {
+  margin-top: 24px;
+  display: grid;
+  gap: 16px;
+}
+
+.menuHead h2,
+.menuCourse h3,
+.menuCourse ul {
+  margin: 0;
+}
+
+.menuHead h2 {
+  color: #201d11;
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 0.98;
+  font-weight: 800;
+}
+
+.menuGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 48px;
+  row-gap: 18px;
+  align-items: start;
+}
+
+.menuCourse {
+  display: grid;
+  gap: 10px;
+}
+
+.menuCourse h3 {
+  color: #201d11;
+  font-size: 18px;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+.menuCourse ul {
+  padding-left: 18px;
+  color: #342a19;
+  display: grid;
+  gap: 8px;
+}
+
+.menuCourse li {
+  font-size: 14px;
+  line-height: 1.45;
+}
+
 .filterChip {
   min-height: 40px;
   border: 1px solid #d8c791;
@@ -434,7 +485,7 @@
   }
 
   .locationSection {
-    margin-top: 6px;
+    margin-top: 10px;
     padding-top: 16px;
     gap: 14px;
   }
@@ -456,7 +507,7 @@
   }
 
   .hostSection {
-    margin-top: 4px;
+    margin-top: 18px;
     grid-template-columns: minmax(0, 1fr);
     gap: 16px;
     align-items: start;
@@ -509,6 +560,37 @@
     min-height: 40px;
     padding: 0 22px;
     font-size: 14px;
+  }
+
+  .menuSection {
+    margin-top: 18px;
+    gap: 14px;
+  }
+
+  .menuHead h2 {
+    font-size: 18px;
+  }
+
+  .menuGrid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .menuCourse {
+    gap: 8px;
+  }
+
+  .menuCourse h3 {
+    font-size: 16px;
+  }
+
+  .menuCourse ul {
+    gap: 6px;
+  }
+
+  .menuCourse li {
+    font-size: 13px;
+    line-height: 1.4;
   }
 }
 

@@ -162,6 +162,25 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
               </Link>
             </div>
           </section>
+
+          <section className={styles.menuSection} aria-label="Au menu">
+            <div className={styles.menuHead}>
+              <h2>Au menu</h2>
+            </div>
+
+            <div className={styles.menuGrid}>
+              {event.menuSections.map((section) => (
+                <section key={section.title} className={styles.menuCourse}>
+                  <h3>{section.title}</h3>
+                  <ul>
+                    {section.items.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </div>
+          </section>
         </section>
       </article>
     </div>

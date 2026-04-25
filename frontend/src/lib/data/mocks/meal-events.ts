@@ -17,6 +17,25 @@ export const MOCK_MEAL_EVENTS: MealEvent[] = [
     pricePerPerson: 12,
     currentParticipants: 3,
     maxParticipants: 5,
+    menuSections: [
+      {
+        title: "Entrée",
+        items: ["Purée d'avocats"],
+      },
+      {
+        title: "Plat",
+        items: [
+          "Œufs brouillés, piment et fines herbes",
+          "Haricots blancs, sauce tomate",
+          "Champignons",
+          "Toasts de pain frais",
+        ],
+      },
+      {
+        title: "Dessert",
+        items: ["Salade de fruits"],
+      },
+    ],
   },
   {
     id: "table-vegetale-rennes",
@@ -41,6 +60,24 @@ export const MOCK_MEAL_EVENTS: MealEvent[] = [
     pricePerPerson: 14,
     currentParticipants: 2,
     maxParticipants: 5,
+    menuSections: [
+      {
+        title: "Entrée",
+        items: ["Velouté de petits pois à la menthe"],
+      },
+      {
+        title: "Plat",
+        items: [
+          "Galettes de lentilles corail",
+          "Riz pilaf aux amandes",
+          "Légumes rôtis au four",
+        ],
+      },
+      {
+        title: "Dessert",
+        items: ["Crème coco vanille"],
+      },
+    ],
   },
   {
     id: "dhal-naan-nantes",
@@ -64,6 +101,25 @@ export const MOCK_MEAL_EVENTS: MealEvent[] = [
     pricePerPerson: 16,
     currentParticipants: 4,
     maxParticipants: 6,
+    menuSections: [
+      {
+        title: "Entrée",
+        items: ["Raita au concombre et menthe"],
+      },
+      {
+        title: "Plat",
+        items: [
+          "Dhal de lentilles corail",
+          "Naan maison",
+          "Pickles d'oignons rouges",
+          "Coriandre fraîche",
+        ],
+      },
+      {
+        title: "Dessert",
+        items: ["Mangue au citron vert"],
+      },
+    ],
   },
   {
     id: "couscous-maison-paris",
@@ -81,6 +137,24 @@ export const MOCK_MEAL_EVENTS: MealEvent[] = [
     pricePerPerson: 18,
     currentParticipants: 3,
     maxParticipants: 5,
+    menuSections: [
+      {
+        title: "Entrée",
+        items: ["Carottes râpées au cumin"],
+      },
+      {
+        title: "Plat",
+        items: [
+          "Couscous maison",
+          "Bouillon léger aux légumes",
+          "Pois chiches fondants",
+        ],
+      },
+      {
+        title: "Dessert",
+        items: ["Orange à la cannelle"],
+      },
+    ],
   },
   {
     id: "apero-tapas-lyon",
@@ -103,6 +177,25 @@ export const MOCK_MEAL_EVENTS: MealEvent[] = [
     pricePerPerson: 11,
     currentParticipants: 2,
     maxParticipants: 5,
+    menuSections: [
+      {
+        title: "Entrée",
+        items: ["Houmous citronné"],
+      },
+      {
+        title: "Plat",
+        items: [
+          "Sélection de tapas",
+          "Tortilla fondante",
+          "Poivrons grillés",
+          "Pain toasté",
+        ],
+      },
+      {
+        title: "Dessert",
+        items: ["Crème catalane revisitée"],
+      },
+    ],
   },
   {
     id: "repas-sans-gluten-bordeaux",
@@ -127,6 +220,24 @@ export const MOCK_MEAL_EVENTS: MealEvent[] = [
     pricePerPerson: 20,
     currentParticipants: 1,
     maxParticipants: 4,
+    menuSections: [
+      {
+        title: "Entrée",
+        items: ["Burrata sans gluten et tomates confites"],
+      },
+      {
+        title: "Plat",
+        items: [
+          "Pâtes fraîches sans gluten",
+          "Sauce crémeuse aux herbes",
+          "Légumes croquants",
+        ],
+      },
+      {
+        title: "Dessert",
+        items: ["Moelleux amande sans gluten"],
+      },
+    ],
   },
   {
     id: "bio-marseille",
@@ -151,6 +262,25 @@ export const MOCK_MEAL_EVENTS: MealEvent[] = [
     pricePerPerson: 13,
     currentParticipants: 4,
     maxParticipants: 6,
+    menuSections: [
+      {
+        title: "Entrée",
+        items: ["Tartines bio chèvre miel"],
+      },
+      {
+        title: "Plat",
+        items: [
+          "Assiette de saison",
+          "Quinoa aux herbes",
+          "Légumes grillés",
+          "Sauce yaourt citron",
+        ],
+      },
+      {
+        title: "Dessert",
+        items: ["Compote pomme-poire maison"],
+      },
+    ],
   },
   {
     id: "casher-strasbourg",
@@ -168,5 +298,23 @@ export const MOCK_MEAL_EVENTS: MealEvent[] = [
     pricePerPerson: 17,
     currentParticipants: 3,
     maxParticipants: 5,
+    menuSections: [
+      {
+        title: "Entrée",
+        items: ["Salade de betteraves et herbes fraîches"],
+      },
+      {
+        title: "Plat",
+        items: [
+          "Poulet rôti aux épices douces",
+          "Pommes grenaille",
+          "Légumes fondants",
+        ],
+      },
+      {
+        title: "Dessert",
+        items: ["Gâteau au miel"],
+      },
+    ],
   },
 ];
