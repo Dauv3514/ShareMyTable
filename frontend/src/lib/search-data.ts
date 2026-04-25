@@ -13,9 +13,14 @@ export type MealEvent = {
   city: string;
   date: string;
   dateLabel: string;
+  detailDateLabel: string;
+  timeLabel: string;
   host: string;
   variant: "default" | "veggie" | "nearby";
   filters: string[];
+  pricePerPerson: number;
+  currentParticipants: number;
+  maxParticipants: number;
 };
 
 export const mealFilterGroups: Array<{
@@ -240,9 +245,14 @@ export const mealEvents: MealEvent[] = [
     city: "Rennes",
     date: "2026-04-24",
     dateLabel: "Ven. 24 avr.",
+    detailDateLabel: "Vendredi 24 avril",
+    timeLabel: "10h30",
     host: "Antoine GREGE",
     variant: "default",
     filters: ["vegetarien", "sans-porc", "sans-alcool", "riche-fibres"],
+    pricePerPerson: 12,
+    currentParticipants: 3,
+    maxParticipants: 5,
   },
   {
     id: "table-vegetale-rennes",
@@ -250,6 +260,8 @@ export const mealEvents: MealEvent[] = [
     city: "Rennes",
     date: "2026-04-25",
     dateLabel: "Sam. 25 avr.",
+    detailDateLabel: "Samedi 25 avril",
+    timeLabel: "12h30",
     host: "Emma DUBOIS",
     variant: "veggie",
     filters: [
@@ -260,6 +272,9 @@ export const mealEvents: MealEvent[] = [
       "faible-graisses-saturees",
       "riche-fibres",
     ],
+    pricePerPerson: 14,
+    currentParticipants: 2,
+    maxParticipants: 5,
   },
   {
     id: "dhal-naan-nantes",
@@ -267,6 +282,8 @@ export const mealEvents: MealEvent[] = [
     city: "Nantes",
     date: "2026-04-25",
     dateLabel: "Sam. 25 avr.",
+    detailDateLabel: "Samedi 25 avril",
+    timeLabel: "19h00",
     host: "Salome BRUN",
     variant: "veggie",
     filters: [
@@ -276,6 +293,9 @@ export const mealEvents: MealEvent[] = [
       "sans-moutarde",
       "faible-matieres-grasses",
     ],
+    pricePerPerson: 16,
+    currentParticipants: 4,
+    maxParticipants: 6,
   },
   {
     id: "couscous-maison-paris",
@@ -283,9 +303,14 @@ export const mealEvents: MealEvent[] = [
     city: "Paris",
     date: "2026-04-26",
     dateLabel: "Dim. 26 avr.",
+    detailDateLabel: "Dimanche 26 avril",
+    timeLabel: "12h00",
     host: "Nora ZEGH",
     variant: "default",
     filters: ["halal", "sans-porc", "sans-alcool", "faible-sel"],
+    pricePerPerson: 18,
+    currentParticipants: 3,
+    maxParticipants: 5,
   },
   {
     id: "apero-tapas-lyon",
@@ -293,6 +318,8 @@ export const mealEvents: MealEvent[] = [
     city: "Lyon",
     date: "2026-04-27",
     dateLabel: "Lun. 27 avr.",
+    detailDateLabel: "Lundi 27 avril",
+    timeLabel: "19h30",
     host: "Maxime PETIT",
     variant: "nearby",
     filters: [
@@ -301,6 +328,9 @@ export const mealEvents: MealEvent[] = [
       "sans-mollusques",
       "faible-graisses-saturees",
     ],
+    pricePerPerson: 11,
+    currentParticipants: 2,
+    maxParticipants: 5,
   },
   {
     id: "repas-sans-gluten-bordeaux",
@@ -308,6 +338,8 @@ export const mealEvents: MealEvent[] = [
     city: "Bordeaux",
     date: "2026-04-28",
     dateLabel: "Mar. 28 avr.",
+    detailDateLabel: "Mardi 28 avril",
+    timeLabel: "20h00",
     host: "Claire DUMAS",
     variant: "default",
     filters: [
@@ -318,6 +350,9 @@ export const mealEvents: MealEvent[] = [
       "sans-lupin",
       "faible-sel",
     ],
+    pricePerPerson: 20,
+    currentParticipants: 1,
+    maxParticipants: 4,
   },
   {
     id: "bio-marseille",
@@ -325,6 +360,8 @@ export const mealEvents: MealEvent[] = [
     city: "Marseille",
     date: "2026-04-29",
     dateLabel: "Mer. 29 avr.",
+    detailDateLabel: "Mercredi 29 avril",
+    timeLabel: "12h15",
     host: "Julie RENARD",
     variant: "nearby",
     filters: [
@@ -335,6 +372,9 @@ export const mealEvents: MealEvent[] = [
       "faible-calories",
       "riche-fibres",
     ],
+    pricePerPerson: 13,
+    currentParticipants: 4,
+    maxParticipants: 6,
   },
   {
     id: "casher-strasbourg",
@@ -342,11 +382,26 @@ export const mealEvents: MealEvent[] = [
     city: "Strasbourg",
     date: "2026-04-30",
     dateLabel: "Jeu. 30 avr.",
+    detailDateLabel: "Jeudi 30 avril",
+    timeLabel: "19h45",
     host: "Noah GARNIER",
     variant: "default",
     filters: ["casher", "sans-crustaces", "sans-soja", "sans-sulfites"],
+    pricePerPerson: 17,
+    currentParticipants: 3,
+    maxParticipants: 5,
   },
 ];
+
+export const mealEventById = new Map(mealEvents.map((event) => [event.id, event]));
+
+export function getMealEventById(eventId: string) {
+  return mealEventById.get(eventId);
+}
+
+export function buildMealEventHref(eventId: string) {
+  return `/evenements/${eventId}`;
+}
 
 export function normalizeText(value: string) {
   return value

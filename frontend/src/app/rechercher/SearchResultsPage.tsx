@@ -7,7 +7,12 @@ import EventCard from "@/components/EventCard";
 import SearchResultCard from "@/components/SearchResultCard";
 import SearchBar from "@/components/SearchBar";
 import SearchMap from "@/components/SearchMap";
-import { filterMealEvents, mealEvents, mealFilterById } from "@/lib/search-data";
+import {
+  buildMealEventHref,
+  filterMealEvents,
+  mealEvents,
+  mealFilterById,
+} from "@/lib/search-data";
 import styles from "./rechercher.module.scss";
 
 function parseFilters(value: string | null) {
@@ -185,6 +190,7 @@ export default function SearchResultsPage() {
               dateLabel={event.dateLabel}
               host={event.host}
               variant={event.variant}
+              href={buildMealEventHref(event.id)}
             />
           ))}
         </div>

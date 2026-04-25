@@ -4,38 +4,38 @@ import Link from "next/link";
 import { useAuth } from "./providers/AuthProvider";
 import SearchBar from "../components/SearchBar";
 import EventCard from "../components/EventCard";
+import { buildMealEventHref, mealEvents } from "../lib/search-data";
 import styles from "./page.module.scss";
+
+const veggieHomeCards = mealEvents
+  .filter(
+    (event) =>
+      event.variant === "veggie" ||
+      event.filters.includes("vegetarien") ||
+      event.filters.includes("vegetalien"),
+  )
+  .slice(0, 4);
+
+const nearbyHomeCards = [
+  ...mealEvents.filter((event) => event.variant === "nearby"),
+  ...mealEvents.filter((event) => event.variant !== "nearby"),
+].slice(0, 4);
 
 const homeSections = [
   {
     title: "Prochainement",
     description: "Ne manquez pas les prochains événements !",
-    cards: [
-      { title: "Brunch du samedi", city: "Rennes", dateLabel: "Ven. 3 avr.", host: "Antoine GREGE", variant: "default" as const },
-      { title: "Pasta party", city: "Rennes", dateLabel: "Sam. 4 avr.", host: "Claire DUMAS", variant: "default" as const },
-      { title: "Couscous maison", city: "Rennes", dateLabel: "Dim. 5 avr.", host: "Nora ZEGH", variant: "default" as const },
-      { title: "Pizza entre voisins", city: "Rennes", dateLabel: "Lun. 6 avr.", host: "Alex MARTIN", variant: "default" as const },
-    ],
+    cards: mealEvents.slice(0, 4),
   },
   {
     title: "Veggie",
     description: "Découvrez la cuisine végétarienne",
-    cards: [
-      { title: "Curry doux veggie", city: "Rennes", dateLabel: "Ven. 3 avr.", host: "Lina ROUSSEAU", variant: "veggie" as const },
-      { title: "Table végétale", city: "Rennes", dateLabel: "Sam. 4 avr.", host: "Emma DUBOIS", variant: "veggie" as const },
-      { title: "Dhal & naan", city: "Rennes", dateLabel: "Dim. 5 avr.", host: "Salomé BRUN", variant: "veggie" as const },
-      { title: "Lasagnes légumes", city: "Rennes", dateLabel: "Mar. 7 avr.", host: "Julie RENARD", variant: "veggie" as const },
-    ],
+    cards: veggieHomeCards,
   },
   {
     title: "Autour de moi",
     description: "Les meilleurs événements près de chez vous",
-    cards: [
-      { title: "Apéro tapas", city: "Rennes", dateLabel: "Jeu. 9 avr.", host: "Maxime PETIT", variant: "nearby" as const },
-      { title: "Dîner de quartier", city: "Rennes", dateLabel: "Ven. 10 avr.", host: "Sarah BERNARD", variant: "nearby" as const },
-      { title: "Repas entre voisins", city: "Rennes", dateLabel: "Sam. 11 avr.", host: "Noah GARNIER", variant: "nearby" as const },
-      { title: "Brunch du coin", city: "Rennes", dateLabel: "Dim. 12 avr.", host: "Camille FAURE", variant: "nearby" as const },
-    ],
+    cards: nearbyHomeCards,
   },
 ];
 
@@ -79,12 +79,13 @@ export default function Home() {
             <div className={styles.cardsRow}>
               {section.cards.map((card) => (
                 <EventCard
-                  key={`${section.title}-${card.title}`}
+                  key={`${section.title}-${card.id}`}
                   title={card.title}
                   city={card.city}
                   dateLabel={card.dateLabel}
                   host={card.host}
                   variant={card.variant}
+                  href={buildMealEventHref(card.id)}
                 />
               ))}
             </div>

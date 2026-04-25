@@ -11,6 +11,18 @@
   flex: 0 0 auto;
 }
 
+.event-card--link {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.event-card--link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 30px rgba(89, 70, 24, 0.16);
+}
+
 .event-card__media {
   position: relative;
   height: 92px;

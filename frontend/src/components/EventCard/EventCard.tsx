@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import "./event-card.scss";
 
 type EventCardProps = {
@@ -10,17 +11,17 @@ type EventCardProps = {
   host: string;
   variant?: "default" | "veggie" | "nearby";
   layout?: "tile" | "wide";
+  href?: string;
 };
-export default function EventCard({
+
+function EventCardContent({
   title,
   city,
   dateLabel,
   host,
-  variant = "default",
-  layout = "tile",
-}: EventCardProps) {
+}: Omit<EventCardProps, "variant" | "layout" | "href">) {
   return (
-    <article className={`event-card event-card--${variant} event-card--${layout}`}>
+    <>
       <div className="event-card__media" aria-hidden="true">
         <div className="event-card__plate">
           <Image
@@ -39,6 +40,44 @@ export default function EventCard({
         <h3 className="event-card__title">{title}</h3>
         <p className="event-card__host">{host}</p>
       </div>
+    </>
+  );
+}
+
+export default function EventCard({
+  title,
+  city,
+  dateLabel,
+  host,
+  variant = "default",
+  layout = "tile",
+  href,
+}: EventCardProps) {
+  const className = `event-card event-card--${variant} event-card--${layout} ${
+    href ? "event-card--link" : ""
+  }`;
+
+  if (href) {
+    return (
+      <Link href={href} className={className}>
+        <EventCardContent
+          title={title}
+          city={city}
+          dateLabel={dateLabel}
+          host={host}
+        />
+      </Link>
+    );
+  }
+
+  return (
+    <article className={className}>
+      <EventCardContent
+        title={title}
+        city={city}
+        dateLabel={dateLabel}
+        host={host}
+      />
     </article>
   );
 }
