@@ -11,6 +11,7 @@ export type MealEvent = {
   id: string;
   title: string;
   city: string;
+  locationLabel: string;
   date: string;
   dateLabel: string;
   detailDateLabel: string;
@@ -243,6 +244,7 @@ export const mealEvents: MealEvent[] = [
     id: "brunch-samedi-rennes",
     title: "Brunch du samedi",
     city: "Rennes",
+    locationLabel: "Saint-Hélier",
     date: "2026-04-24",
     dateLabel: "Ven. 24 avr.",
     detailDateLabel: "Vendredi 24 avril",
@@ -258,6 +260,7 @@ export const mealEvents: MealEvent[] = [
     id: "table-vegetale-rennes",
     title: "Table végétale",
     city: "Rennes",
+    locationLabel: "Thabor",
     date: "2026-04-25",
     dateLabel: "Sam. 25 avr.",
     detailDateLabel: "Samedi 25 avril",
@@ -280,6 +283,7 @@ export const mealEvents: MealEvent[] = [
     id: "dhal-naan-nantes",
     title: "Dhal & naan",
     city: "Nantes",
+    locationLabel: "Île de Nantes",
     date: "2026-04-25",
     dateLabel: "Sam. 25 avr.",
     detailDateLabel: "Samedi 25 avril",
@@ -301,6 +305,7 @@ export const mealEvents: MealEvent[] = [
     id: "couscous-maison-paris",
     title: "Couscous maison",
     city: "Paris",
+    locationLabel: "Canal Saint-Martin",
     date: "2026-04-26",
     dateLabel: "Dim. 26 avr.",
     detailDateLabel: "Dimanche 26 avril",
@@ -316,6 +321,7 @@ export const mealEvents: MealEvent[] = [
     id: "apero-tapas-lyon",
     title: "Apéro tapas",
     city: "Lyon",
+    locationLabel: "Croix-Rousse",
     date: "2026-04-27",
     dateLabel: "Lun. 27 avr.",
     detailDateLabel: "Lundi 27 avril",
@@ -336,6 +342,7 @@ export const mealEvents: MealEvent[] = [
     id: "repas-sans-gluten-bordeaux",
     title: "Dîner sans gluten",
     city: "Bordeaux",
+    locationLabel: "Chartrons",
     date: "2026-04-28",
     dateLabel: "Mar. 28 avr.",
     detailDateLabel: "Mardi 28 avril",
@@ -358,6 +365,7 @@ export const mealEvents: MealEvent[] = [
     id: "bio-marseille",
     title: "Assiette bio",
     city: "Marseille",
+    locationLabel: "Notre-Dame-du-Mont",
     date: "2026-04-29",
     dateLabel: "Mer. 29 avr.",
     detailDateLabel: "Mercredi 29 avril",
@@ -380,6 +388,7 @@ export const mealEvents: MealEvent[] = [
     id: "casher-strasbourg",
     title: "Table familiale",
     city: "Strasbourg",
+    locationLabel: "Krutenau",
     date: "2026-04-30",
     dateLabel: "Jeu. 30 avr.",
     detailDateLabel: "Jeudi 30 avril",
@@ -401,6 +410,10 @@ export function getMealEventById(eventId: string) {
 
 export function buildMealEventHref(eventId: string) {
   return `/evenements/${eventId}`;
+}
+
+export function buildMealEventMapHref(eventId: string) {
+  return `/evenements/${eventId}/carte`;
 }
 
 export function normalizeText(value: string) {

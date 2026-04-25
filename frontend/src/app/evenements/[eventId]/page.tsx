@@ -1,6 +1,12 @@
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getMealEventById, mealFilterById } from "@/lib/search-data";
+import { ChevronRight, House } from "lucide-react";
+import {
+  buildMealEventMapHref,
+  getMealEventById,
+  mealFilterById,
+} from "@/lib/search-data";
 import styles from "./event-detail.module.scss";
 
 type EventDetailPageProps = {
@@ -76,6 +82,27 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
               </span>
             ))}
           </div>
+
+          <section className={styles.locationSection} aria-label="Lieu de l'événement">
+            <div className={styles.locationBlock}>
+              <span className={styles.locationIcon} aria-hidden="true">
+                <House />
+              </span>
+
+              <div className={styles.locationText}>
+                <strong>{event.locationLabel}</strong>
+                <span>{event.city}</span>
+              </div>
+            </div>
+
+            <Link
+              href={buildMealEventMapHref(event.id)}
+              className={styles.locationLink}
+            >
+              <span>Voir sur la carte</span>
+              <ChevronRight aria-hidden="true" />
+            </Link>
+          </section>
         </section>
       </article>
     </div>
