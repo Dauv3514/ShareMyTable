@@ -1,8 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { CalendarDays, MapPin, UserRound } from "lucide-react";
-import { MealEvent, mealFilterById } from "@/lib/search-data";
+import { getMealFilterById } from "@/lib/search-data";
+import { buildMealEventHref } from "@/lib/meal-data";
+import type { MealEvent } from "@/lib/data/types";
 import "./search-result-card.scss";
 
 type SearchResultCardProps = {
@@ -11,12 +14,15 @@ type SearchResultCardProps = {
 
 export default function SearchResultCard({ event }: SearchResultCardProps) {
   const visibleFilters = event.filters
-    .map((filterId) => mealFilterById.get(filterId)?.label)
+    .map((filterId) => getMealFilterById(filterId)?.label)
     .filter(Boolean)
     .slice(0, 2);
 
   return (
-    <article className={`search-result-card search-result-card--${event.variant}`}>
+    <Link
+      href={buildMealEventHref(event.id)}
+      className={`search-result-card search-result-card--${event.variant}`}
+    >
       <div className="search-result-card__media" aria-hidden="true">
         <div className="search-result-card__plate">
           <Image
@@ -57,6 +63,6 @@ export default function SearchResultCard({ event }: SearchResultCardProps) {
           </div>
         )}
       </div>
-    </article>
+    </Link>
   );
 }

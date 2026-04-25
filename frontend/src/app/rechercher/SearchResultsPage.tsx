@@ -7,7 +7,11 @@ import EventCard from "@/components/EventCard";
 import SearchResultCard from "@/components/SearchResultCard";
 import SearchBar from "@/components/SearchBar";
 import SearchMap from "@/components/SearchMap";
-import { filterMealEvents, mealEvents, mealFilterById } from "@/lib/search-data";
+import {
+  filterMealEvents,
+  getMealFilterById,
+} from "@/lib/search-data";
+import { buildMealEventHref, getMealEvents } from "@/lib/meal-data";
 import styles from "./rechercher.module.scss";
 
 function parseFilters(value: string | null) {
@@ -61,16 +65,17 @@ export default function SearchResultsPage() {
     () => filterMealEvents({ location, date, filters }),
     [date, filters, location],
   );
+  const mealEvents = useMemo(() => getMealEvents(), []);
   const shouldShowMap = location.trim().length > 0;
   const recommendedEvents = useMemo(() => {
     const resultIds = new Set(events.map((event) => event.id));
     const recommendations = mealEvents.filter((event) => !resultIds.has(event.id));
 
     return (recommendations.length > 0 ? recommendations : mealEvents).slice(0, 4);
-  }, [events]);
+  }, [events, mealEvents]);
   const activeFilters = filters
     .map((filterId) => {
-      const filter = mealFilterById.get(filterId);
+      const filter = getMealFilterById(filterId);
       return filter ? { id: filterId, label: filter.label } : null;
     })
     .filter((filter): filter is { id: string; label: string } => Boolean(filter));
@@ -185,6 +190,7 @@ export default function SearchResultsPage() {
               dateLabel={event.dateLabel}
               host={event.host}
               variant={event.variant}
+              href={buildMealEventHref(event.id)}
             />
           ))}
         </div>
