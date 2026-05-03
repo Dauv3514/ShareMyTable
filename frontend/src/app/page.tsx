@@ -6,6 +6,7 @@ import { useAuth } from "./providers/AuthProvider";
 import SearchBar from "../components/SearchBar";
 import EventCard from "../components/EventCard";
 import { buildMealEventHref, getMealEvents, type MealEvent } from "../lib/meal-data";
+import { buildEventSectionHref, getHomeSections } from "../lib/event-sections";
 import styles from "./page.module.scss";
 
 export default function Home() {
@@ -29,39 +30,7 @@ export default function Home() {
     };
   }, []);
 
-  const homeSections = useMemo(() => {
-    const veggieHomeCards = mealEvents
-      .filter(
-        (event) =>
-          event.variant === "veggie" ||
-          event.filters.includes("vegetarien") ||
-          event.filters.includes("vegetalien"),
-      )
-      .slice(0, 4);
-
-    const nearbyHomeCards = [
-      ...mealEvents.filter((event) => event.variant === "nearby"),
-      ...mealEvents.filter((event) => event.variant !== "nearby"),
-    ].slice(0, 4);
-
-    return [
-      {
-        title: "Prochainement",
-        description: "Ne manquez pas les prochains événements !",
-        cards: mealEvents.slice(0, 4),
-      },
-      {
-        title: "Veggie",
-        description: "Découvrez la cuisine végétarienne",
-        cards: veggieHomeCards.length > 0 ? veggieHomeCards : mealEvents.slice(0, 4),
-      },
-      {
-        title: "Autour de moi",
-        description: "Les meilleurs événements près de chez vous",
-        cards: nearbyHomeCards,
-      },
-    ];
-  }, [mealEvents]);
+  const homeSections = useMemo(() => getHomeSections(mealEvents), [mealEvents]);
 
   return (
     <div className={styles.page}>
@@ -92,7 +61,7 @@ export default function Home() {
                 <h2>{section.title}</h2>
                 <p>{section.description}</p>
               </div>
-              <Link href="#" className={styles.sectionLink}>
+              <Link href={buildEventSectionHref(section.slug)} className={styles.sectionLink}>
                 Voir Tout
               </Link>
             </div>
