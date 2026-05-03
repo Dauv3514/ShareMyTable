@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 import EventCard from "@/components/EventCard";
@@ -11,7 +11,7 @@ import {
   filterMealEvents,
   getMealFilterById,
 } from "@/lib/search-data";
-import { buildMealEventHref, getMealEvents } from "@/lib/meal-data";
+import { buildMealEventHref, getMealEvents, type MealEvent } from "@/lib/meal-data";
 import styles from "./rechercher.module.scss";
 
 function parseFilters(value: string | null) {
@@ -55,17 +55,35 @@ function buildSearchUrl({
 export default function SearchResultsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [mealEvents, setMealEvents] = useState<MealEvent[]>([]);
   const location = searchParams.get("lieu") ?? "";
   const date = searchParams.get("date") ?? "";
   const filters = useMemo(
     () => parseFilters(searchParams.get("filters")),
     [searchParams],
   );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadEvents = async () => {
+      const events = await getMealEvents();
+      if (!cancelled) {
+        setMealEvents(events);
+      }
+    };
+
+    void loadEvents();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const events = useMemo(
-    () => filterMealEvents({ location, date, filters }),
-    [date, filters, location],
+    () => filterMealEvents({ events: mealEvents, location, date, filters }),
+    [date, filters, location, mealEvents],
   );
-  const mealEvents = useMemo(() => getMealEvents(), []);
   const shouldShowMap = location.trim().length > 0;
   const recommendedEvents = useMemo(() => {
     const resultIds = new Set(events.map((event) => event.id));

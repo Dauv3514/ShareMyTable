@@ -17,7 +17,7 @@ type EventMapPageProps = {
 
 export default async function EventMapPage({ params }: EventMapPageProps) {
   const { eventId } = await params;
-  const event = getMealEventById(eventId);
+  const event = await getMealEventById(eventId);
 
   if (!event) {
     notFound();

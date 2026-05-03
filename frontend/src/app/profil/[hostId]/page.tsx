@@ -18,13 +18,13 @@ type PublicProfilePageProps = {
 
 export default async function PublicProfilePage({ params }: PublicProfilePageProps) {
   const { hostId } = await params;
-  const host = getHostProfileById(hostId);
+  const host = await getHostProfileById(hostId);
 
   if (!host) {
     notFound();
   }
 
-  const hostEvents = getMealEventsByHostId(host.id);
+  const hostEvents = await getMealEventsByHostId(host.id);
   const latestEvent = hostEvents[0];
   const firstName = host.name.split(" ")[0] ?? host.name;
   const needsElision = /^[aeiouyàâäéèêëîïôöùûü]/i.test(firstName);

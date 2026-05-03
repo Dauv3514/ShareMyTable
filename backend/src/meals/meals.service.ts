@@ -41,6 +41,7 @@ type MealResponse = {
 type PublishedMealsQuery = {
   page?: number;
   limit?: number;
+  hostId?: number;
   mealType?: string;
   city?: string;
   country?: string;
@@ -101,8 +102,14 @@ export class MealsService {
       .where('meal.status = :status', { status: MealStatus.PUBLISHED });
 
     if (query.mealType?.trim()) {
-      queryBuilder.andWhere('LOWER(meal.meal_type) = LOWER(:mealType)', {
+      queryBuilder.andWhere('LOWER(meal.mealType) = LOWER(:mealType)', {
         mealType: query.mealType.trim(),
+      });
+    }
+
+    if (query.hostId) {
+      queryBuilder.andWhere('host.id = :hostId', {
+        hostId: query.hostId,
       });
     }
 
@@ -120,16 +127,16 @@ export class MealsService {
 
     const dateFrom = this.parseOptionalQueryDate(query.dateFrom, 'dateFrom');
     if (dateFrom) {
-      queryBuilder.andWhere('meal.date_time >= :dateFrom', { dateFrom });
+      queryBuilder.andWhere('meal.dateTime >= :dateFrom', { dateFrom });
     }
 
     const dateTo = this.parseOptionalQueryDate(query.dateTo, 'dateTo');
     if (dateTo) {
-      queryBuilder.andWhere('meal.date_time <= :dateTo', { dateTo });
+      queryBuilder.andWhere('meal.dateTime <= :dateTo', { dateTo });
     }
 
     queryBuilder
-      .orderBy('meal.date_time', 'ASC')
+      .orderBy('meal.dateTime', 'ASC')
       .skip((page - 1) * limit)
       .take(limit);
 

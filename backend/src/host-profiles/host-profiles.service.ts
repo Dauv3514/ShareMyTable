@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
+import { Meal, MealStatus } from '../meals/meal.entity';
 import { RoleName } from '../users/role.entity';
 import { UsersService } from '../users/users.service';
 import { Utilisateur } from '../users/users.entity';
@@ -53,6 +54,22 @@ type HostProfileAdminResponse = HostProfileResponse & {
   user: HostProfileUserSummary;
 };
 
+type PublicHostProfileResponse = HostProfileResponse & {
+  user: {
+    userId: number;
+    pseudo: string | null;
+    firstName: string;
+    lastName: string;
+    profilePhotoUrl: string | null;
+    bio: string | null;
+    createdAt: Date;
+  };
+  stats: {
+    publishedMealsCount: number;
+    completedMealsCount: number;
+  };
+};
+
 // Service metier du parcours de candidature hote.
 // Il orchestre la creation, la moderation admin et l'auto-review niveau 1.
 @Injectable()
@@ -63,6 +80,8 @@ export class HostProfilesService {
     private readonly hostProfilesRepository: Repository<HostProfile>,
     @InjectRepository(Utilisateur)
     private readonly usersRepository: Repository<Utilisateur>,
+    @InjectRepository(Meal)
+    private readonly mealsRepository: Repository<Meal>,
     private readonly usersService: UsersService,
     private readonly hostProfileVerificationService: HostProfileVerificationService,
   ) {}
@@ -255,6 +274,53 @@ export class HostProfilesService {
   async findById(id: number): Promise<HostProfileAdminResponse> {
     const hostProfile = await this.findEntityById(id);
     return this.toAdminHostProfileResponse(hostProfile);
+  }
+
+  async findPublicByUserId(userId: number): Promise<PublicHostProfileResponse> {
+    const hostProfile = await this.hostProfilesRepository.findOne({
+      where: {
+        user: { id: userId },
+        validationStatus: HostValidationStatus.APPROVED,
+        isActive: true,
+      },
+      relations: ['user'],
+    });
+
+    if (!hostProfile) {
+      throw new NotFoundException('Profil hote public introuvable');
+    }
+
+    const [publishedMealsCount, completedMealsCount] = await Promise.all([
+      this.mealsRepository.count({
+        where: {
+          host: { id: userId },
+          status: MealStatus.PUBLISHED,
+        },
+      }),
+      this.mealsRepository.count({
+        where: {
+          host: { id: userId },
+          status: MealStatus.DONE,
+        },
+      }),
+    ]);
+
+    return {
+      ...this.toHostProfileResponse(hostProfile),
+      user: {
+        userId: hostProfile.user.id,
+        pseudo: hostProfile.user.pseudo,
+        firstName: hostProfile.user.firstName,
+        lastName: hostProfile.user.lastName,
+        profilePhotoUrl: hostProfile.user.profilePhotoUrl,
+        bio: hostProfile.user.bio,
+        createdAt: hostProfile.user.createdAt,
+      },
+      stats: {
+        publishedMealsCount,
+        completedMealsCount,
+      },
+    };
   }
 
   // Resolution interne par user_id pour les routes "me".

@@ -18,6 +18,10 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+.event-card--link * {
+  cursor: pointer;
+}
+
 .event-card--link:hover {
   transform: translateY(-2px);
   box-shadow: 0 16px 30px rgba(89, 70, 24, 0.16);

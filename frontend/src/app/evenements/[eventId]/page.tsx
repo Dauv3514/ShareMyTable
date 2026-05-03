@@ -9,8 +9,7 @@ import {
 import {
   buildHostProfileHref,
   buildMealEventMapHref,
-  getHostProfileById,
-  getMealEventById,
+  getEventDetailPayload,
 } from "@/lib/meal-data";
 import styles from "./event-detail.module.scss";
 
@@ -28,17 +27,13 @@ const menuIcons = {
 
 export default async function EventDetailPage({ params }: EventDetailPageProps) {
   const { eventId } = await params;
-  const event = getMealEventById(eventId);
+  const payload = await getEventDetailPayload(eventId);
 
-  if (!event) {
+  if (!payload) {
     notFound();
   }
 
-  const hostProfile = getHostProfileById(event.hostId);
-
-  if (!hostProfile) {
-    notFound();
-  }
+  const { event, hostProfile } = payload;
 
   const selectedFilters = event.filters
     .map((filterId) => getMealFilterById(filterId)?.label)
@@ -55,7 +50,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
         <header className={styles.hero}>
           <div className={styles.heroPhoto}>
             <Image
-              src="/photoRepas.png"
+              src={hostProfile?.homePhotos[0] ?? "/photoRepas.png"}
               alt={event.title}
               fill
               priority
@@ -196,6 +191,33 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
               ))}
             </div>
           </section>
+
+          {event.dietaryPreferenceGroups && event.dietaryPreferenceGroups.length > 0 ? (
+            <section
+              className={styles.preferenceSection}
+              aria-label="Préférences alimentaires"
+            >
+              <div className={styles.preferenceHead}>
+                <h2>Préférences alimentaires</h2>
+              </div>
+
+              <div className={styles.preferenceGrid}>
+                {event.dietaryPreferenceGroups.map((group) => (
+                  <section key={group.title} className={styles.preferenceGroup}>
+                    <span className={styles.preferenceTitle}>{group.title}</span>
+
+                    <div className={styles.preferenceBox}>
+                      {group.items.map((item) => (
+                        <span key={`${group.title}-${item}`} className={styles.preferenceChip}>
+                          {item}
+                        </span>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            </section>
+          ) : null}
 
           <section className={styles.rulesSection} aria-label="Règles et conditions">
             <div className={styles.rulesHead}>
