@@ -36,6 +36,12 @@ export const MOCK_MEAL_EVENTS: MealEvent[] = [
         items: ["Salade de fruits"],
       },
     ],
+    dietaryPreferenceGroups: [
+      {
+        title: "Allergènes",
+        items: ["Oeufs", "Lait", "Gluten"],
+      },
+    ],
   },
   {
     id: "table-vegetale-rennes",
@@ -76,6 +82,16 @@ export const MOCK_MEAL_EVENTS: MealEvent[] = [
       {
         title: "Dessert",
         items: ["Crème coco vanille"],
+      },
+    ],
+    dietaryPreferenceGroups: [
+      {
+        title: "Allergènes",
+        items: ["Fruits a coque", "Soja"],
+      },
+      {
+        title: "Convient aussi",
+        items: ["Vegetalien", "Sans lactose"],
       },
     ],
   },
@@ -120,6 +136,12 @@ export const MOCK_MEAL_EVENTS: MealEvent[] = [
         items: ["Mangue au citron vert"],
       },
     ],
+    dietaryPreferenceGroups: [
+      {
+        title: "Allergènes",
+        items: ["Gluten", "Lait", "Moutarde", "Fruits a coque"],
+      },
+    ],
   },
   {
     id: "couscous-maison-paris",
@@ -153,6 +175,16 @@ export const MOCK_MEAL_EVENTS: MealEvent[] = [
       {
         title: "Dessert",
         items: ["Orange à la cannelle"],
+      },
+    ],
+    dietaryPreferenceGroups: [
+      {
+        title: "Allergènes",
+        items: ["Celeri"],
+      },
+      {
+        title: "Convient aussi",
+        items: ["Halal", "Sans porc"],
       },
     ],
   },
@@ -196,6 +228,12 @@ export const MOCK_MEAL_EVENTS: MealEvent[] = [
         items: ["Crème catalane revisitée"],
       },
     ],
+    dietaryPreferenceGroups: [
+      {
+        title: "Allergènes",
+        items: ["Poissons", "Oeufs", "Gluten"],
+      },
+    ],
   },
   {
     id: "repas-sans-gluten-bordeaux",
@@ -236,6 +274,16 @@ export const MOCK_MEAL_EVENTS: MealEvent[] = [
       {
         title: "Dessert",
         items: ["Moelleux amande sans gluten"],
+      },
+    ],
+    dietaryPreferenceGroups: [
+      {
+        title: "Allergènes",
+        items: ["Lait", "Amandes"],
+      },
+      {
+        title: "Convient aussi",
+        items: ["Sans gluten"],
       },
     ],
   },

@@ -30,9 +30,15 @@ export type MealEvent = {
   currentParticipants: number;
   maxParticipants: number;
   menuSections: MealMenuSection[];
+  dietaryPreferenceGroups?: MealDietaryPreferenceGroup[];
 };
 
 export type MealMenuSection = {
+  title: string;
+  items: string[];
+};
+
+export type MealDietaryPreferenceGroup = {
   title: string;
   items: string[];
 };
