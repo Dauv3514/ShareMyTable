@@ -3,8 +3,8 @@ import type {
   MealFilter,
   MealFilterCategory,
   MealFilterGroup,
+  MealEvent,
 } from "./data/types";
-import { getMealEvents } from "./meal-data";
 
 const mealFilterRepository = {
   listGroups(): MealFilterGroup[] {
@@ -41,10 +41,12 @@ export function normalizeText(value: string) {
 }
 
 export function filterMealEvents({
+  events,
   location,
   date,
   filters,
 }: {
+  events: MealEvent[];
   location?: string;
   date?: string;
   filters?: string[];
@@ -52,7 +54,7 @@ export function filterMealEvents({
   const normalizedLocation = normalizeText(location ?? "");
   const selectedFilters = new Set(filters ?? []);
 
-  return getMealEvents().filter((event) => {
+  return events.filter((event) => {
     const matchesLocation =
       !normalizedLocation || normalizeText(event.city).includes(normalizedLocation);
     const matchesDate = !date || event.date === date;

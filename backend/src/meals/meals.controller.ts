@@ -85,6 +85,7 @@ export class MealsController {
   async findPublishedMeals(
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('hostId') hostId?: string,
     @Query('mealType') mealType?: string,
     @Query('city') city?: string,
     @Query('country') country?: string,
@@ -94,6 +95,7 @@ export class MealsController {
     return this.mealsService.findAllPublished({
       page: page ? Number(page) : undefined,
       limit: limit ? Number(limit) : undefined,
+      hostId: hostId ? Number(hostId) : undefined,
       mealType,
       city,
       country,

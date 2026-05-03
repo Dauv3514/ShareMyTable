@@ -61,6 +61,13 @@ export class HostProfilesController {
     return this.hostProfilesService.resubmitMine(Number(req.user.sub));
   }
 
+  @Get('public/user/:userId')
+  async findPublicHostProfileByUserId(
+    @Param('userId', ParseIntPipe) userId: number,
+  ) {
+    return this.hostProfilesService.findPublicByUserId(userId);
+  }
+
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(RoleName.ADMIN)
   @Get('pending')

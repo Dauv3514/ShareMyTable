@@ -1,48 +1,67 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "./providers/AuthProvider";
 import SearchBar from "../components/SearchBar";
 import EventCard from "../components/EventCard";
-import { buildMealEventHref, getMealEvents } from "../lib/meal-data";
+import { buildMealEventHref, getMealEvents, type MealEvent } from "../lib/meal-data";
 import styles from "./page.module.scss";
-
-const mealEvents = getMealEvents();
-
-const veggieHomeCards = mealEvents
-  .filter(
-    (event) =>
-      event.variant === "veggie" ||
-      event.filters.includes("vegetarien") ||
-      event.filters.includes("vegetalien"),
-  )
-  .slice(0, 4);
-
-const nearbyHomeCards = [
-  ...mealEvents.filter((event) => event.variant === "nearby"),
-  ...mealEvents.filter((event) => event.variant !== "nearby"),
-].slice(0, 4);
-
-const homeSections = [
-  {
-    title: "Prochainement",
-    description: "Ne manquez pas les prochains événements !",
-    cards: mealEvents.slice(0, 4),
-  },
-  {
-    title: "Veggie",
-    description: "Découvrez la cuisine végétarienne",
-    cards: veggieHomeCards,
-  },
-  {
-    title: "Autour de moi",
-    description: "Les meilleurs événements près de chez vous",
-    cards: nearbyHomeCards,
-  },
-];
 
 export default function Home() {
   const { isLoggedIn, loading } = useAuth();
+  const [mealEvents, setMealEvents] = useState<MealEvent[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadEvents = async () => {
+      const events = await getMealEvents();
+      if (!cancelled) {
+        setMealEvents(events);
+      }
+    };
+
+    void loadEvents();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const homeSections = useMemo(() => {
+    const veggieHomeCards = mealEvents
+      .filter(
+        (event) =>
+          event.variant === "veggie" ||
+          event.filters.includes("vegetarien") ||
+          event.filters.includes("vegetalien"),
+      )
+      .slice(0, 4);
+
+    const nearbyHomeCards = [
+      ...mealEvents.filter((event) => event.variant === "nearby"),
+      ...mealEvents.filter((event) => event.variant !== "nearby"),
+    ].slice(0, 4);
+
+    return [
+      {
+        title: "Prochainement",
+        description: "Ne manquez pas les prochains événements !",
+        cards: mealEvents.slice(0, 4),
+      },
+      {
+        title: "Veggie",
+        description: "Découvrez la cuisine végétarienne",
+        cards: veggieHomeCards.length > 0 ? veggieHomeCards : mealEvents.slice(0, 4),
+      },
+      {
+        title: "Autour de moi",
+        description: "Les meilleurs événements près de chez vous",
+        cards: nearbyHomeCards,
+      },
+    ];
+  }, [mealEvents]);
 
   return (
     <div className={styles.page}>

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
 import { RolesGuard } from '../auth/roles.guard';
+import { Meal } from '../meals/meal.entity';
 import { UsersModule } from '../users/users.module';
 import { Utilisateur } from '../users/users.entity';
 import { HostProfile } from './host-profile.entity';
@@ -13,7 +14,7 @@ import { HostProfilesService } from './host-profiles.service';
 // Module de candidature, auto-review niveau 1 et moderation des hotes.
 @Module({
   imports: [
-    TypeOrmModule.forFeature([HostProfile, Utilisateur]),
+    TypeOrmModule.forFeature([HostProfile, Utilisateur, Meal]),
     AuthModule,
     UsersModule,
   ],

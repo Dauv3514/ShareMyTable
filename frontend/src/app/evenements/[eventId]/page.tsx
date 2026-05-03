@@ -9,8 +9,7 @@ import {
 import {
   buildHostProfileHref,
   buildMealEventMapHref,
-  getHostProfileById,
-  getMealEventById,
+  getEventDetailPayload,
 } from "@/lib/meal-data";
 import styles from "./event-detail.module.scss";
 
@@ -28,17 +27,13 @@ const menuIcons = {
 
 export default async function EventDetailPage({ params }: EventDetailPageProps) {
   const { eventId } = await params;
-  const event = getMealEventById(eventId);
+  const payload = await getEventDetailPayload(eventId);
 
-  if (!event) {
+  if (!payload) {
     notFound();
   }
 
-  const hostProfile = getHostProfileById(event.hostId);
-
-  if (!hostProfile) {
-    notFound();
-  }
+  const { event, hostProfile } = payload;
 
   const selectedFilters = event.filters
     .map((filterId) => getMealFilterById(filterId)?.label)
@@ -55,7 +50,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
         <header className={styles.hero}>
           <div className={styles.heroPhoto}>
             <Image
-              src="/photoRepas.png"
+              src={hostProfile?.homePhotos[0] ?? "/photoRepas.png"}
               alt={event.title}
               fill
               priority
