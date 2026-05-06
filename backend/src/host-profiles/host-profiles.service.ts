@@ -75,6 +75,9 @@ type PublicHostProfileResponse = HostProfileResponse & {
 // Il orchestre la creation, la moderation admin et l'auto-review niveau 1.
 @Injectable()
 export class HostProfilesService {
+  private static readonly AUTO_INVALID_ADDRESS_REJECTION_REASON =
+    "Adresse non valide ou non verifiable. Merci de corriger l'adresse avant de renvoyer votre demande hote.";
+
   constructor(
     private readonly dataSource: DataSource,
     @InjectRepository(HostProfile)
@@ -136,6 +139,7 @@ export class HostProfilesService {
     });
 
     await this.hostProfileVerificationService.runAutoReview(hostProfile);
+    this.applyAutomaticAddressDecision(hostProfile);
 
     const savedHostProfile = await this.hostProfilesRepository.save(hostProfile);
     return this.toHostProfileResponse(savedHostProfile);
@@ -163,6 +167,7 @@ export class HostProfilesService {
 
     this.applyUpdatableFields(hostProfile, updateHostProfileDto);
     await this.hostProfileVerificationService.runAutoReview(hostProfile);
+    this.applyAutomaticAddressDecision(hostProfile);
 
     const updatedHostProfile = await this.hostProfilesRepository.save(hostProfile);
     return this.toHostProfileResponse(updatedHostProfile);
@@ -184,6 +189,7 @@ export class HostProfilesService {
     hostProfile.rejectionReason = null;
 
     await this.hostProfileVerificationService.runAutoReview(hostProfile);
+    this.applyAutomaticAddressDecision(hostProfile);
 
     const updatedHostProfile = await this.hostProfilesRepository.save(hostProfile);
     return this.toHostProfileResponse(updatedHostProfile);
@@ -395,6 +401,18 @@ export class HostProfilesService {
     if (updateHostProfileDto.address !== undefined) {
       hostProfile.address = updateHostProfileDto.address.trim();
     }
+  }
+
+  private applyAutomaticAddressDecision(hostProfile: HostProfile): void {
+    if (!hostProfile.verificationRiskFlags.includes('address_invalid')) {
+      return;
+    }
+
+    hostProfile.validationStatus = HostValidationStatus.REJECTED;
+    hostProfile.isActive = false;
+    hostProfile.activatedAt = null;
+    hostProfile.rejectionReason =
+      HostProfilesService.AUTO_INVALID_ADDRESS_REJECTION_REASON;
   }
 
   // Format public des routes "me".

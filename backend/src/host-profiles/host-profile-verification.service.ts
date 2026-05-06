@@ -18,6 +18,7 @@ type AddressVerificationResult = {
   lat: number | null;
   lng: number | null;
   note: string;
+  riskFlags: string[];
 };
 
 type AutoReviewSummary = {
@@ -48,8 +49,8 @@ export class HostProfileVerificationService {
       hostProfile.lat = addressResult.lat;
       hostProfile.lng = addressResult.lng;
     }
-    if (!addressResult.verified) {
-      riskFlags.add('address_not_verified');
+    for (const riskFlag of addressResult.riskFlags) {
+      riskFlags.add(riskFlag);
     }
     notes.push(addressResult.note);
 
@@ -143,6 +144,7 @@ export class HostProfileVerificationService {
         lat: hostProfile.lat,
         lng: hostProfile.lng,
         note: "Adresse non verifiee: champs d'adresse incomplets.",
+        riskFlags: ['address_not_verified', 'address_invalid'],
       };
     }
 
@@ -184,6 +186,7 @@ export class HostProfileVerificationService {
           lat: hostProfile.lat,
           lng: hostProfile.lng,
           note: `Adresse non verifiee: geocodage OpenStreetMap indisponible (${response.status}).`,
+          riskFlags: ['address_not_verified', 'address_verification_failed'],
         };
       }
 
@@ -196,6 +199,7 @@ export class HostProfileVerificationService {
           lat: hostProfile.lat,
           lng: hostProfile.lng,
           note: "Adresse non verifiee: aucun resultat pertinent trouve par OpenStreetMap.",
+          riskFlags: ['address_not_verified', 'address_invalid'],
         };
       }
 
@@ -208,6 +212,7 @@ export class HostProfileVerificationService {
           lat: hostProfile.lat,
           lng: hostProfile.lng,
           note: "Adresse non verifiee: coordonnees de geocodage invalides.",
+          riskFlags: ['address_not_verified', 'address_invalid'],
         };
       }
 
@@ -218,6 +223,7 @@ export class HostProfileVerificationService {
         note: firstResult.display_name
           ? `Adresse verifiee par OpenStreetMap: ${firstResult.display_name}.`
           : 'Adresse verifiee par OpenStreetMap.',
+        riskFlags: [],
       };
     } catch (error) {
       const message =
@@ -229,6 +235,7 @@ export class HostProfileVerificationService {
         lat: hostProfile.lat,
         lng: hostProfile.lng,
         note: `Adresse non verifiee: erreur technique lors du geocodage (${message}).`,
+        riskFlags: ['address_not_verified', 'address_verification_failed'],
       };
     }
   }
