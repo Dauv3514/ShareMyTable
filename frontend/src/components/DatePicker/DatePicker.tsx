@@ -8,18 +8,13 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import "./date-picker.scss";
 
-const START_MONTH = new Date(2020, 0, 1);
-const END_MONTH = new Date(2035, 11, 1);
+const DEFAULT_START_MONTH = new Date(2020, 0, 1);
+const DEFAULT_END_MONTH = new Date(2035, 11, 1);
 
 const MONTH_OPTIONS = Array.from({ length: 12 }, (_, monthIndex) => ({
   value: monthIndex,
   label: format(new Date(2026, monthIndex, 1), "MMM", { locale: fr }),
 }));
-
-const YEAR_OPTIONS = Array.from(
-  { length: END_MONTH.getFullYear() - START_MONTH.getFullYear() + 1 },
-  (_, index) => START_MONTH.getFullYear() + index,
-);
 
 function addMonths(date: Date, amount: number) {
   return new Date(date.getFullYear(), date.getMonth() + amount, 1);
@@ -31,6 +26,8 @@ type DatePickerFieldProps = {
   placeholder?: string;
   variant?: "search" | "input";
   ariaLabel?: string;
+  startMonth?: Date;
+  endMonth?: Date;
 };
 
 function toFormDateValue(date: Date) {
@@ -55,24 +52,34 @@ export default function DatePickerField({
   placeholder = "Date",
   variant = "search",
   ariaLabel = "Choisir une date",
+  startMonth = DEFAULT_START_MONTH,
+  endMonth = DEFAULT_END_MONTH,
 }: DatePickerFieldProps) {
   const [open, setOpen] = useState(false);
   const isControlled = value !== undefined && typeof onChange === "function";
   const initialDate = useMemo(() => toDate(value), [value]);
+  const yearOptions = useMemo(
+    () =>
+      Array.from(
+        { length: endMonth.getFullYear() - startMonth.getFullYear() + 1 },
+        (_, index) => startMonth.getFullYear() + index,
+      ),
+    [endMonth, startMonth],
+  );
   const [internalDate, setInternalDate] = useState<Date | undefined>(initialDate);
   const selectedDate = isControlled ? initialDate : internalDate;
   const [month, setMonth] = useState<Date | undefined>(undefined);
   const visibleMonth = month ?? selectedDate ?? new Date();
 
   const canGoPrevious =
-    visibleMonth.getFullYear() > START_MONTH.getFullYear() ||
-    (visibleMonth.getFullYear() === START_MONTH.getFullYear() &&
-      visibleMonth.getMonth() > START_MONTH.getMonth());
+    visibleMonth.getFullYear() > startMonth.getFullYear() ||
+    (visibleMonth.getFullYear() === startMonth.getFullYear() &&
+      visibleMonth.getMonth() > startMonth.getMonth());
 
   const canGoNext =
-    visibleMonth.getFullYear() < END_MONTH.getFullYear() ||
-    (visibleMonth.getFullYear() === END_MONTH.getFullYear() &&
-      visibleMonth.getMonth() < END_MONTH.getMonth());
+    visibleMonth.getFullYear() < endMonth.getFullYear() ||
+    (visibleMonth.getFullYear() === endMonth.getFullYear() &&
+      visibleMonth.getMonth() < endMonth.getMonth());
 
   const handleSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
@@ -178,7 +185,7 @@ export default function DatePickerField({
                   }
                   aria-label="Choisir une annee"
                 >
-                  {YEAR_OPTIONS.map((year) => (
+                  {yearOptions.map((year) => (
                     <option key={year} value={year}>
                       {year}
                     </option>
@@ -205,8 +212,8 @@ export default function DatePickerField({
             onSelect={handleSelect}
             month={visibleMonth}
             onMonthChange={setMonth}
-            startMonth={START_MONTH}
-            endMonth={END_MONTH}
+            startMonth={startMonth}
+            endMonth={endMonth}
             hideNavigation
             locale={fr}
             showOutsideDays

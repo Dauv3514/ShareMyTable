@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
+import { HostProfilesModule } from '../host-profiles/host-profiles.module';
 import { UsersModule } from '../users/users.module';
 import { AuthGuard } from './auth.guard';
 import { MailService } from '../mail/mail.service';
@@ -14,6 +15,7 @@ import { GoogleAuthGuard } from './google-auth.guard';
 @Module({
   imports: [
     forwardRef(() => UsersModule),
+    forwardRef(() => HostProfilesModule),
     PassportModule.register({ session: false }),
     JwtModule.registerAsync({
       inject: [ConfigService],

@@ -8,6 +8,9 @@ import DatePickerField from "@/components/DatePicker";
 import { useAuth } from "@/app/providers/AuthProvider";
 import styles from "./complete-profile.module.scss";
 
+const BIRTH_DATE_START_MONTH = new Date(1920, 0, 1);
+const BIRTH_DATE_END_MONTH = new Date();
+
 function CompleteProfileContent() {
   const router = useRouter();
   const { login } = useAuth();
@@ -309,6 +312,8 @@ function CompleteProfileContent() {
                 placeholder="Date de naissance"
                 variant="input"
                 ariaLabel="Choisir une date de naissance"
+                startMonth={BIRTH_DATE_START_MONTH}
+                endMonth={BIRTH_DATE_END_MONTH}
               />
             </label>
 
