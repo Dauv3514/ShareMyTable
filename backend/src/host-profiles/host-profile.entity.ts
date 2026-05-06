@@ -86,6 +86,9 @@ export class HostProfile {
   @Column({ name: 'auto_review_notes', type: 'text', nullable: true })
   autoReviewNotes: string | null;
 
+  @Column({ name: 'rejection_reason', type: 'text', nullable: true })
+  rejectionReason: string | null;
+
   @Column({ name: 'last_auto_reviewed_at', type: 'timestamp', nullable: true })
   lastAutoReviewedAt: Date | null;
 

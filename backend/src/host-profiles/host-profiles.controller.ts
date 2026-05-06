@@ -7,14 +7,22 @@ import {
   Patch,
   Post,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '../auth/auth.guard';
 import type { IAuthInfoRequest } from '../auth/auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
+import {
+  buildHostHomePhotoUrl,
+  registrationImageUploadOptions,
+} from '../uploads/registration-image-upload';
 import { RoleName } from '../users/role.entity';
 import { CreateHostProfileDto } from './dto/create-host-profile.dto';
+import { RejectHostProfileDto } from './dto/reject-host-profile.dto';
 import { UpdateHostProfileDto } from './dto/update-host-profile.dto';
 import { HostProfilesService } from './host-profiles.service';
 
@@ -26,14 +34,23 @@ export class HostProfilesController {
   constructor(private readonly hostProfilesService: HostProfilesService) {}
 
   @UseGuards(AuthGuard)
+  @UseInterceptors(
+    FileInterceptor('host_home_photo', registrationImageUploadOptions),
+  )
   @Post('request')
   async requestHostProfile(
     @Req() req: IAuthInfoRequest,
     @Body() createHostProfileDto: CreateHostProfileDto,
+    @UploadedFile() file?: { filename: string },
   ) {
     return this.hostProfilesService.requestHostProfile(
       Number(req.user.sub),
-      createHostProfileDto,
+      {
+        ...createHostProfileDto,
+        homePhotoUrl: file?.filename
+          ? buildHostHomePhotoUrl(file.filename)
+          : createHostProfileDto.homePhotoUrl,
+      },
     );
   }
 
@@ -44,14 +61,23 @@ export class HostProfilesController {
   }
 
   @UseGuards(AuthGuard)
+  @UseInterceptors(
+    FileInterceptor('host_home_photo', registrationImageUploadOptions),
+  )
   @Patch('me')
   async updateMyHostProfile(
     @Req() req: IAuthInfoRequest,
     @Body() updateHostProfileDto: UpdateHostProfileDto,
+    @UploadedFile() file?: { filename: string },
   ) {
     return this.hostProfilesService.updateMine(
       Number(req.user.sub),
-      updateHostProfileDto,
+      {
+        ...updateHostProfileDto,
+        homePhotoUrl: file?.filename
+          ? buildHostHomePhotoUrl(file.filename)
+          : updateHostProfileDto.homePhotoUrl,
+      },
     );
   }
 
@@ -99,7 +125,10 @@ export class HostProfilesController {
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(RoleName.ADMIN)
   @Patch(':id/reject')
-  async rejectHostProfile(@Param('id', ParseIntPipe) id: number) {
-    return this.hostProfilesService.reject(id);
+  async rejectHostProfile(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: RejectHostProfileDto,
+  ) {
+    return this.hostProfilesService.reject(id, body.rejectionReason);
   }
 }
