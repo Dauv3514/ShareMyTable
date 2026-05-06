@@ -33,6 +33,9 @@ import DatePickerField from "@/components/DatePicker";
 import { useAuth } from "../providers/AuthProvider";
 import styles from "./profil.module.scss";
 
+const BIRTH_DATE_START_MONTH = new Date(1920, 0, 1);
+const BIRTH_DATE_END_MONTH = new Date();
+
 type ProfileFormData = {
   first_name: string;
   last_name: string;
@@ -462,6 +465,8 @@ const ProfileEditForm = ({
           placeholder="Date de naissance"
           variant="input"
           ariaLabel="Choisir une date de naissance"
+          startMonth={BIRTH_DATE_START_MONTH}
+          endMonth={BIRTH_DATE_END_MONTH}
         />
       </label>
 

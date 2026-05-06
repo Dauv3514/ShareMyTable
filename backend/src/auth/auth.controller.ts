@@ -1,19 +1,47 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Get, Query, UseGuards, Req, Res, Patch, UploadedFile, UseInterceptors } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Patch,
+  Post,
+  Query,
+  Req,
+  Res,
+  UploadedFile,
+  UploadedFiles,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { AuthGuard as PassportAuthGuard } from '@nestjs/passport';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { Public } from './public.decorator';
 import { InscriptionDto, ConnexionDto, ForgotPasswordDto, ResetPasswordDto, OAuthCompleteDto, ChangePasswordDto } from '../auth/auth.dto';
+import { HostProfilesService } from '../host-profiles/host-profiles.service';
 import { AuthProvider } from '../users/users.entity';
 import { GoogleAuthGuard } from './google-auth.guard';
 import { AuthGuard } from './auth.guard';
 import type { IAuthInfoRequest } from './auth.guard';
 import { buildProfilePhotoUrl, profilePhotoUploadOptions } from '../uploads/profile-photo-upload';
+import {
+  buildHostHomePhotoUrl,
+  registrationImageUploadOptions,
+} from '../uploads/registration-image-upload';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private hostProfilesService: HostProfilesService,
+  ) {}
+
+  private isTrue(value?: string | boolean) {
+    return value === true || value === 'true';
+  }
 
   private getProfilePhotoUpdate(
     body: { profile_photo_url?: string; remove_profile_photo?: string },
@@ -34,15 +62,88 @@ export class AuthController {
     return undefined;
   }
 
+  private getUploadedFile(
+    files: Record<string, Array<{ filename: string }> | undefined> | undefined,
+    fieldName: string,
+  ) {
+    return files?.[fieldName]?.[0];
+  }
+
   @Public()
   @HttpCode(HttpStatus.CREATED)
-  @UseInterceptors(FileInterceptor('profile_photo', profilePhotoUploadOptions))
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'profile_photo', maxCount: 1 },
+        { name: 'host_home_photo', maxCount: 1 },
+      ],
+      registrationImageUploadOptions,
+    ),
+  )
   @Post('inscription')
-  async inscription(@Body() userDto: InscriptionDto, @UploadedFile() file?: { filename: string }) {
-    return this.authService.inscription({
+  async inscription(
+    @Body() userDto: InscriptionDto,
+    @UploadedFiles()
+    files?: {
+      profile_photo?: Array<{ filename: string }>;
+      host_home_photo?: Array<{ filename: string }>;
+    },
+  ) {
+    const requestHost = this.isTrue(userDto.request_host);
+    const profilePhotoFile = this.getUploadedFile(files, 'profile_photo');
+    const hostHomePhotoFile = this.getUploadedFile(files, 'host_home_photo');
+
+    if (requestHost) {
+      if (!userDto.host_district_label?.trim()) {
+        throw new BadRequestException(
+          'Le quartier est obligatoire pour envoyer une demande hote',
+        );
+      }
+
+      if (!userDto.host_address?.trim()) {
+        throw new BadRequestException(
+          "L'adresse est obligatoire pour envoyer une demande hote",
+        );
+      }
+    }
+
+    const inscriptionResult = await this.authService.inscription({
       ...userDto,
-      profile_photo_url: this.getProfilePhotoUpdate(userDto, file) ?? undefined,
+      profile_photo_url:
+        this.getProfilePhotoUpdate(userDto, profilePhotoFile) ?? undefined,
     });
+
+    if (!requestHost) {
+      return inscriptionResult;
+    }
+
+    try {
+      await this.hostProfilesService.requestHostProfile(inscriptionResult.userId, {
+        country: userDto.country,
+        city: userDto.city,
+        districtLabel: userDto.host_district_label!.trim(),
+        address: userDto.host_address!.trim(),
+        homePhotoUrl: hostHomePhotoFile?.filename
+          ? buildHostHomePhotoUrl(hostHomePhotoFile.filename)
+          : userDto.host_home_photo_url?.trim() || undefined,
+      });
+
+      return {
+        ...inscriptionResult,
+        hostRequestCreated: true,
+      };
+    } catch (error) {
+      const hostRequestError =
+        error instanceof Error
+          ? error.message
+          : "La demande hote n'a pas pu etre envoyee";
+
+      return {
+        ...inscriptionResult,
+        hostRequestCreated: false,
+        hostRequestError,
+      };
+    }
   }
 
   @Public()

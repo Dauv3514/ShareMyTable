@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
 import { RolesGuard } from '../auth/roles.guard';
@@ -15,7 +15,7 @@ import { HostProfilesService } from './host-profiles.service';
 @Module({
   imports: [
     TypeOrmModule.forFeature([HostProfile, Utilisateur, Meal]),
-    AuthModule,
+    forwardRef(() => AuthModule),
     UsersModule,
   ],
   controllers: [HostProfilesController],
