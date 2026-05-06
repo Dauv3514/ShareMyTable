@@ -43,6 +43,7 @@ type HostProfileResponse = {
   homePhotoVerified: boolean;
   verificationScore: number;
   autoReviewNotes: string | null;
+  rejectionReason: string | null;
   lastAutoReviewedAt: Date | null;
   homePhotoVisionLabels: HostPhotoVisionLabel[];
   homePhotoSafeSearch: HostPhotoSafeSearch;
@@ -126,6 +127,7 @@ export class HostProfilesService {
       homePhotoVerified: false,
       verificationScore: 0,
       autoReviewNotes: null,
+      rejectionReason: null,
       lastAutoReviewedAt: null,
       homePhotoVisionLabels: [],
       homePhotoSafeSearch: null,
@@ -179,6 +181,7 @@ export class HostProfilesService {
     hostProfile.validationStatus = HostValidationStatus.PENDING;
     hostProfile.isActive = false;
     hostProfile.activatedAt = null;
+    hostProfile.rejectionReason = null;
 
     await this.hostProfileVerificationService.runAutoReview(hostProfile);
 
@@ -208,6 +211,7 @@ export class HostProfilesService {
       hostProfile.validationStatus = HostValidationStatus.APPROVED;
       hostProfile.isActive = true;
       hostProfile.activatedAt = new Date();
+      hostProfile.rejectionReason = null;
 
       const updatedHostProfile = await hostProfilesRepository.save(hostProfile);
       updatedHostProfile.user = await this.usersService.setRoleWithManager(
@@ -224,7 +228,10 @@ export class HostProfilesService {
 
   // Choix metier retenu :
   // un profil deja approuve ne peut pas etre rejete pour eviter un downgrade implicite.
-  async reject(id: number): Promise<HostProfileAdminResponse> {
+  async reject(
+    id: number,
+    rejectionReason?: string,
+  ): Promise<HostProfileAdminResponse> {
     const hostProfile = await this.findEntityById(id);
 
     if (hostProfile.validationStatus === HostValidationStatus.REJECTED) {
@@ -240,6 +247,7 @@ export class HostProfilesService {
     hostProfile.validationStatus = HostValidationStatus.REJECTED;
     hostProfile.isActive = false;
     hostProfile.activatedAt = null;
+    hostProfile.rejectionReason = this.normalizeNullableString(rejectionReason);
 
     const savedHostProfile = await this.hostProfilesRepository.save(hostProfile);
     return this.toAdminHostProfileResponse(savedHostProfile);
@@ -408,6 +416,7 @@ export class HostProfilesService {
       homePhotoVerified: hostProfile.homePhotoVerified,
       verificationScore: hostProfile.verificationScore,
       autoReviewNotes: hostProfile.autoReviewNotes,
+      rejectionReason: hostProfile.rejectionReason,
       lastAutoReviewedAt: hostProfile.lastAutoReviewedAt,
       homePhotoVisionLabels: hostProfile.homePhotoVisionLabels,
       homePhotoSafeSearch: hostProfile.homePhotoSafeSearch,

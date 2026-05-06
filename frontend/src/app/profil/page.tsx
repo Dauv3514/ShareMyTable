@@ -54,6 +54,17 @@ type PasswordFormData = {
   confirm_password: string;
 };
 
+type HostProfileSummary = {
+  id: number;
+  isActive: boolean;
+  validationStatus: "pending" | "approved" | "rejected";
+  country: string;
+  city: string;
+  districtLabel: string;
+  address: string;
+  rejectionReason: string | null;
+};
+
 type ExpandablePanel = "profile" | "password" | null;
 type ProfileSection = "overview" | "preferences" | "activity" | "payments" | "notifications";
 
@@ -663,6 +674,8 @@ const ProfilPage = () => {
   const searchParams = useSearchParams();
   const { isLoggedIn, loading, user } = useAuth();
   const [expandedPanel, setExpandedPanel] = useState<ExpandablePanel>(null);
+  const [hostProfile, setHostProfile] = useState<HostProfileSummary | null>(null);
+  const [hostProfileLoading, setHostProfileLoading] = useState(true);
   const overviewSectionRef = useRef<HTMLElement | null>(null);
   const preferencesSectionRef = useRef<HTMLElement | null>(null);
   const activitySectionRef = useRef<HTMLElement | null>(null);
@@ -715,6 +728,76 @@ const ProfilPage = () => {
       router.replace("/connexion");
     }
   }, [isLoggedIn, loading, router]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchHostProfile = async () => {
+      if (!isLoggedIn || !user) {
+        if (!cancelled) {
+          setHostProfile(null);
+          setHostProfileLoading(false);
+        }
+        return;
+      }
+
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+      if (!token || !apiUrl) {
+        if (!cancelled) {
+          setHostProfile(null);
+          setHostProfileLoading(false);
+        }
+        return;
+      }
+
+      try {
+        setHostProfileLoading(true);
+
+        const response = await axios.get(`${apiUrl}/host-profiles/me`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (cancelled) {
+          return;
+        }
+
+        setHostProfile({
+          id: response.data.id,
+          isActive: Boolean(response.data.isActive),
+          validationStatus: response.data.validationStatus,
+          country: response.data.country ?? "",
+          city: response.data.city ?? "",
+          districtLabel: response.data.districtLabel ?? "",
+          address: response.data.address ?? "",
+          rejectionReason: response.data.rejectionReason ?? null,
+        });
+      } catch (error: unknown) {
+        if (cancelled) {
+          return;
+        }
+
+        if (axios.isAxiosError(error) && error.response?.status === 404) {
+          setHostProfile(null);
+        } else {
+          setHostProfile(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setHostProfileLoading(false);
+        }
+      }
+    };
+
+    void fetchHostProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn, user, user?.id]);
 
   useEffect(() => {
     const panel = searchParams.get("panel");
@@ -817,6 +900,51 @@ const ProfilPage = () => {
     return user.email || user.phone || user.pseudo || "Coordonnées à renseigner";
   }, [user]);
 
+  const hostStatusMeta = useMemo(() => {
+    if (!hostProfile) {
+      return {
+        label: "Aucune demande envoyee",
+        toneClassName: styles.hostStatusNeutral,
+        description:
+          "Tu peux envoyer une demande hote pour proposer tes repas sur la plateforme.",
+        actionLabel: "Faire ma demande hote",
+        actionHref: "/profil/devenir-hote",
+      };
+    }
+
+    if (hostProfile.validationStatus === "pending") {
+      return {
+        label: "Demande en attente",
+        toneClassName: styles.hostStatusPending,
+        description:
+          "Ta demande hote est en cours de verification. Tu peux encore ajuster les informations deja envoyees.",
+        actionLabel: "Modifier ma demande",
+        actionHref: "/profil/devenir-hote",
+      };
+    }
+
+    if (hostProfile.validationStatus === "rejected") {
+      return {
+        label: "Demande refusee",
+        toneClassName: styles.hostStatusRejected,
+        description:
+          hostProfile.rejectionReason?.trim() ||
+          "Ta demande a ete refusee. Tu peux la corriger puis la renvoyer.",
+        actionLabel: "Corriger et renvoyer",
+        actionHref: "/profil/devenir-hote",
+      };
+    }
+
+    return {
+      label: "Profil hote valide",
+      toneClassName: styles.hostStatusApproved,
+      description:
+        "Ton profil hote est approuve. Tu peux maintenant organiser des repas.",
+      actionLabel: "Creer un repas",
+      actionHref: "/mes-repas/creer",
+    };
+  }, [hostProfile]);
+
   const updatePanelQuery = (nextPanel: ExpandablePanel) => {
     const params = new URLSearchParams(searchParams.toString());
 
@@ -917,6 +1045,64 @@ const ProfilPage = () => {
                 valueClassName={user.isProfileComplete ? styles.statValueIcon : undefined}
               />
             </div>
+          </section>
+
+          <section className={styles.sectionCard}>
+            <div className={styles.sectionHead}>
+              <div>
+                <h2>Statut hote</h2>
+                <p className={styles.sectionHint}>
+                  Suis ta candidature et avance vers la creation de repas.
+                </p>
+              </div>
+            </div>
+
+            {hostProfileLoading ? (
+              <p className={styles.sectionHint}>Chargement de la demande hote...</p>
+            ) : (
+              <div className={styles.hostStatusCard}>
+                <div className={styles.hostStatusTop}>
+                  <span
+                    className={`${styles.hostStatusBadge} ${hostStatusMeta.toneClassName}`}
+                  >
+                    {hostStatusMeta.label}
+                  </span>
+
+                  {hostProfile ? (
+                    <span className={styles.hostStatusLocation}>
+                      {hostProfile.city}, {hostProfile.country}
+                    </span>
+                  ) : null}
+                </div>
+
+                <p className={styles.hostStatusDescription}>
+                  {hostStatusMeta.description}
+                </p>
+
+                {hostProfile ? (
+                  <dl className={styles.hostStatusDetails}>
+                    <div>
+                      <dt>Quartier</dt>
+                      <dd>{hostProfile.districtLabel || "-"}</dd>
+                    </div>
+                    <div>
+                      <dt>Adresse</dt>
+                      <dd>{hostProfile.address || "-"}</dd>
+                    </div>
+                  </dl>
+                ) : null}
+
+                <div className={styles.hostStatusActions}>
+                  <button
+                    type="button"
+                    className={styles.primaryButton}
+                    onClick={() => router.push(hostStatusMeta.actionHref)}
+                  >
+                    {hostStatusMeta.actionLabel}
+                  </button>
+                </div>
+              </div>
+            )}
           </section>
 
           <section ref={preferencesSectionRef} className={styles.sectionCard}>
