@@ -114,6 +114,19 @@ function ProfileMenuContent({
         navigateToProfile({ section: "payments" });
       },
     },
+    ...(user?.role === "ADMIN"
+      ? [
+          {
+            key: "admin",
+            label: "Administration",
+            icon: ShieldCheck,
+            onClick: () => {
+              router.push("/admin");
+              onClose();
+            },
+          } satisfies ProfileAction,
+        ]
+      : []),
     {
       key: "profile-edit",
       label: "Modifier mon profil",

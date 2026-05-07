@@ -110,6 +110,13 @@ export class HostProfilesController {
 
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(RoleName.ADMIN)
+  @Get('history')
+  async findHostProfileReviewHistory() {
+    return this.hostProfilesService.findHistory();
+  }
+
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RoleName.ADMIN)
   @Get(':id')
   async findHostProfileById(@Param('id', ParseIntPipe) id: number) {
     return this.hostProfilesService.findById(id);
@@ -118,17 +125,25 @@ export class HostProfilesController {
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(RoleName.ADMIN)
   @Patch(':id/approve')
-  async approveHostProfile(@Param('id', ParseIntPipe) id: number) {
-    return this.hostProfilesService.approve(id);
+  async approveHostProfile(
+    @Req() req: IAuthInfoRequest,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.hostProfilesService.approve(id, Number(req.user.sub));
   }
 
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(RoleName.ADMIN)
   @Patch(':id/reject')
   async rejectHostProfile(
+    @Req() req: IAuthInfoRequest,
     @Param('id', ParseIntPipe) id: number,
     @Body() body: RejectHostProfileDto,
   ) {
-    return this.hostProfilesService.reject(id, body.rejectionReason);
+    return this.hostProfilesService.reject(
+      id,
+      Number(req.user.sub),
+      body.rejectionReason,
+    );
   }
 }
