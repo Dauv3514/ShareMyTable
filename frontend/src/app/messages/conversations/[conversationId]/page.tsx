@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowUp, ChevronRight, Users } from "lucide-react";
+import { ArrowUp, ChevronRight } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -12,12 +12,12 @@ import {
 } from "react";
 import UserAvatar from "@/components/UserAvatar";
 import { useAuth } from "@/app/providers/AuthProvider";
+import ConversationAvatar from "../../ConversationAvatar";
 import {
   createMessagingSocket,
   fetchMessagingConversationDetail,
   formatConversationDate,
   formatConversationTime,
-  getConversationCounterpart,
   getConversationSubtitle,
   getConversationTitle,
   postMessagingMessage,
@@ -38,11 +38,48 @@ function appendMessageIfMissing(
   return [...currentMessages, nextMessage];
 }
 
+function shouldShowMessageMeta(
+  messages: MessagingMessageSummary[],
+  currentIndex: number,
+) {
+  const currentMessage = messages[currentIndex];
+  const nextMessage = messages[currentIndex + 1];
+
+  if (!nextMessage) {
+    return true;
+  }
+
+  const nextIsFarAway =
+    new Date(nextMessage.createdAt).getTime() -
+      new Date(currentMessage.createdAt).getTime() >=
+    60 * 60 * 1000;
+  const nextIsDifferentDay =
+    new Date(nextMessage.createdAt).toDateString() !==
+    new Date(currentMessage.createdAt).toDateString();
+
+  return nextIsFarAway || nextIsDifferentDay;
+}
+
+function getUnreadStartIndex(
+  messages: MessagingMessageSummary[],
+  currentUserId: number,
+) {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    if (messages[index].sender.userId === currentUserId) {
+      const unreadIndex = index + 1;
+      return unreadIndex < messages.length ? unreadIndex : null;
+    }
+  }
+
+  return messages.length > 0 ? 0 : null;
+}
+
 export default function ConversationPage() {
   const params = useParams<{ conversationId: string }>();
   const router = useRouter();
   const { isLoggedIn, loading, user } = useAuth();
   const conversationId = Number(params.conversationId);
+  const currentUserId = user?.id ?? 0;
 
   const [conversation, setConversation] = useState<MessagingConversationDetail | null>(null);
   const [isFetching, setIsFetching] = useState(true);
@@ -218,12 +255,19 @@ export default function ConversationPage() {
 
     const groups: Array<
       | { type: "divider"; key: string; label: string }
-      | { type: "message"; key: string; message: MessagingMessageSummary }
+      | { type: "unread"; key: string; label: string }
+      | {
+          type: "message";
+          key: string;
+          message: MessagingMessageSummary;
+          showMeta: boolean;
+        }
     > = [];
 
     let currentDayKey: string | null = null;
+    const unreadStartIndex = getUnreadStartIndex(conversation.messages, currentUserId);
 
-    for (const message of conversation.messages) {
+    for (const [index, message] of conversation.messages.entries()) {
       const dayKey = new Date(message.createdAt).toDateString();
 
       if (dayKey !== currentDayKey) {
@@ -235,15 +279,24 @@ export default function ConversationPage() {
         });
       }
 
+      if (unreadStartIndex !== null && index === unreadStartIndex) {
+        groups.push({
+          type: "unread",
+          key: `unread-${message.id}`,
+          label: "Nouveaux messages",
+        });
+      }
+
       groups.push({
         type: "message",
         key: `message-${message.id}`,
         message,
+        showMeta: shouldShowMessageMeta(conversation.messages, index),
       });
     }
 
     return groups;
-  }, [conversation]);
+  }, [conversation, currentUserId]);
 
   if (loading) {
     return (
@@ -288,7 +341,6 @@ export default function ConversationPage() {
     );
   }
 
-  const counterpart = getConversationCounterpart(conversation, user.id);
   const participantCount = conversation.members.filter(
     (member) => member.userId !== user.id,
   ).length;
@@ -300,23 +352,16 @@ export default function ConversationPage() {
         <div className={styles.chatFrame}>
           <header className={styles.chatHeader}>
             <div className={styles.chatHeaderMain}>
-              <Link href={mealHref} className={styles.backButton}>
+              <Link href={mealHref} className={`${styles.backButton} ${styles.chatBackButton}`}>
                 <ChevronRight style={{ transform: "rotate(180deg)" }} />
               </Link>
 
-              {conversation.type === "meal_group" ? (
-                <div className={`${styles.avatarWrap} ${styles.avatarWrapGroup}`}>
-                  <Users size={28} />
-                </div>
-              ) : (
-                <div className={styles.avatarWrap}>
-                  <UserAvatar
-                    src={counterpart?.profilePhotoUrl}
-                    alt={getConversationTitle(conversation, user.id)}
-                    size={50}
-                  />
-                </div>
-              )}
+              <ConversationAvatar
+                users={conversation.members}
+                currentUserId={user.id}
+                alt={getConversationTitle(conversation, user.id)}
+                includeCurrentUser={conversation.type === "meal_group"}
+              />
 
               <div className={styles.chatHeaderCopy}>
                 <h1>{getConversationTitle(conversation, user.id)}</h1>
@@ -345,17 +390,31 @@ export default function ConversationPage() {
                 );
               }
 
+              if (item.type === "unread") {
+                return (
+                  <div key={item.key} className={styles.unreadDivider}>
+                    <span>{item.label}</span>
+                  </div>
+                );
+              }
+
               const isMine = item.message.sender.userId === user.id;
+              const shouldShowInlineAvatar =
+                !isMine || conversation.type === "meal_group";
 
               return (
                 <div
                   key={item.key}
                   className={`${styles.messageRow} ${
-                    isMine ? styles.messageRowMine : ""
+                    isMine ? styles.messageRowMine : styles.messageRowIncoming
                   }`}
                 >
-                  <div className={styles.messageAvatar}>
-                    {!isMine ? (
+                  <div
+                    className={`${styles.messageAvatar} ${
+                      isMine ? styles.messageAvatarOutgoing : ""
+                    }`}
+                  >
+                    {shouldShowInlineAvatar ? (
                       <div className={styles.avatarWrap}>
                         <UserAvatar
                           src={item.message.sender.profilePhotoUrl}
@@ -363,6 +422,24 @@ export default function ConversationPage() {
                           size={34}
                         />
                       </div>
+                    ) : item.showMeta ? (
+                      <div
+                        className={`${styles.avatarWrap} ${styles.messageAvatarOffset}`}
+                      >
+                        <UserAvatar
+                          src={item.message.sender.profilePhotoUrl}
+                          alt={item.message.sender.firstName || "Participant"}
+                          size={34}
+                        />
+                      </div>
+                    ) : (
+                      <div className={styles.messageAvatarSpacer} />
+                    )}
+
+                    {item.showMeta ? (
+                      <span className={styles.messageTime}>
+                        {formatConversationTime(item.message.createdAt)}
+                      </span>
                     ) : null}
                   </div>
 
@@ -373,15 +450,14 @@ export default function ConversationPage() {
                       </span>
                     ) : null}
 
-                    <div
-                      className={`${styles.messageBubble} ${
-                        isMine ? styles.messageBubbleMine : ""
-                      }`}
-                    >
-                      <p className={styles.messageText}>{item.message.body}</p>
-                      <span className={styles.messageTime}>
-                        {formatConversationTime(item.message.createdAt)}
-                      </span>
+                    <div className={styles.messageBubbleWrap}>
+                      <div
+                        className={`${styles.messageBubble} ${
+                          isMine ? styles.messageBubbleMine : ""
+                        }`}
+                      >
+                        <p className={styles.messageText}>{item.message.body}</p>
+                      </div>
                     </div>
                   </div>
                 </div>

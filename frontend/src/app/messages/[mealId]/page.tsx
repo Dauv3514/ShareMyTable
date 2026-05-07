@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Search, ChevronRight, Users, CalendarDays, MapPin } from "lucide-react";
+import { Search, ChevronRight, CalendarDays, MapPin } from "lucide-react";
 import {
   useCallback,
   useDeferredValue,
@@ -14,13 +14,13 @@ import {
 import UserAvatar from "@/components/UserAvatar";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { buildMealEventHref } from "@/lib/meal-data";
+import ConversationAvatar from "../ConversationAvatar";
 import {
   createMessagingSocket,
   fetchMealCardDetails,
   fetchMessagingConversations,
   formatConversationDate,
   formatConversationTime,
-  getConversationCounterpart,
   getConversationSubtitle,
   getConversationTitle,
   getMessagePreview,
@@ -293,8 +293,8 @@ export default function MealMessagesPage() {
               </div>
             </article>
 
-            <article className={styles.sectionCard}>
-              <div className={styles.sectionHead}>
+            <article className={styles.listSection}>
+              <div className={`${styles.sectionHead} ${styles.sectionHeadCompact}`}>
                 <h2>Discussions</h2>
                 <span className={styles.sectionCount}>{filteredMealConversations.length}</span>
               </div>
@@ -304,11 +304,14 @@ export default function MealMessagesPage() {
                   {groupConversation ? (
                     <Link
                       href={`/messages/conversations/${groupConversation.id}`}
-                      className={styles.conversationLink}
+                      className={`${styles.conversationLink} ${styles.conversationLinkFlat} ${styles.groupConversationRow}`}
                     >
-                      <div className={`${styles.avatarWrap} ${styles.avatarWrapGroup}`}>
-                        <Users size={28} />
-                      </div>
+                      <ConversationAvatar
+                        users={groupConversation.members}
+                        currentUserId={user.id}
+                        alt="Discussion de groupe"
+                        includeCurrentUser
+                      />
 
                       <div className={styles.threadBody}>
                         <div className={styles.threadTitleRow}>
@@ -334,21 +337,17 @@ export default function MealMessagesPage() {
                   ) : null}
 
                   {directConversations.map((conversation) => {
-                    const counterpart = getConversationCounterpart(conversation, user.id);
-
                     return (
                       <Link
                         key={conversation.id}
                         href={`/messages/conversations/${conversation.id}`}
-                        className={styles.conversationLink}
+                        className={`${styles.conversationLink} ${styles.conversationLinkFlat}`}
                       >
-                        <div className={styles.avatarWrap}>
-                          <UserAvatar
-                            src={counterpart?.profilePhotoUrl}
-                            alt={getConversationTitle(conversation, user.id)}
-                            size={48}
-                          />
-                        </div>
+                        <ConversationAvatar
+                          users={conversation.members}
+                          currentUserId={user.id}
+                          alt={getConversationTitle(conversation, user.id)}
+                        />
 
                         <div className={styles.threadBody}>
                           <div className={styles.threadTitleRow}>

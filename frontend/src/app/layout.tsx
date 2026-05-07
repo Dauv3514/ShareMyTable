@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Merriweather_Sans, Open_Sans } from "next/font/google";
 import { ToastContainer } from "react-toastify";
-import BottomMenu from "../components/BottomMenu";
-import Navbar from "../components/Navbar";
+import AppChrome from "../components/AppChrome";
 import { AuthProvider } from "./providers/AuthProvider";
 import "./globals.scss";
 import "leaflet/dist/leaflet.css";
@@ -33,17 +32,10 @@ export default function RootLayout({
     <html lang="fr">
       <body className={`${openSans.variable} ${merriweatherSans.variable}`}>
         <AuthProvider>
-          <div className="app-shell">
-            <Navbar />
-
-            <div className="app-shell__content">
-              <main className="page-container">{children}</main>
-            </div>
-
-            <BottomMenu />
-
-            <ToastContainer position="top-right" autoClose={3000} theme="dark" />
-          </div>
+          <AppChrome>
+            {children}
+          </AppChrome>
+          <ToastContainer position="top-right" autoClose={3000} theme="dark" />
         </AuthProvider>
       </body>
     </html>

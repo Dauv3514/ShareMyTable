@@ -13,6 +13,7 @@ import {
 import { toast } from "react-toastify";
 import UserAvatar from "@/components/UserAvatar";
 import { useAuth } from "@/app/providers/AuthProvider";
+import ConversationAvatar from "./ConversationAvatar";
 import {
   createMessagingSocket,
   fetchMessagingConversations,
@@ -64,16 +65,22 @@ type MealThreadRowProps = {
 
 function MealThreadRow({ mealThread, currentUserId }: MealThreadRowProps) {
   const leadParticipant = getThreadAvatar(mealThread, currentUserId);
+  const groupConversation = mealThread.conversations.find(
+    (conversation) => conversation.type === "meal_group",
+  );
+  const avatarUsers = groupConversation?.members ?? mealThread.participants;
 
   return (
-    <Link href={`/messages/${mealThread.mealId}`} className={styles.threadLink}>
-      <div className={styles.avatarWrap}>
-        <UserAvatar
-          src={leadParticipant?.profilePhotoUrl}
-          alt={leadParticipant?.firstName || mealThread.mealTitle}
-          size={48}
-        />
-      </div>
+    <Link
+      href={`/messages/${mealThread.mealId}`}
+      className={`${styles.threadLink} ${styles.threadLinkFlat}`}
+    >
+      <ConversationAvatar
+        users={avatarUsers}
+        currentUserId={currentUserId}
+        alt={mealThread.mealTitle}
+        includeCurrentUser={Boolean(groupConversation)}
+      />
 
       <div className={styles.threadBody}>
         <div className={styles.threadTitleRow}>
@@ -106,13 +113,13 @@ type ThreadSectionProps = {
 
 function ThreadSection({ title, threads, currentUserId }: ThreadSectionProps) {
   return (
-    <section className={styles.sectionCard}>
-      <div className={styles.sectionHead}>
+    <section className={styles.listSection}>
+      <div className={`${styles.sectionHead} ${styles.sectionHeadCompact}`}>
         <h2>{title}</h2>
         <span className={styles.sectionCount}>{threads.length}</span>
       </div>
 
-      <div className={styles.threadsList}>
+      <div className={`${styles.threadsList} ${styles.threadsListFlat}`}>
         {threads.map((thread) => (
           <MealThreadRow
             key={thread.mealId}
