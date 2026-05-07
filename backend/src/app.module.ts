@@ -11,6 +11,7 @@ import { validateEnvConfig } from './config/env.validation';
 import { HostProfilesModule } from './host-profiles/host-profiles.module';
 import { MealsModule } from './meals/meals.module';
 import { PaymentsModule } from './payments/payments.module';
+import { MessagingModule } from './messaging/messaging.module';
 import { UsersModule } from './users/users.module';
 
 dotenv.config();
@@ -32,6 +33,7 @@ dotenv.config();
     MealsModule,
     BookingsModule,
     PaymentsModule,
+    MessagingModule,
   ],
   controllers: [AppController],
   providers: [AppService],
