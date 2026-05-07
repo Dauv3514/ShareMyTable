@@ -7,6 +7,7 @@ import { MessageConversationMember } from './message-conversation-member.entity'
 import { MessageConversation } from './message-conversation.entity';
 import { MessageEntry } from './message-entry.entity';
 import { MessagingController } from './messaging.controller';
+import { MessagingGateway } from './messaging.gateway';
 import { MessagingService } from './messaging.service';
 
 @Module({
@@ -21,7 +22,7 @@ import { MessagingService } from './messaging.service';
     AuthModule,
   ],
   controllers: [MessagingController],
-  providers: [MessagingService],
+  providers: [MessagingService, MessagingGateway],
   exports: [MessagingService],
 })
 export class MessagingModule {}
