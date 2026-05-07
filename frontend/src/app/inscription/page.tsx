@@ -544,7 +544,7 @@ function InscriptionPageContent() {
             <section className={styles.formSection}>
               <div className={styles.sectionHeader}>
                 <div className={styles.sectionTitleRow}>
-                  <h3>Demande hote a l'inscription</h3>
+                  <h3>Demande hote a l&apos;inscription</h3>
                   <span className={styles.sectionBadgeAccent}>Candidature hote</span>
                 </div>
                 <p>
@@ -652,7 +652,7 @@ function InscriptionPageContent() {
 
                   <p className={styles.hostHelp}>
                     La photo du logement reste optionnelle. En revanche, le
-                    quartier et l'adresse sont obligatoires si la demande hote est active.
+                    quartier et l&apos;adresse sont obligatoires si la demande hote est active.
                   </p>
                 </div>
               ) : null}

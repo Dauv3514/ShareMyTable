@@ -11,7 +11,7 @@ const navItems = [
   { label: "Rechercher", href: "/rechercher" },
   { label: "Mes repas", href: "/mes-repas" },
   { label: "Creer un evenement", href: "/mes-repas/creer" },
-  { label: "Messagerie", href: "#" },
+  { label: "Messagerie", href: "/messages" },
 ];
 
 export default function Navbar() {
