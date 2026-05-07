@@ -18,6 +18,10 @@ import {
   HostProfile,
   HostValidationStatus,
 } from './host-profile.entity';
+import {
+  HostProfileReviewDecision,
+  HostProfileReviewLog,
+} from './host-profile-review-log.entity';
 import { HostProfileVerificationService } from './host-profile-verification.service';
 
 type HostProfileUserSummary = {
@@ -71,6 +75,28 @@ type PublicHostProfileResponse = HostProfileResponse & {
   };
 };
 
+type HostProfileReviewHistoryResponse = {
+  id: number;
+  decision: HostProfileReviewDecision;
+  rejectionReason: string | null;
+  reviewedAt: Date;
+  admin: {
+    userId: number;
+    pseudo: string | null;
+    email: string;
+    firstName: string;
+    lastName: string;
+  } | null;
+  applicant: HostProfileUserSummary;
+  hostProfile: {
+    id: number;
+    country: string;
+    city: string;
+    districtLabel: string;
+    address: string;
+  };
+};
+
 // Service metier du parcours de candidature hote.
 // Il orchestre la creation, la moderation admin et l'auto-review niveau 1.
 @Injectable()
@@ -82,6 +108,8 @@ export class HostProfilesService {
     private readonly dataSource: DataSource,
     @InjectRepository(HostProfile)
     private readonly hostProfilesRepository: Repository<HostProfile>,
+    @InjectRepository(HostProfileReviewLog)
+    private readonly hostProfileReviewLogsRepository: Repository<HostProfileReviewLog>,
     @InjectRepository(Utilisateur)
     private readonly usersRepository: Repository<Utilisateur>,
     @InjectRepository(Meal)
@@ -197,9 +225,14 @@ export class HostProfilesService {
 
   // Validation admin :
   // le profil devient actif et le role principal du user passe a HOST.
-  async approve(id: number): Promise<HostProfileAdminResponse> {
+  async approve(
+    id: number,
+    adminUserId: number,
+  ): Promise<HostProfileAdminResponse> {
     const savedHostProfile = await this.dataSource.transaction(async (manager) => {
       const hostProfilesRepository = manager.getRepository(HostProfile);
+      const reviewLogsRepository = manager.getRepository(HostProfileReviewLog);
+      const usersRepository = manager.getRepository(Utilisateur);
 
       const hostProfile = await hostProfilesRepository.findOne({
         where: { id },
@@ -226,6 +259,19 @@ export class HostProfilesService {
         RoleName.HOST,
       );
 
+      const admin = await usersRepository.findOne({
+        where: { id: adminUserId },
+      });
+
+      await reviewLogsRepository.save(
+        reviewLogsRepository.create({
+          hostProfile: updatedHostProfile,
+          admin,
+          decision: HostProfileReviewDecision.APPROVED,
+          rejectionReason: null,
+        }),
+      );
+
       return updatedHostProfile;
     });
 
@@ -236,26 +282,55 @@ export class HostProfilesService {
   // un profil deja approuve ne peut pas etre rejete pour eviter un downgrade implicite.
   async reject(
     id: number,
+    adminUserId: number,
     rejectionReason?: string,
   ): Promise<HostProfileAdminResponse> {
-    const hostProfile = await this.findEntityById(id);
+    const savedHostProfile = await this.dataSource.transaction(async (manager) => {
+      const hostProfilesRepository = manager.getRepository(HostProfile);
+      const reviewLogsRepository = manager.getRepository(HostProfileReviewLog);
+      const usersRepository = manager.getRepository(Utilisateur);
 
-    if (hostProfile.validationStatus === HostValidationStatus.REJECTED) {
-      throw new BadRequestException('La demande hote est deja rejetee');
-    }
+      const hostProfile = await hostProfilesRepository.findOne({
+        where: { id },
+        relations: ['user'],
+      });
 
-    if (hostProfile.validationStatus === HostValidationStatus.APPROVED) {
-      throw new BadRequestException(
-        'Un profil hote approuve ne peut pas etre rejete',
+      if (!hostProfile) {
+        throw new NotFoundException('Profil hote introuvable');
+      }
+
+      if (hostProfile.validationStatus === HostValidationStatus.REJECTED) {
+        throw new BadRequestException('La demande hote est deja rejetee');
+      }
+
+      if (hostProfile.validationStatus === HostValidationStatus.APPROVED) {
+        throw new BadRequestException(
+          'Un profil hote approuve ne peut pas etre rejete',
+        );
+      }
+
+      hostProfile.validationStatus = HostValidationStatus.REJECTED;
+      hostProfile.isActive = false;
+      hostProfile.activatedAt = null;
+      hostProfile.rejectionReason = this.normalizeNullableString(rejectionReason);
+
+      const updatedHostProfile = await hostProfilesRepository.save(hostProfile);
+      const admin = await usersRepository.findOne({
+        where: { id: adminUserId },
+      });
+
+      await reviewLogsRepository.save(
+        reviewLogsRepository.create({
+          hostProfile: updatedHostProfile,
+          admin,
+          decision: HostProfileReviewDecision.REJECTED,
+          rejectionReason: updatedHostProfile.rejectionReason,
+        }),
       );
-    }
 
-    hostProfile.validationStatus = HostValidationStatus.REJECTED;
-    hostProfile.isActive = false;
-    hostProfile.activatedAt = null;
-    hostProfile.rejectionReason = this.normalizeNullableString(rejectionReason);
+      return updatedHostProfile;
+    });
 
-    const savedHostProfile = await this.hostProfilesRepository.save(hostProfile);
     return this.toAdminHostProfileResponse(savedHostProfile);
   }
 
@@ -288,6 +363,15 @@ export class HostProfilesService {
   async findById(id: number): Promise<HostProfileAdminResponse> {
     const hostProfile = await this.findEntityById(id);
     return this.toAdminHostProfileResponse(hostProfile);
+  }
+
+  async findHistory(): Promise<HostProfileReviewHistoryResponse[]> {
+    const reviewLogs = await this.hostProfileReviewLogsRepository.find({
+      relations: ['hostProfile', 'hostProfile.user', 'admin'],
+      order: { createdAt: 'DESC' },
+    });
+
+    return reviewLogs.map((reviewLog) => this.toReviewHistoryResponse(reviewLog));
   }
 
   async findPublicByUserId(userId: number): Promise<PublicHostProfileResponse> {
@@ -453,6 +537,38 @@ export class HostProfilesService {
         userId: hostProfile.user.id,
         pseudo: hostProfile.user.pseudo,
         email: hostProfile.user.email,
+      },
+    };
+  }
+
+  private toReviewHistoryResponse(
+    reviewLog: HostProfileReviewLog,
+  ): HostProfileReviewHistoryResponse {
+    return {
+      id: reviewLog.id,
+      decision: reviewLog.decision,
+      rejectionReason: reviewLog.rejectionReason,
+      reviewedAt: reviewLog.createdAt,
+      admin: reviewLog.admin
+        ? {
+            userId: reviewLog.admin.id,
+            pseudo: reviewLog.admin.pseudo,
+            email: reviewLog.admin.email,
+            firstName: reviewLog.admin.firstName,
+            lastName: reviewLog.admin.lastName,
+          }
+        : null,
+      applicant: {
+        userId: reviewLog.hostProfile.user.id,
+        pseudo: reviewLog.hostProfile.user.pseudo,
+        email: reviewLog.hostProfile.user.email,
+      },
+      hostProfile: {
+        id: reviewLog.hostProfile.id,
+        country: reviewLog.hostProfile.country,
+        city: reviewLog.hostProfile.city,
+        districtLabel: reviewLog.hostProfile.districtLabel,
+        address: reviewLog.hostProfile.address,
       },
     };
   }
