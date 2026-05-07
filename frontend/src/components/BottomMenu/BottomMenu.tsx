@@ -20,11 +20,19 @@ export default function BottomMenu() {
   const isMeActive = pathname === "/profil";
   const isAuthActive = pathname === "/connexion" || pathname === "/inscription";
 
+  const isItemActive = (href: string) => {
+    if (href === "/") {
+      return pathname === "/";
+    }
+
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
+
   return (
     <div className="bottom-menu">
       <nav className="bottom-menu__bar" aria-label="Navigation principale">
         {items.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = isItemActive(item.href);
           return (
             <Link
               key={item.key}

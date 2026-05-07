@@ -214,7 +214,7 @@ export default function AdminPage() {
     return (
       <section className={styles.page}>
         <div className={styles.loadingCard}>
-          <p>Chargement de l'administration...</p>
+          <p>Chargement de l&apos;administration...</p>
         </div>
       </section>
     );
@@ -233,7 +233,7 @@ export default function AdminPage() {
             <h1>Moderation des demandes hote</h1>
             <p>
               Valide ou refuse les candidatures en attente, puis retrouve tout
-              l'historique des decisions et l'admin qui les a prises.
+              l&apos;historique des decisions et l&apos;admin qui les a prises.
             </p>
           </div>
 
@@ -339,7 +339,7 @@ export default function AdminPage() {
                         }))
                       }
                       rows={4}
-                      placeholder="Explique clairement au candidat ce qu'il doit corriger."
+                      placeholder="Explique clairement au candidat ce qu&apos;il doit corriger."
                     />
                   </label>
 
@@ -373,14 +373,14 @@ export default function AdminPage() {
           <div className={styles.sectionHead}>
             <div>
               <h2>Historique des decisions</h2>
-              <p>Retrouve les demandes acceptees ou refusees et l'admin responsable.</p>
+              <p>Retrouve les demandes acceptees ou refusees et l&apos;admin responsable.</p>
             </div>
           </div>
 
           {history.length === 0 ? (
             <div className={styles.emptyState}>
               <ShieldCheck />
-              <p>Aucune decision admin n'a encore ete historisee.</p>
+              <p>Aucune decision admin n&apos;a encore ete historisee.</p>
             </div>
           ) : (
             <div className={styles.historyList}>
