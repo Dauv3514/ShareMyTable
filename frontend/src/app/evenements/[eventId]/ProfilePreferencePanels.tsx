@@ -1,62 +1,56 @@
 "use client";
 
-import { useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { fetchPublicUserPreferences } from "@/lib/user-preferences";
 import styles from "./event-detail.module.scss";
 
-const PROFILE_DIETARY_STORAGE_PREFIX = "profile:dietary-preferences:v3";
-
-const normalizePreferenceTag = (value: string) =>
-  value
-    .trim()
-    .replace(/\s+/g, " ");
-
-const readStoredPreferenceTags = (storageKey: string) => {
-  const storedPreferences = window.localStorage.getItem(storageKey);
-
-  if (!storedPreferences) {
-    return null;
-  }
-
-  try {
-    const parsed = JSON.parse(storedPreferences);
-
-    if (!Array.isArray(parsed)) {
-      return null;
-    }
-
-    const cleaned = parsed
-      .map((item) => (typeof item === "string" ? normalizePreferenceTag(item) : ""))
-      .filter(Boolean);
-
-    return cleaned;
-  } catch {
-    return null;
-  }
-};
-
 const uniqueTags = (tags: string[]) => Array.from(new Set(tags.filter(Boolean)));
-const subscribeToNothing = () => () => {};
+
+function usePublicPreferenceTags(
+  hostUserId: string,
+  fallbackTags: string[],
+  type: "dietary" | "ambiance",
+) {
+  const [preferenceTags, setPreferenceTags] = useState<string[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadPreferences = async () => {
+      const preferences = await fetchPublicUserPreferences(hostUserId);
+
+      if (cancelled) {
+        return;
+      }
+
+      setPreferenceTags(
+        type === "ambiance"
+          ? preferences?.ambianceTags ?? null
+          : preferences?.dietaryTags ?? null,
+      );
+    };
+
+    void loadPreferences();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hostUserId, type]);
+
+  return preferenceTags && preferenceTags.length > 0
+    ? uniqueTags(preferenceTags)
+    : uniqueTags(fallbackTags);
+}
 
 export function EventProfileFilters({
-  hostProfileId,
+  hostUserId,
   fallbackTags,
 }: {
-  hostProfileId: string;
+  hostUserId: string;
   fallbackTags: string[];
 }) {
-  const isHydrated = useSyncExternalStore(subscribeToNothing, () => true, () => false);
-  const displayTags = useMemo(() => {
-    if (!isHydrated) {
-      return fallbackTags;
-    }
-
-    const dietaryTags = readStoredPreferenceTags(
-      `${PROFILE_DIETARY_STORAGE_PREFIX}:${hostProfileId}`,
-    );
-    const profileTags = uniqueTags(dietaryTags ?? []);
-
-    return profileTags.length > 0 ? profileTags : fallbackTags;
-  }, [fallbackTags, hostProfileId, isHydrated]);
+  const publicAmbianceTags = usePublicPreferenceTags(hostUserId, fallbackTags, "ambiance");
+  const displayTags = useMemo(() => publicAmbianceTags, [publicAmbianceTags]);
 
   return (
     <div className={styles.filters}>
@@ -70,24 +64,13 @@ export function EventProfileFilters({
 }
 
 export function EventDietaryPreferenceSection({
-  hostProfileId,
+  hostUserId,
   fallbackTags,
 }: {
-  hostProfileId: string;
+  hostUserId: string;
   fallbackTags: string[];
 }) {
-  const isHydrated = useSyncExternalStore(subscribeToNothing, () => true, () => false);
-  const visibleDietaryTags = useMemo(() => {
-    if (!isHydrated) {
-      return uniqueTags(fallbackTags);
-    }
-
-    const storedDietaryTags = readStoredPreferenceTags(
-      `${PROFILE_DIETARY_STORAGE_PREFIX}:${hostProfileId}`,
-    );
-
-    return uniqueTags(storedDietaryTags && storedDietaryTags.length > 0 ? storedDietaryTags : fallbackTags);
-  }, [fallbackTags, hostProfileId, isHydrated]);
+  const visibleDietaryTags = usePublicPreferenceTags(hostUserId, fallbackTags, "dietary");
 
   if (visibleDietaryTags.length === 0) {
     return null;
@@ -104,7 +87,7 @@ export function EventDietaryPreferenceSection({
 
       <div className={styles.preferenceGrid}>
         <section className={styles.preferenceGroup}>
-          <span className={styles.preferenceTitle}>Tags du profil</span>
+          <span className={styles.preferenceTitle}>Tags concernant l'événement</span>
 
           <div className={styles.preferenceBox}>
             {visibleDietaryTags.map((item) => (

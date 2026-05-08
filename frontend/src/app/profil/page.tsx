@@ -30,13 +30,15 @@ import {
 import { toast } from "react-toastify";
 import UserAvatar from "@/components/UserAvatar";
 import DatePickerField from "@/components/DatePicker";
+import {
+  fetchMyUserPreferences,
+  updateMyUserPreferences,
+} from "@/lib/user-preferences";
 import { useAuth } from "../providers/AuthProvider";
 import styles from "./profil.module.scss";
 
 const BIRTH_DATE_START_MONTH = new Date(1920, 0, 1);
 const BIRTH_DATE_END_MONTH = new Date();
-const PROFILE_DIETARY_STORAGE_PREFIX = "profile:dietary-preferences:v3";
-const PROFILE_AMBIANCE_STORAGE_PREFIX = "profile:meal-ambiance:v2";
 const DEFAULT_DIETARY_PREFERENCE_TAGS = ["Sans gluten"];
 const DEFAULT_AMBIANCE_PREFERENCE_TAGS = ["Discussions enrichissantes"];
 const DIETARY_PREFERENCE_SUGGESTIONS = [
@@ -132,30 +134,6 @@ const toPreferenceKey = (value: string) =>
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
-
-const readStoredPreferenceTags = (storageKey: string, fallbackTags: string[]) => {
-  const storedPreferences = window.localStorage.getItem(storageKey);
-
-  if (!storedPreferences) {
-    return fallbackTags;
-  }
-
-  try {
-    const parsed = JSON.parse(storedPreferences);
-
-    if (!Array.isArray(parsed)) {
-      return fallbackTags;
-    }
-
-    const cleaned = parsed
-      .map((item) => (typeof item === "string" ? normalizePreferenceTag(item) : ""))
-      .filter(Boolean);
-
-    return cleaned.length > 0 ? cleaned : fallbackTags;
-  } catch {
-    return fallbackTags;
-  }
-};
 
 const StatCard = ({
   label,
@@ -888,6 +866,7 @@ const ProfilPage = () => {
   const notificationsSectionRef = useRef<HTMLDivElement | null>(null);
   const profilePanelRef = useRef<HTMLDivElement | null>(null);
   const passwordPanelRef = useRef<HTMLDivElement | null>(null);
+  const skipPreferenceSyncRef = useRef(true);
 
   const getSectionTarget = (section: string | null) => {
     switch (section) {
@@ -1173,39 +1152,89 @@ const ProfilPage = () => {
   );
 
   useEffect(() => {
+    let cancelled = false;
+
     if (!user?.id) {
       setPreferencesReady(false);
+      skipPreferenceSyncRef.current = true;
       return;
     }
 
-    setDietaryPreferenceTags(
-      readStoredPreferenceTags(
-        `${PROFILE_DIETARY_STORAGE_PREFIX}:${user.id}`,
-        DEFAULT_DIETARY_PREFERENCE_TAGS
-      )
-    );
-    setAmbiancePreferenceTags(
-      readStoredPreferenceTags(
-        `${PROFILE_AMBIANCE_STORAGE_PREFIX}:${user.id}`,
-        DEFAULT_AMBIANCE_PREFERENCE_TAGS
-      )
-    );
-    setPreferencesReady(true);
+    const loadPreferences = async () => {
+      const token = localStorage.getItem("token");
+
+      skipPreferenceSyncRef.current = true;
+
+      if (!token) {
+        if (!cancelled) {
+          setDietaryPreferenceTags(DEFAULT_DIETARY_PREFERENCE_TAGS);
+          setAmbiancePreferenceTags(DEFAULT_AMBIANCE_PREFERENCE_TAGS);
+          setPreferencesReady(true);
+        }
+        return;
+      }
+
+      const preferences = await fetchMyUserPreferences(token);
+
+      if (cancelled) {
+        return;
+      }
+
+      if (preferences) {
+        setDietaryPreferenceTags(preferences.dietaryTags);
+        setAmbiancePreferenceTags(preferences.ambianceTags);
+      } else {
+        setDietaryPreferenceTags(DEFAULT_DIETARY_PREFERENCE_TAGS);
+        setAmbiancePreferenceTags(DEFAULT_AMBIANCE_PREFERENCE_TAGS);
+      }
+
+      setPreferencesReady(true);
+    };
+
+    void loadPreferences();
+
+    return () => {
+      cancelled = true;
+    };
   }, [user?.id]);
 
   useEffect(() => {
+    let cancelled = false;
+
     if (!user?.id || !preferencesReady) {
       return;
     }
 
-    window.localStorage.setItem(
-      `${PROFILE_DIETARY_STORAGE_PREFIX}:${user.id}`,
-      JSON.stringify(dietaryPreferenceTags)
-    );
-    window.localStorage.setItem(
-      `${PROFILE_AMBIANCE_STORAGE_PREFIX}:${user.id}`,
-      JSON.stringify(ambiancePreferenceTags)
-    );
+    if (skipPreferenceSyncRef.current) {
+      skipPreferenceSyncRef.current = false;
+      return;
+    }
+
+    const syncPreferences = async () => {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        return;
+      }
+
+      const updatedPreferences = await updateMyUserPreferences(token, {
+        dietaryTags: dietaryPreferenceTags,
+        ambianceTags: ambiancePreferenceTags,
+      });
+
+      if (!updatedPreferences || cancelled) {
+        if (!cancelled) {
+          toast.error("Impossible d'enregistrer les préférences pour le moment.");
+        }
+        return;
+      }
+    };
+
+    void syncPreferences();
+
+    return () => {
+      cancelled = true;
+    };
   }, [ambiancePreferenceTags, dietaryPreferenceTags, preferencesReady, user?.id]);
 
   const updatePanelQuery = (nextPanel: ExpandablePanel) => {

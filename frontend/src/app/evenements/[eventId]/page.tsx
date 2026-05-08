@@ -46,6 +46,9 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
   const dietaryFilters = selectedFilterDefinitions
     .filter((filter) => filter.category === "dietary-preferences")
     .map((filter) => filter.label);
+  const ambianceFilters = selectedFilterDefinitions
+    .filter((filter) => filter.category === "meal-ambiance")
+    .map((filter) => filter.label);
   const participantProfiles = (
     await Promise.all(
       (event.participantProfileIds ?? [])
@@ -125,7 +128,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
             </div>
           </div>
 
-          <EventProfileFilters hostProfileId={hostProfile.id} fallbackTags={dietaryFilters} />
+          <EventProfileFilters hostUserId={hostProfile.id} fallbackTags={ambianceFilters} />
 
           <div className={styles.detailActions}>
             <Link href="/connexion" className={styles.contactButton}>
@@ -233,7 +236,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
           </section>
 
           <EventDietaryPreferenceSection
-            hostProfileId={hostProfile.id}
+            hostUserId={hostProfile.id}
             fallbackTags={dietaryFilters}
           />
 

@@ -4,12 +4,15 @@ import {
     Entity,
     JoinColumn,
     ManyToOne,
+    OneToMany,
     OneToOne,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from 'typeorm';
 import { HostProfile } from '../host-profiles/host-profile.entity';
+import { PreferenceTag } from './preference-tag.entity';
 import { Role } from './role.entity';
+import { UserPreferenceTag } from './user-preference-tag.entity';
 
 export enum AccountStatus {
     ACTIVE = 'active',
@@ -25,43 +28,43 @@ export enum AuthProvider {
 @Entity('users')
 export class Utilisateur {
     @PrimaryGeneratedColumn()
-    id: number;
+    id!: number;
 
     @Column({ type: 'varchar', length: 50, unique: true, nullable: true })
-    pseudo: string | null;
+    pseudo!: string | null;
 
     @Column({ length: 255, unique: true })
-    email: string;
+    email!: string;
 
     @Column({ type: 'varchar', length: 30, unique: true, nullable: true })
-    phone: string | null;
+    phone!: string | null;
 
     @Column({ name: 'password_hash', type: 'varchar', length: 255, nullable: true })
-    passwordHash: string | null;
+    passwordHash!: string | null;
 
     @Column({ name: 'first_name', length: 80 })
-    firstName: string;
+    firstName!: string;
 
     @Column({ name: 'last_name', length: 80 })
-    lastName: string;
+    lastName!: string;
 
     @Column({ name: 'profile_photo_url', type: 'text', nullable: true })
-    profilePhotoUrl: string | null;
+    profilePhotoUrl!: string | null;
 
     @Column({ length: 120 })
-    city: string;
+    city!: string;
 
     @Column({ length: 50 })
-    country: string;
+    country!: string;
 
     @Column({ type: 'text', nullable: true })
-    bio: string | null;
+    bio!: string | null;
 
     @Column({ name: 'birth_date', type: 'date' })
-    birthDate: Date;
+    birthDate!: Date;
 
     @Column({ name: 'email_verified_at', type: 'timestamp', nullable: true })
-    emailVerifiedAt: Date | null;
+    emailVerifiedAt!: Date | null;
 
     @Column({
         name: 'auth_provider',
@@ -69,23 +72,23 @@ export class Utilisateur {
         enum: AuthProvider,
         default: AuthProvider.LOCAL,
     })
-    authProvider: AuthProvider;
+    authProvider!: AuthProvider;
 
     @Column({ name: 'auth_provider_id', type: 'varchar', length: 150, nullable: true })
-    authProviderId: string | null;
+    authProviderId!: string | null;
 
     @Column({ name: 'is_profile_complete', type: 'boolean', default: false })
-    isProfileComplete: boolean;
+    isProfileComplete!: boolean;
 
     @Column({ name: 'email_verification_token_hash', type: 'varchar', length: 64, nullable: true })
-    emailVerificationTokenHash: string | null;
+    emailVerificationTokenHash!: string | null;
 
     @Column({
         name: 'email_verification_expires_at',
         type: 'timestamp',
         nullable: true,
     })
-    emailVerificationExpiresAt: Date | null;
+    emailVerificationExpiresAt!: Date | null;
 
     @Column({
         name: 'password_reset_token_hash',
@@ -93,14 +96,14 @@ export class Utilisateur {
         length: 64,
         nullable: true,
     })
-    passwordResetTokenHash: string | null;
+    passwordResetTokenHash!: string | null;
 
     @Column({
         name: 'password_reset_expires_at',
         type: 'timestamp',
         nullable: true,
     })
-    passwordResetExpiresAt: Date | null;
+    passwordResetExpiresAt!: Date | null;
 
     @Column({
         name: 'account_status',
@@ -109,21 +112,27 @@ export class Utilisateur {
         enumName: 'users_account_status_enum',
         default: AccountStatus.ACTIVE,
     })
-    accountStatus: AccountStatus;
+    accountStatus!: AccountStatus;
 
     @ManyToOne(() => Role, (role) => role.users, {
         eager: true,
         nullable: false,
     })
     @JoinColumn({ name: 'role_id', referencedColumnName: 'id' })
-    role: Role;
+    role!: Role;
 
     @OneToOne(() => HostProfile, (hostProfile) => hostProfile.user)
-    hostProfile: HostProfile | null;
+    hostProfile!: HostProfile | null;
+
+    @OneToMany(() => UserPreferenceTag, (userPreferenceTag) => userPreferenceTag.user)
+    userPreferenceTags!: UserPreferenceTag[];
+
+    @OneToMany(() => PreferenceTag, (preferenceTag) => preferenceTag.ownerUser)
+    ownedPreferenceTags!: PreferenceTag[];
 
     @CreateDateColumn({ name: 'created_at' })
-    createdAt: Date;
+    createdAt!: Date;
 
     @UpdateDateColumn({ name: 'updated_at' })
-    updatedAt: Date;
+    updatedAt!: Date;
 }

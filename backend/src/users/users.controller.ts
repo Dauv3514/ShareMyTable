@@ -15,7 +15,11 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '../auth/auth.guard';
 import type { IAuthInfoRequest } from '../auth/auth.guard';
 import { UsersService } from './users.service';
-import { CompleteProfileDto, UpdateProfileDto } from './users.dto';
+import {
+  CompleteProfileDto,
+  UpdateProfileDto,
+  UpdateUserPreferencesDto,
+} from './users.dto';
 import { buildProfilePhotoUrl, profilePhotoUploadOptions } from '../uploads/profile-photo-upload';
 
 @Controller('users')
@@ -70,6 +74,19 @@ export class UsersController {
     }
 
     @UseGuards(AuthGuard)
+    @Get('me/preferences')
+    async getMyPreferences(@Req() req: IAuthInfoRequest) {
+        const preferences = await this.usersService.getUserPreferenceSummary(req.user.sub, {
+            initializeDefaults: true,
+        });
+
+        return {
+            dietaryTags: preferences.dietaryTags,
+            ambianceTags: preferences.ambianceTags,
+        };
+    }
+
+    @UseGuards(AuthGuard)
     @UseInterceptors(FileInterceptor('profile_photo', profilePhotoUploadOptions))
     @Patch('me')
     async updateProfile(
@@ -111,6 +128,26 @@ export class UsersController {
     }
 
     @UseGuards(AuthGuard)
+    @Patch('me/preferences')
+    async updateMyPreferences(
+        @Req() req: IAuthInfoRequest,
+        @Body() body: UpdateUserPreferencesDto,
+    ) {
+        const preferences = await this.usersService.updateUserPreferenceSummary(req.user.sub, {
+            dietaryTags: body.dietary_tags ?? [],
+            ambianceTags: body.ambiance_tags ?? [],
+        });
+
+        return {
+            success: true,
+            preferences: {
+                dietaryTags: preferences.dietaryTags,
+                ambianceTags: preferences.ambianceTags,
+            },
+        };
+    }
+
+    @UseGuards(AuthGuard)
     @UseInterceptors(FileInterceptor('profile_photo', profilePhotoUploadOptions))
     @Patch('me/complete-profile')
     async completeProfile(
@@ -144,6 +181,18 @@ export class UsersController {
     return {
       userId: user.id,
       username: user.pseudo,
+    };
+  }
+
+  @Get(':userId/preferences')
+  async getUserPreferences(@Param('userId') userId: number) {
+    const preferences = await this.usersService.getUserPreferenceSummary(Number(userId), {
+      initializeDefaults: true,
+    });
+
+    return {
+      dietaryTags: preferences.dietaryTags,
+      ambianceTags: preferences.ambianceTags,
     };
   }
 
