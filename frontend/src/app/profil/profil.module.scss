@@ -280,18 +280,9 @@
   color: #9b8f6c;
 }
 
-.preferenceGroup {
+.preferenceEditor {
   display: grid;
-  gap: 10px;
-}
-
-.preferenceGroup + .preferenceGroup {
-  margin-top: 16px;
-}
-
-.preferenceTitle {
-  font-size: 15px;
-  font-weight: 700;
+  gap: 12px;
 }
 
 .preferenceBox {
@@ -311,7 +302,7 @@
 
 .chip {
   min-height: 32px;
-  padding: 0 12px;
+  padding: 0 6px 0 12px;
   border-radius: 999px;
   border: 1px solid #e6dbbf;
   background: #fffdf7;
@@ -323,6 +314,19 @@
   font-weight: 500;
 }
 
+.chipRemoveButton {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
 .chipRemove {
   width: 14px;
   height: 14px;
@@ -330,21 +334,232 @@
   stroke-width: 2.4;
 }
 
-.addChip {
+.addChipButton {
   width: 32px;
   height: 32px;
+  border: none;
   border-radius: 50%;
   background: #ddd09f;
   color: #4e451d;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
 }
 
-.addChip svg {
+.addChipButton svg {
   width: 18px;
   height: 18px;
   stroke-width: 2.6;
+}
+
+.preferenceModal {
+  position: fixed;
+  inset: 0;
+  z-index: 160;
+  display: grid;
+  align-items: end;
+  justify-items: center;
+}
+
+.preferenceModalBackdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: rgba(28, 28, 22, 0.58);
+  cursor: pointer;
+}
+
+.preferenceModalSheet {
+  position: relative;
+  width: min(560px, calc(100% - 22px));
+  max-height: min(82vh, 720px);
+  background: #fffdf7;
+  border: 1px solid #ded1ad;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -16px 36px rgba(58, 47, 26, 0.22);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+
+.preferenceModalHeader {
+  padding: 18px 18px 14px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  background: #ffffff;
+  border-bottom: 1px solid #efe4ca;
+}
+
+.preferenceModalEyebrow {
+  margin: 0 0 4px;
+  color: #7c7335;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.preferenceModalHeader h3 {
+  margin: 0;
+  color: #292d06;
+  font-size: 19px;
+  line-height: 1.1;
+}
+
+.preferenceModalClose {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #e6dcc1;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #312914;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(77, 62, 25, 0.08);
+}
+
+.preferenceModalClose svg {
+  width: 18px;
+  height: 18px;
+}
+
+.preferenceModalContent {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 18px;
+  display: grid;
+  gap: 24px;
+  scrollbar-color: #a8a8a8 transparent;
+  scrollbar-width: thin;
+}
+
+.preferenceModalContent::-webkit-scrollbar {
+  width: 8px;
+}
+
+.preferenceModalContent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.preferenceModalContent::-webkit-scrollbar-thumb {
+  background: #a8a8a8;
+  border-radius: 999px;
+}
+
+.preferenceModalGroup {
+  display: grid;
+  gap: 12px;
+}
+
+.preferenceModalGroupHeader {
+  display: grid;
+  gap: 4px;
+}
+
+.preferenceModalGroupHeader h4 {
+  margin: 0;
+  color: #3d4210;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.preferenceModalGroupHeader p {
+  margin: 0;
+  color: #756a42;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.preferenceModalChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.preferenceModalChip {
+  max-width: 100%;
+  border: 1px solid #d8c791;
+  background: #ffffff;
+  color: #3c321d;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.preferenceModalChip:hover,
+.preferenceModalChip:focus-visible {
+  background: #fff8df;
+  border-color: #bca956;
+  outline: none;
+}
+
+.preferenceModalField input {
+  width: 100%;
+  border: 1px solid #dfd3b1;
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 14px 16px;
+  font-size: 15px;
+  color: #312914;
+  box-shadow: 0 8px 18px rgba(59, 45, 18, 0.06);
+  font-family: inherit;
+}
+
+.preferenceModalField input::placeholder {
+  font-size: 13px;
+  color: #8e8e8e;
+}
+
+.preferenceModalField input:focus {
+  outline: none;
+  border-color: #cab35a;
+  box-shadow: 0 0 0 4px rgba(225, 236, 121, 0.25);
+}
+
+.preferenceModalFooter {
+  padding: 12px 18px calc(16px + env(safe-area-inset-bottom));
+  background: #ffffff;
+  border-top: 1px solid #efe4ca;
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+}
+
+.preferenceModalResult {
+  width: min(260px, 100%);
+  min-height: 40px;
+  border: none;
+  border-radius: 999px;
+  background: #252525;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+
+.preferenceModalResult:disabled {
+  background: #cfcfcf;
+  color: #f7f7f7;
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+.preferenceModalClear {
+  border: none;
+  background: transparent;
+  color: #7c7335;
+  font-size: 12px;
+  cursor: pointer;
 }
 
 .sectionList {
@@ -766,9 +981,27 @@
     width: 100%;
   }
 
+  .preferenceModalSheet {
+    width: 100%;
+    border-right: none;
+    border-left: none;
+  }
+
   .sectionCard {
     border-radius: 24px;
     padding: 18px;
+  }
+}
+
+@media (min-width: 720px) {
+  .preferenceModal {
+    align-items: center;
+  }
+
+  .preferenceModalSheet {
+    border-radius: 16px;
+    max-height: min(78vh, 720px);
+    box-shadow: 0 22px 48px rgba(58, 47, 26, 0.24);
   }
 }
 

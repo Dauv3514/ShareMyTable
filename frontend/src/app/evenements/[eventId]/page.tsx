@@ -10,7 +10,12 @@ import {
   buildHostProfileHref,
   buildMealEventMapHref,
   getEventDetailPayload,
+  getHostProfileById,
 } from "@/lib/meal-data";
+import {
+  EventDietaryPreferenceSection,
+  EventProfileFilters,
+} from "./ProfilePreferencePanels";
 import styles from "./event-detail.module.scss";
 
 type EventDetailPageProps = {
@@ -35,9 +40,19 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
 
   const { event, hostProfile } = payload;
 
-  const selectedFilters = event.filters
-    .map((filterId) => getMealFilterById(filterId)?.label)
-    .filter(Boolean);
+  const selectedFilterDefinitions = event.filters
+    .map((filterId) => getMealFilterById(filterId))
+    .filter((filter): filter is NonNullable<ReturnType<typeof getMealFilterById>> => Boolean(filter));
+  const dietaryFilters = selectedFilterDefinitions
+    .filter((filter) => filter.category === "dietary-preferences")
+    .map((filter) => filter.label);
+  const participantProfiles = (
+    await Promise.all(
+      (event.participantProfileIds ?? [])
+        .slice(0, event.currentParticipants)
+        .map((participantId) => getHostProfileById(participantId)),
+    )
+  ).filter(Boolean);
   const hostFirstName = hostProfile.name.split(" ")[0] ?? hostProfile.name;
   const participationRatio = Math.min(
     100,
@@ -78,7 +93,29 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
 
           <div className={styles.participants}>
             <div className={styles.participantsGrid}>
-              <span>Participants</span>
+              <div className={styles.participantsMeta}>
+                <span>Participants</span>
+                {participantProfiles.length > 0 ? (
+                  <div className={styles.participantAvatarList} aria-label="Participants au repas">
+                    {participantProfiles.map((participant) => (
+                      <Link
+                        key={participant.id}
+                        href={buildHostProfileHref(participant.id)}
+                        className={styles.participantAvatarLink}
+                        aria-label={`Voir le profil de ${participant.name}`}
+                      >
+                        <span className={styles.participantAvatarFrame}>
+                          <UserAvatar
+                            src={participant.photoUrl}
+                            alt={participant.name}
+                            size={32}
+                          />
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
               <strong>
                 {event.currentParticipants}/{event.maxParticipants}
               </strong>
@@ -88,12 +125,15 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
             </div>
           </div>
 
-          <div className={styles.filters}>
-            {selectedFilters.map((filter) => (
-              <span key={filter} className={styles.filterChip}>
-                {filter}
-              </span>
-            ))}
+          <EventProfileFilters hostProfileId={hostProfile.id} fallbackTags={dietaryFilters} />
+
+          <div className={styles.detailActions}>
+            <Link href="/connexion" className={styles.contactButton}>
+              <span>Contacter {hostFirstName}</span>
+            </Link>
+            <Link href="/connexion" className={styles.registerButton}>
+              <span>S&apos;inscrire</span>
+            </Link>
           </div>
 
           <section className={styles.locationSection} aria-label="Lieu de l'événement">
@@ -192,32 +232,10 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
             </div>
           </section>
 
-          {event.dietaryPreferenceGroups && event.dietaryPreferenceGroups.length > 0 ? (
-            <section
-              className={styles.preferenceSection}
-              aria-label="Préférences alimentaires"
-            >
-              <div className={styles.preferenceHead}>
-                <h2>Préférences alimentaires</h2>
-              </div>
-
-              <div className={styles.preferenceGrid}>
-                {event.dietaryPreferenceGroups.map((group) => (
-                  <section key={group.title} className={styles.preferenceGroup}>
-                    <span className={styles.preferenceTitle}>{group.title}</span>
-
-                    <div className={styles.preferenceBox}>
-                      {group.items.map((item) => (
-                        <span key={`${group.title}-${item}`} className={styles.preferenceChip}>
-                          {item}
-                        </span>
-                      ))}
-                    </div>
-                  </section>
-                ))}
-              </div>
-            </section>
-          ) : null}
+          <EventDietaryPreferenceSection
+            hostProfileId={hostProfile.id}
+            fallbackTags={dietaryFilters}
+          />
 
           <section className={styles.rulesSection} aria-label="Règles et conditions">
             <div className={styles.rulesHead}>
@@ -239,15 +257,6 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
               </Link>
             </div>
           </section>
-
-          <div className={styles.detailActions}>
-            <Link href="/connexion" className={styles.contactButton}>
-              <span>Contacter {hostFirstName}</span>
-            </Link>
-            <Link href="/connexion" className={styles.registerButton}>
-              <span>S&apos;inscrire</span>
-            </Link>
-          </div>
         </section>
       </article>
     </div>

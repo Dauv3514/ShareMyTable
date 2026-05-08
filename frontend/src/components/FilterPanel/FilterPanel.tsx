@@ -55,7 +55,10 @@ export default function FilterPanel({
         <div className="filter-panel__content">
           {mealFilterGroups.map((group) => (
             <section className="filter-panel__group" key={group.id}>
-              <h3>{group.title}</h3>
+              <div className="filter-panel__group-header">
+                <h3>{group.title}</h3>
+                <p>{group.subtitle}</p>
+              </div>
               <div className="filter-panel__chips">
                 {group.filters.map((filter) => {
                   const selected = selectedFilters.includes(filter.id);
@@ -72,7 +75,6 @@ export default function FilterPanel({
                       onClick={() => onToggleFilter(filter.id)}
                     >
                       <span>{filter.label}</span>
-                      <small>{filter.description}</small>
                     </button>
                   );
                 })}

@@ -23,6 +23,8 @@ export default async function EventMapPage({ params }: EventMapPageProps) {
     notFound();
   }
 
+  const hostFirstName = event.host.split(" ")[0] ?? event.host;
+
   return (
     <div className={styles.page}>
       <Link href={buildMealEventHref(event.id)} className={styles.backLink}>
@@ -64,6 +66,15 @@ export default async function EventMapPage({ params }: EventMapPageProps) {
           </div>
         </div>
       </section>
+
+      <div className={styles.detailActions}>
+        <Link href="/connexion" className={styles.contactButton}>
+          <span>Contacter {hostFirstName}</span>
+        </Link>
+        <Link href="/connexion" className={styles.registerButton}>
+          <span>S&apos;inscrire</span>
+        </Link>
+      </div>
 
       <SearchMap location={event.city} eventCount={1} />
     </div>

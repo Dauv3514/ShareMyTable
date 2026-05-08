@@ -110,6 +110,12 @@
   color: #292d06;
 }
 
+.participantsMeta {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+
 .participantsGrid span {
   font-size: 16px;
   line-height: 1.2;
@@ -120,6 +126,40 @@
   font-size: 20px;
   line-height: 1;
   font-weight: 400;
+}
+
+.participantAvatarList {
+  display: flex;
+  align-items: center;
+  padding-left: 2px;
+}
+
+.participantAvatarLink {
+  position: relative;
+  margin-left: -8px;
+  display: inline-flex;
+  text-decoration: none;
+}
+
+.participantAvatarLink:first-child {
+  margin-left: 0;
+}
+
+.participantAvatarFrame {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #fffdf7;
+  border: 2px solid #fffdf7;
+  box-shadow: 0 4px 10px rgba(60, 47, 22, 0.12);
+  display: grid;
+  place-items: center;
+}
+
+.participantAvatarLink:hover .participantAvatarFrame,
+.participantAvatarLink:focus-visible .participantAvatarFrame {
+  transform: translateY(-1px);
 }
 
 .progress {
@@ -643,6 +683,7 @@
 @media (max-width: 640px) {
   .page {
     padding-top: 8px;
+    padding-bottom: 170px;
   }
 
   .heroPhoto {
@@ -681,6 +722,15 @@
 
   .participantsGrid strong {
     font-size: 18px;
+  }
+
+  .participantsMeta {
+    gap: 8px;
+  }
+
+  .participantAvatarFrame {
+    width: 30px;
+    height: 30px;
   }
 
   .filterChip {
@@ -856,8 +906,16 @@
   }
 
   .detailActions {
-    margin-top: 22px;
+    position: fixed;
+    left: 50%;
+    bottom: calc(84px + env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    z-index: 45;
+    width: min(calc(100% - 24px), 520px);
+    margin-top: 0;
     gap: 12px;
+    padding: 12px 0 0;
+    background: linear-gradient(180deg, rgba(255, 253, 247, 0) 0%, #fffdf7 42%);
   }
 
   .contactButton,
