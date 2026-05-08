@@ -1,4 +1,4 @@
-export type MealFilterCategory = "imperatifs" | "stricts" | "preferences" | "nutrition";
+export type MealFilterCategory = "dietary-preferences" | "meal-ambiance";
 
 export type MealFilter = {
   id: string;
@@ -10,6 +10,7 @@ export type MealFilter = {
 export type MealFilterGroup = {
   id: MealFilterCategory;
   title: string;
+  subtitle: string;
   filters: MealFilter[];
 };
 
@@ -29,6 +30,7 @@ export type MealEvent = {
   pricePerPerson: number;
   currentParticipants: number;
   maxParticipants: number;
+  participantProfileIds?: string[];
   menuSections: MealMenuSection[];
   dietaryPreferenceGroups?: MealDietaryPreferenceGroup[];
 };

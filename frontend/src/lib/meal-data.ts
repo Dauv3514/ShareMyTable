@@ -84,20 +84,28 @@ type EventDetailPayload = {
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 const filterKeywordMap: Array<{ id: string; keywords: string[] }> = [
-  { id: "vegetalien", keywords: ["vegetalien", "vegan", "vegetal"] },
+  { id: "vegan", keywords: ["vegetalien", "vegan", "vegetal"] },
   { id: "vegetarien", keywords: ["vegetarien", "veggie"] },
+  { id: "flexitarien", keywords: ["flexitarien", "flexi"] },
   { id: "sans-lactose", keywords: ["sans lactose"] },
-  { id: "sans-oeufs", keywords: ["sans oeuf", "sans oeufs"] },
   { id: "sans-gluten", keywords: ["sans gluten", "gluten free"] },
-  { id: "sans-alcool", keywords: ["sans alcool"] },
-  { id: "non-epice", keywords: ["non epice", "pas epice", "version douce"] },
   { id: "halal", keywords: ["halal"] },
   { id: "casher", keywords: ["casher"] },
-  { id: "sans-porc", keywords: ["sans porc"] },
-  { id: "riche-fibres", keywords: ["fibres", "legumes", "cereales completes"] },
+  { id: "pas-de-porc", keywords: ["sans porc", "pas de porc"] },
+  { id: "allergie-aux-noix", keywords: ["sans noix", "sans amandes", "fruits a coque"] },
+  { id: "diabetique", keywords: ["sans sucre", "diabete", "diabetique"] },
+  { id: "ambiance-decontractee", keywords: ["decontracte", "detendu", "brunch"] },
+  { id: "soiree-jeux", keywords: ["soiree jeux", "jeux", "game night"] },
+  { id: "decouverte-culinaire", keywords: ["decouverte culinaire", "degustation", "saveurs"] },
+  { id: "repas-calme", keywords: ["calme", "intimiste"] },
+  { id: "echange-linguistique", keywords: ["echange linguistique", "bilingue", "anglais"] },
+  { id: "cuisine-du-monde", keywords: ["cuisine du monde", "couscous", "dhal", "tapas"] },
+  { id: "repas-en-plein-air", keywords: ["plein air", "terrasse", "jardin"] },
+  { id: "convivial-et-festif", keywords: ["convivial", "festif", "apero"] },
+  { id: "sans-ecrans", keywords: ["sans ecrans", "deconnecte"] },
   {
-    id: "faible-graisses-saturees",
-    keywords: ["faible en graisses", "leger", "legere"],
+    id: "discussions-enrichissantes",
+    keywords: ["discussion", "echanges", "conversation"],
   },
 ];
 
@@ -313,6 +321,7 @@ function mapMealToEvent(
     pricePerPerson: Math.round(meal.pricePerSeatCents / 100),
     currentParticipants: fallbackEvent.currentParticipants,
     maxParticipants: meal.seatsTotal || fallbackEvent.maxParticipants,
+    participantProfileIds: fallbackEvent.participantProfileIds,
     menuSections: buildMenuSections(meal, fallbackEvent.menuSections),
     dietaryPreferenceGroups: buildPreferenceGroups(
       derivedFilters,

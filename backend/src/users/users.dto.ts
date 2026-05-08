@@ -1,4 +1,12 @@
-import { IsDateString, IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsDateString,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Length,
+} from 'class-validator';
 
 export class CompleteProfileDto {
   @IsNotEmpty({ message: "Le pays est obligatoire" })
@@ -68,4 +76,20 @@ export class UpdateProfileDto {
 
   @IsOptional()
   remove_profile_photo?: string;
+}
+
+export class UpdateUserPreferencesDto {
+  @IsArray({ message: 'Les préférences alimentaires doivent être une liste.' })
+  @IsString({ each: true, message: 'Chaque préférence alimentaire doit être un texte.' })
+  @ArrayMaxSize(50, {
+    message: 'Tu ne peux pas enregistrer plus de 50 tags alimentaires.',
+  })
+  dietary_tags!: string[];
+
+  @IsArray({ message: "Les préférences d'ambiance doivent être une liste." })
+  @IsString({ each: true, message: "Chaque préférence d'ambiance doit être un texte." })
+  @ArrayMaxSize(50, {
+    message: "Tu ne peux pas enregistrer plus de 50 tags d'ambiance.",
+  })
+  ambiance_tags!: string[];
 }

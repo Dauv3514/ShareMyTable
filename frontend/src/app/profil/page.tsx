@@ -30,11 +30,41 @@ import {
 import { toast } from "react-toastify";
 import UserAvatar from "@/components/UserAvatar";
 import DatePickerField from "@/components/DatePicker";
+import {
+  fetchMyUserPreferences,
+  updateMyUserPreferences,
+} from "@/lib/user-preferences";
 import { useAuth } from "../providers/AuthProvider";
 import styles from "./profil.module.scss";
 
 const BIRTH_DATE_START_MONTH = new Date(1920, 0, 1);
 const BIRTH_DATE_END_MONTH = new Date();
+const DEFAULT_DIETARY_PREFERENCE_TAGS = ["Sans gluten"];
+const DEFAULT_AMBIANCE_PREFERENCE_TAGS = ["Discussions enrichissantes"];
+const DIETARY_PREFERENCE_SUGGESTIONS = [
+  "Végétarien",
+  "Vegan",
+  "Flexitarien",
+  "Sans gluten",
+  "Sans lactose",
+  "Halal",
+  "Casher",
+  "Allergie aux noix",
+  "Diabétique",
+  "Pas de porc",
+];
+const AMBIANCE_PREFERENCE_SUGGESTIONS = [
+  "Discussions enrichissantes",
+  "Ambiance décontractée",
+  "Soirée jeux",
+  "Découverte culinaire",
+  "Repas calme",
+  "Échange linguistique",
+  "Cuisine du monde",
+  "Repas en plein air",
+  "Convivial et festif",
+  "Sans écrans",
+];
 
 type ProfileFormData = {
   first_name: string;
@@ -65,6 +95,8 @@ type HostProfileSummary = {
   rejectionReason: string | null;
 };
 
+type PreferenceCategory = "dietary" | "ambiance";
+
 type ExpandablePanel = "profile" | "password" | null;
 type ProfileSection = "overview" | "preferences" | "activity" | "payments" | "notifications";
 
@@ -92,6 +124,17 @@ const getProviderLabel = (
   return "Email";
 };
 
+const normalizePreferenceTag = (value: string) =>
+  value
+    .trim()
+    .replace(/\s+/g, " ");
+
+const toPreferenceKey = (value: string) =>
+  normalizePreferenceTag(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
 const StatCard = ({
   label,
   value,
@@ -109,29 +152,159 @@ const StatCard = ({
   );
 };
 
-const PreferenceGroup = ({
-  title,
+const PreferenceEditor = ({
   items,
+  addLabel,
+  onOpenModal,
+  onRemoveItem,
 }: {
-  title: string;
   items: string[];
+  addLabel: string;
+  onOpenModal: () => void;
+  onRemoveItem: (item: string) => void;
 }) => {
   return (
-    <div className={styles.preferenceGroup}>
-      <span className={styles.preferenceTitle}>{title}</span>
+    <div className={styles.preferenceEditor}>
       <div className={styles.preferenceBox}>
         <div className={styles.chipList}>
-        {items.map((item) => (
-          <span key={item} className={styles.chip}>
-            <span>{item}</span>
-            <X className={styles.chipRemove} aria-hidden="true" />
-          </span>
-        ))}
+          {items.map((item) => (
+            <span key={item} className={styles.chip}>
+              <span>{item}</span>
+              <button
+                type="button"
+                className={styles.chipRemoveButton}
+                aria-label={`Retirer ${item}`}
+                onClick={() => onRemoveItem(item)}
+              >
+                <X className={styles.chipRemove} aria-hidden="true" />
+              </button>
+            </span>
+          ))}
         </div>
-        <span className={styles.addChip} aria-hidden="true">
+
+        <button
+          type="button"
+          className={styles.addChipButton}
+          aria-haspopup="dialog"
+          aria-label={addLabel}
+          onClick={onOpenModal}
+        >
           <Plus />
-        </span>
+        </button>
       </div>
+    </div>
+  );
+};
+
+const PreferenceTagModal = ({
+  open,
+  title,
+  suggestedText,
+  inputPlaceholder,
+  suggestions,
+  draftValue,
+  onDraftChange,
+  onAddItem,
+  onClose,
+}: {
+  open: boolean;
+  title: string;
+  suggestedText: string;
+  inputPlaceholder: string;
+  suggestions: string[];
+  draftValue: string;
+  onDraftChange: (value: string) => void;
+  onAddItem: (item: string) => void;
+  onClose: () => void;
+}) => {
+  if (!open) {
+    return null;
+  }
+
+  const normalizedDraft = normalizePreferenceTag(draftValue);
+
+  return (
+    <div
+      className={styles.preferenceModal}
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+    >
+      <button
+        className={styles.preferenceModalBackdrop}
+        type="button"
+        aria-label="Fermer la fenêtre"
+        onClick={onClose}
+      />
+
+      <section className={styles.preferenceModalSheet}>
+        <div className={styles.preferenceModalHeader}>
+          <div>
+            <p className={styles.preferenceModalEyebrow}>Préférences</p>
+            <h3>Ajouter un tag</h3>
+          </div>
+          <button
+            type="button"
+            className={styles.preferenceModalClose}
+            aria-label="Fermer la fenêtre"
+            onClick={onClose}
+          >
+            <X aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className={styles.preferenceModalContent}>
+          <section className={styles.preferenceModalGroup}>
+            <div className={styles.preferenceModalGroupHeader}>
+              <h4>Tags suggérés</h4>
+              <p>{suggestedText}</p>
+            </div>
+
+            <div className={styles.preferenceModalChips}>
+              {suggestions.map((suggestion) => (
+                <button
+                  key={suggestion}
+                  type="button"
+                  className={styles.preferenceModalChip}
+                  onClick={() => onAddItem(suggestion)}
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className={styles.preferenceModalGroup}>
+            <div className={styles.preferenceModalGroupHeader}>
+              <h4>Tag personnalisé</h4>
+              <p>Visible uniquement dans tes préférences de profil.</p>
+            </div>
+
+            <label className={styles.preferenceModalField}>
+              <input
+                type="text"
+                value={draftValue}
+                onChange={(event) => onDraftChange(event.target.value)}
+                placeholder={inputPlaceholder}
+              />
+            </label>
+          </section>
+        </div>
+
+        <div className={styles.preferenceModalFooter}>
+          <button
+            type="button"
+            className={styles.preferenceModalResult}
+            disabled={!normalizedDraft}
+            onClick={() => onAddItem(draftValue)}
+          >
+            Ajouter le tag
+          </button>
+          <button type="button" className={styles.preferenceModalClear} onClick={onClose}>
+            Annuler
+          </button>
+        </div>
+      </section>
     </div>
   );
 };
@@ -676,6 +849,16 @@ const ProfilPage = () => {
   const [expandedPanel, setExpandedPanel] = useState<ExpandablePanel>(null);
   const [hostProfile, setHostProfile] = useState<HostProfileSummary | null>(null);
   const [hostProfileLoading, setHostProfileLoading] = useState(true);
+  const [dietaryPreferenceTags, setDietaryPreferenceTags] = useState<string[]>(
+    DEFAULT_DIETARY_PREFERENCE_TAGS
+  );
+  const [ambiancePreferenceTags, setAmbiancePreferenceTags] = useState<string[]>(
+    DEFAULT_AMBIANCE_PREFERENCE_TAGS
+  );
+  const [preferencesReady, setPreferencesReady] = useState(false);
+  const [preferenceDraft, setPreferenceDraft] = useState("");
+  const [activePreferenceModal, setActivePreferenceModal] =
+    useState<PreferenceCategory | null>(null);
   const overviewSectionRef = useRef<HTMLElement | null>(null);
   const preferencesSectionRef = useRef<HTMLElement | null>(null);
   const activitySectionRef = useRef<HTMLElement | null>(null);
@@ -683,6 +866,7 @@ const ProfilPage = () => {
   const notificationsSectionRef = useRef<HTMLDivElement | null>(null);
   const profilePanelRef = useRef<HTMLDivElement | null>(null);
   const passwordPanelRef = useRef<HTMLDivElement | null>(null);
+  const skipPreferenceSyncRef = useRef(true);
 
   const getSectionTarget = (section: string | null) => {
     switch (section) {
@@ -945,6 +1129,114 @@ const ProfilPage = () => {
     };
   }, [hostProfile]);
 
+  const availableDietarySuggestions = useMemo(
+    () =>
+      DIETARY_PREFERENCE_SUGGESTIONS.filter(
+        (tag) =>
+          !dietaryPreferenceTags.some(
+            (selectedTag) => toPreferenceKey(selectedTag) === toPreferenceKey(tag)
+          )
+      ),
+    [dietaryPreferenceTags]
+  );
+
+  const availableAmbianceSuggestions = useMemo(
+    () =>
+      AMBIANCE_PREFERENCE_SUGGESTIONS.filter(
+        (tag) =>
+          !ambiancePreferenceTags.some(
+            (selectedTag) => toPreferenceKey(selectedTag) === toPreferenceKey(tag)
+          )
+      ),
+    [ambiancePreferenceTags]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!user?.id) {
+      setPreferencesReady(false);
+      skipPreferenceSyncRef.current = true;
+      return;
+    }
+
+    const loadPreferences = async () => {
+      const token = localStorage.getItem("token");
+
+      skipPreferenceSyncRef.current = true;
+
+      if (!token) {
+        if (!cancelled) {
+          setDietaryPreferenceTags(DEFAULT_DIETARY_PREFERENCE_TAGS);
+          setAmbiancePreferenceTags(DEFAULT_AMBIANCE_PREFERENCE_TAGS);
+          setPreferencesReady(true);
+        }
+        return;
+      }
+
+      const preferences = await fetchMyUserPreferences(token);
+
+      if (cancelled) {
+        return;
+      }
+
+      if (preferences) {
+        setDietaryPreferenceTags(preferences.dietaryTags);
+        setAmbiancePreferenceTags(preferences.ambianceTags);
+      } else {
+        setDietaryPreferenceTags(DEFAULT_DIETARY_PREFERENCE_TAGS);
+        setAmbiancePreferenceTags(DEFAULT_AMBIANCE_PREFERENCE_TAGS);
+      }
+
+      setPreferencesReady(true);
+    };
+
+    void loadPreferences();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!user?.id || !preferencesReady) {
+      return;
+    }
+
+    if (skipPreferenceSyncRef.current) {
+      skipPreferenceSyncRef.current = false;
+      return;
+    }
+
+    const syncPreferences = async () => {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        return;
+      }
+
+      const updatedPreferences = await updateMyUserPreferences(token, {
+        dietaryTags: dietaryPreferenceTags,
+        ambianceTags: ambiancePreferenceTags,
+      });
+
+      if (!updatedPreferences || cancelled) {
+        if (!cancelled) {
+          toast.error("Impossible d'enregistrer les préférences pour le moment.");
+        }
+        return;
+      }
+    };
+
+    void syncPreferences();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [ambiancePreferenceTags, dietaryPreferenceTags, preferencesReady, user?.id]);
+
   const updatePanelQuery = (nextPanel: ExpandablePanel) => {
     const params = new URLSearchParams(searchParams.toString());
 
@@ -975,6 +1267,47 @@ const ProfilPage = () => {
 
   const handlePlaceholderClick = (label: string) => {
     toast.info(`${label} sera ajouté plus tard.`);
+  };
+
+  const handleAddPreferenceTag = (rawValue: string) => {
+    const nextTag = normalizePreferenceTag(rawValue);
+    const targetCategory = activePreferenceModal;
+
+    if (!targetCategory || !nextTag) {
+      toast.info("Saisis un tag ou choisis une suggestion.");
+      return;
+    }
+
+    const selectedTags =
+      targetCategory === "dietary" ? dietaryPreferenceTags : ambiancePreferenceTags;
+
+    const alreadyExists = selectedTags.some((tag) => toPreferenceKey(tag) === toPreferenceKey(nextTag));
+
+    if (alreadyExists) {
+      toast.info("Ce tag est déjà présent.");
+      return;
+    }
+
+    if (targetCategory === "dietary") {
+      setDietaryPreferenceTags((prev) => [...prev, nextTag]);
+    } else {
+      setAmbiancePreferenceTags((prev) => [...prev, nextTag]);
+    }
+
+    setPreferenceDraft("");
+    setActivePreferenceModal(null);
+  };
+
+  const handleRemovePreferenceTag = (
+    category: PreferenceCategory,
+    tagToRemove: string
+  ) => {
+    if (category === "dietary") {
+      setDietaryPreferenceTags((prev) => prev.filter((tag) => tag !== tagToRemove));
+      return;
+    }
+
+    setAmbiancePreferenceTags((prev) => prev.filter((tag) => tag !== tagToRemove));
   };
 
   if (loading || (!user && isLoggedIn)) {
@@ -1107,11 +1440,38 @@ const ProfilPage = () => {
 
           <section ref={preferencesSectionRef} className={styles.sectionCard}>
             <div className={styles.sectionHead}>
-              <h2>Préférences alimentaires</h2>
+              <div>
+                <h2>Régime & préférences alimentaires</h2>
+                <p className={styles.sectionHint}>
+                  Regroupe ici tes contraintes, habitudes et tags alimentaires personnels.
+                </p>
+              </div>
             </div>
 
-            <PreferenceGroup title="Allergies" items={["Coriandre", "Noisette", "Crevettes"]} />
-            <PreferenceGroup title="Régime" items={["Végétarien(ne)", "Halal", "Sans gluten"]} />
+            <PreferenceEditor
+              items={dietaryPreferenceTags}
+              addLabel="Ajouter une préférence alimentaire"
+              onOpenModal={() => setActivePreferenceModal("dietary")}
+              onRemoveItem={(item) => handleRemovePreferenceTag("dietary", item)}
+            />
+          </section>
+
+          <section className={styles.sectionCard}>
+            <div className={styles.sectionHead}>
+              <div>
+                <h2>Ambiance & style de repas</h2>
+                <p className={styles.sectionHint}>
+                  Regroupe ici les ambiances et expériences de table que tu apprécies.
+                </p>
+              </div>
+            </div>
+
+            <PreferenceEditor
+              items={ambiancePreferenceTags}
+              addLabel="Ajouter une préférence d'ambiance"
+              onOpenModal={() => setActivePreferenceModal("ambiance")}
+              onRemoveItem={(item) => handleRemovePreferenceTag("ambiance", item)}
+            />
           </section>
 
           <section ref={activitySectionRef} className={styles.sectionCard}>
@@ -1243,6 +1603,37 @@ const ProfilPage = () => {
           </section>
         </div>
       </div>
+
+      <PreferenceTagModal
+        open={activePreferenceModal !== null}
+        title={
+          activePreferenceModal === "ambiance"
+            ? "Ajouter une préférence d'ambiance"
+            : "Ajouter une préférence alimentaire"
+        }
+        suggestedText={
+          activePreferenceModal === "ambiance"
+            ? "Tu peux reprendre les ambiances et styles déjà proposés sur la plateforme."
+            : "Tu peux reprendre les tags déjà proposés sur la plateforme."
+        }
+        inputPlaceholder={
+          activePreferenceModal === "ambiance"
+            ? "Ex. repas convivial, soirée calme, table sans écrans..."
+            : "Ex. sans piment, allergie au kiwi..."
+        }
+        suggestions={
+          activePreferenceModal === "ambiance"
+            ? availableAmbianceSuggestions
+            : availableDietarySuggestions
+        }
+        draftValue={preferenceDraft}
+        onDraftChange={setPreferenceDraft}
+        onAddItem={handleAddPreferenceTag}
+        onClose={() => {
+          setActivePreferenceModal(null);
+          setPreferenceDraft("");
+        }}
+      />
     </section>
   );
 };

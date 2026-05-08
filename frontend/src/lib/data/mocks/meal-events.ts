@@ -13,10 +13,16 @@ export const MOCK_MEAL_EVENTS: MealEvent[] = [
     timeLabel: "10h30",
     host: "Antoine GREGE",
     variant: "default",
-    filters: ["vegetarien", "sans-porc", "sans-alcool", "riche-fibres"],
+    filters: [
+      "vegetarien",
+      "ambiance-decontractee",
+      "discussions-enrichissantes",
+      "sans-ecrans",
+    ],
     pricePerPerson: 12,
     currentParticipants: 3,
     maxParticipants: 5,
+    participantProfileIds: ["emma-dubois", "salome-brun", "nora-zegh"],
     menuSections: [
       {
         title: "Entrée",
@@ -56,16 +62,16 @@ export const MOCK_MEAL_EVENTS: MealEvent[] = [
     host: "Emma DUBOIS",
     variant: "veggie",
     filters: [
-      "vegetalien",
+      "vegan",
       "sans-lactose",
-      "sans-oeufs",
-      "non-epice",
-      "faible-graisses-saturees",
-      "riche-fibres",
+      "decouverte-culinaire",
+      "cuisine-du-monde",
+      "repas-calme",
     ],
     pricePerPerson: 14,
     currentParticipants: 2,
     maxParticipants: 5,
+    participantProfileIds: ["antoine-grege", "julie-renard"],
     menuSections: [
       {
         title: "Entrée",
@@ -109,14 +115,14 @@ export const MOCK_MEAL_EVENTS: MealEvent[] = [
     variant: "veggie",
     filters: [
       "vegetarien",
-      "sans-viande-rouge",
-      "sans-alcool",
-      "sans-moutarde",
-      "faible-matieres-grasses",
+      "decouverte-culinaire",
+      "cuisine-du-monde",
+      "convivial-et-festif",
     ],
     pricePerPerson: 16,
     currentParticipants: 4,
     maxParticipants: 6,
+    participantProfileIds: ["antoine-grege", "emma-dubois", "maxime-petit", "claire-dumas"],
     menuSections: [
       {
         title: "Entrée",
@@ -155,10 +161,11 @@ export const MOCK_MEAL_EVENTS: MealEvent[] = [
     timeLabel: "12h00",
     host: "Nora ZEGH",
     variant: "default",
-    filters: ["halal", "sans-porc", "sans-alcool", "faible-sel"],
+    filters: ["halal", "pas-de-porc", "cuisine-du-monde", "convivial-et-festif"],
     pricePerPerson: 18,
     currentParticipants: 3,
     maxParticipants: 5,
+    participantProfileIds: ["salome-brun", "noah-garnier", "julie-renard"],
     menuSections: [
       {
         title: "Entrée",
@@ -201,14 +208,15 @@ export const MOCK_MEAL_EVENTS: MealEvent[] = [
     host: "Maxime PETIT",
     variant: "nearby",
     filters: [
-      "pescetarien",
-      "sans-viande-rouge",
-      "sans-mollusques",
-      "faible-graisses-saturees",
+      "flexitarien",
+      "ambiance-decontractee",
+      "discussions-enrichissantes",
+      "repas-en-plein-air",
     ],
     pricePerPerson: 11,
     currentParticipants: 2,
     maxParticipants: 5,
+    participantProfileIds: ["nora-zegh", "claire-dumas"],
     menuSections: [
       {
         title: "Entrée",
@@ -249,15 +257,13 @@ export const MOCK_MEAL_EVENTS: MealEvent[] = [
     variant: "default",
     filters: [
       "sans-gluten",
-      "sans-arachides",
-      "sans-fruits-a-coque",
-      "sans-celeri",
-      "sans-lupin",
-      "faible-sel",
+      "repas-calme",
+      "sans-ecrans",
     ],
     pricePerPerson: 20,
     currentParticipants: 1,
     maxParticipants: 4,
+    participantProfileIds: ["emma-dubois"],
     menuSections: [
       {
         title: "Entrée",
@@ -300,16 +306,15 @@ export const MOCK_MEAL_EVENTS: MealEvent[] = [
     host: "Julie RENARD",
     variant: "nearby",
     filters: [
-      "bio-uniquement",
-      "sans-sucre-ajoute",
-      "sans-alcool",
-      "non-epice",
-      "faible-calories",
-      "riche-fibres",
+      "flexitarien",
+      "diabetique",
+      "ambiance-decontractee",
+      "repas-en-plein-air",
     ],
     pricePerPerson: 13,
     currentParticipants: 4,
     maxParticipants: 6,
+    participantProfileIds: ["antoine-grege", "salome-brun", "nora-zegh", "noah-garnier"],
     menuSections: [
       {
         title: "Entrée",
@@ -342,10 +347,11 @@ export const MOCK_MEAL_EVENTS: MealEvent[] = [
     timeLabel: "19h45",
     host: "Noah GARNIER",
     variant: "default",
-    filters: ["casher", "sans-crustaces", "sans-soja", "sans-sulfites"],
+    filters: ["casher", "discussions-enrichissantes", "convivial-et-festif", "sans-ecrans"],
     pricePerPerson: 17,
     currentParticipants: 3,
     maxParticipants: 5,
+    participantProfileIds: ["claire-dumas", "julie-renard", "maxime-petit"],
     menuSections: [
       {
         title: "Entrée",

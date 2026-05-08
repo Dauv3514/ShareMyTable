@@ -82,16 +82,30 @@
 .section {
   display: grid;
   gap: 12px;
+  width: 100%;
+  min-width: 0;
 }
 
 .sectionHead {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: flex-start;
-  justify-content: space-between;
   gap: 12px;
+  width: 100%;
+}
+
+.sectionActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-self: end;
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .sectionCopy {
+  min-width: 0;
+
   h2,
   p {
     margin: 0;
@@ -109,6 +123,45 @@
     font-size: 11px;
     line-height: 1.25;
     color: #292d06;
+  }
+}
+
+.sectionNav {
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.cardsRail {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.sectionNavButton {
+  display: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(184, 165, 71, 0.65);
+  background: #ffffff;
+  color: #52590D;
+  box-shadow: 0 8px 20px rgba(89, 70, 24, 0.1);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  span {
+    font-size: 24px;
+    line-height: 1;
+    transform: translateY(-1px);
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px rgba(89, 70, 24, 0.14);
   }
 }
 
@@ -136,11 +189,17 @@
 .cardsRow {
   display: flex;
   gap: 12px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   overflow-x: auto;
   padding: 4px 10px 6px 2px;
   margin-right: -18px;
   scroll-snap-type: x proximity;
+  scroll-padding-left: 2px;
+  scroll-behavior: smooth;
   scrollbar-width: none;
+  align-items: stretch;
 
   &::-webkit-scrollbar {
     display: none;
@@ -198,12 +257,15 @@
   }
 
   .cardsRow {
-    overflow: visible;
-    margin-right: 0;
-    padding: 0;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
+    padding: 4px 0 6px;
+    margin-right: 0;
+  }
+
+  .cardsRow :global(.event-card) {
+    width: calc((100% - 16px) / 2);
+    min-width: calc((100% - 16px) / 2);
+    flex-basis: calc((100% - 16px) / 2);
   }
 }
 
@@ -232,9 +294,28 @@
     padding: 0 20px;
   }
 
+  .cardsRail {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr) 38px;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .sectionNavButton {
+    display: inline-flex;
+  }
+
   .cardsRow {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 18px;
+    padding: 0 0 6px;
+    margin-right: 0;
+    overflow-x: hidden;
+  }
+
+  .cardsRow :global(.event-card) {
+    width: calc((100% - 54px) / 4);
+    min-width: calc((100% - 54px) / 4);
+    flex-basis: calc((100% - 54px) / 4);
   }
 }
 

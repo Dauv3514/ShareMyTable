@@ -52,7 +52,7 @@ export function getEventsForSection(events: MealEvent[], slug: EventSectionSlug)
       (event) =>
         event.variant === "veggie" ||
         event.filters.includes("vegetarien") ||
-        event.filters.includes("vegetalien"),
+        event.filters.includes("vegan"),
     );
 
     return veggieEvents.length > 0 ? veggieEvents : events;
@@ -71,6 +71,6 @@ export function getEventsForSection(events: MealEvent[], slug: EventSectionSlug)
 export function getHomeSections(events: MealEvent[]) {
   return EVENT_SECTIONS.map((section) => ({
     ...section,
-    cards: getEventsForSection(events, section.slug).slice(0, 4),
+    cards: getEventsForSection(events, section.slug).slice(0, 14),
   }));
 }
