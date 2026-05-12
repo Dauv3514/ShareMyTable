@@ -69,9 +69,9 @@ export default function ReservationDetailClient({
 }) {
   const router = useRouter();
   const { isLoggedIn, loading } = useAuth();
-  const [reservation] = useState<ReservationItem | null>(() =>
-    getGuestReservationById(reservationId),
-  );
+  const [reservation, setReservation] = useState<ReservationItem | null>(null);
+  const [isFetchingReservation, setIsFetchingReservation] = useState(true);
+  const [reservationError, setReservationError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !isLoggedIn) {
@@ -79,7 +79,46 @@ export default function ReservationDetailClient({
     }
   }, [isLoggedIn, loading, router]);
 
-  if (loading) {
+  useEffect(() => {
+    if (loading || !isLoggedIn) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadReservation = async () => {
+      try {
+        setIsFetchingReservation(true);
+        setReservationError(null);
+        const nextReservation = await getGuestReservationById(reservationId);
+
+        if (!cancelled) {
+          setReservation(nextReservation);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setReservation(null);
+          setReservationError(
+            error instanceof Error
+              ? error.message
+              : "Impossible de charger cette réservation pour le moment.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setIsFetchingReservation(false);
+        }
+      }
+    };
+
+    void loadReservation();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn, loading, reservationId]);
+
+  if (loading || isFetchingReservation) {
     return <section className={styles.loadingState}>Chargement de ta réservation...</section>;
   }
 
@@ -94,10 +133,11 @@ export default function ReservationDetailClient({
           <div className={styles.emptyIcon}>
             <Ticket />
           </div>
-          <h1>Réservation introuvable</h1>
+          <h1>{reservationError ? "Impossible de charger la réservation" : "Réservation introuvable"}</h1>
           <p>
-            Cette réservation n&apos;existe pas dans les données mock enregistrées
-            localement.
+            {reservationError
+              ? reservationError
+              : "Cette réservation n'existe pas ou n'est plus disponible."}
           </p>
           <Link href="/mes-repas" className={styles.primaryButton}>
             Retour à mes réservations

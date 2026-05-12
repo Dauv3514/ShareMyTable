@@ -14,6 +14,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "react-toastify";
 import { useAuth } from "@/app/providers/AuthProvider";
 import type { HostProfile, MealEvent } from "@/lib/data/types";
 import {
@@ -106,6 +107,9 @@ export default function ReservationWizard({
   );
   const [hasMounted, setHasMounted] = useState(false);
   const [createdReservation, setCreatedReservation] = useState<ReservationItem | null>(null);
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
+  const [isFetchingCreatedReservation, setIsFetchingCreatedReservation] = useState(false);
+  const [createdReservationError, setCreatedReservationError] = useState<string | null>(null);
 
   const currentStep = getStepIndex(mode);
   const progressPercent = ((currentStep + 1) / STEP_LABELS.length) * 100;
@@ -136,7 +140,38 @@ export default function ReservationWizard({
       return;
     }
 
-    setCreatedReservation(getGuestReservationById(reservationId));
+    let cancelled = false;
+
+    const loadReservation = async () => {
+      try {
+        setIsFetchingCreatedReservation(true);
+        setCreatedReservationError(null);
+        const reservation = await getGuestReservationById(reservationId);
+
+        if (!cancelled) {
+          setCreatedReservation(reservation);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setCreatedReservation(null);
+          setCreatedReservationError(
+            error instanceof Error
+              ? error.message
+              : "Impossible de charger la réservation confirmée.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setIsFetchingCreatedReservation(false);
+        }
+      }
+    };
+
+    void loadReservation();
+
+    return () => {
+      cancelled = true;
+    };
   }, [mode, reservationId]);
 
   const recapRows = useMemo(
@@ -186,15 +221,29 @@ export default function ReservationWizard({
     });
   };
 
-  const handlePayment = () => {
-    const reservation = createGuestReservation({
-      event,
-      hostProfile,
-      draft,
-    });
+  const handlePayment = async () => {
+    try {
+      setIsSubmittingPayment(true);
+      setCreatedReservationError(null);
 
-    setCreatedReservation(reservation);
-    router.push(`/reservation/${event.id}/confirmation?reservationId=${reservation.id}`);
+      const reservation = await createGuestReservation({
+        event,
+        hostProfile,
+        draft,
+      });
+
+      setCreatedReservation(reservation);
+      router.push(`/reservation/${event.id}/confirmation?reservationId=${reservation.id}`);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Impossible de finaliser la réservation pour le moment.";
+
+      toast.error(message);
+    } finally {
+      setIsSubmittingPayment(false);
+    }
   };
 
   const renderFooterActions = () => {
@@ -255,8 +304,9 @@ export default function ReservationWizard({
             type="button"
             className={styles.footerPrimaryButton}
             onClick={handlePayment}
+            disabled={isSubmittingPayment}
           >
-            Payer
+            {isSubmittingPayment ? "Paiement..." : "Payer"}
             <ShieldCheck />
           </button>
         </>
@@ -295,7 +345,11 @@ export default function ReservationWizard({
     );
   };
 
-  if (loading || !hasMounted) {
+  if (
+    loading ||
+    !hasMounted ||
+    (mode === "confirmation" && Boolean(reservationId) && isFetchingCreatedReservation)
+  ) {
     return <section className={styles.loadingState}>Chargement de la réservation...</section>;
   }
 
@@ -420,6 +474,10 @@ export default function ReservationWizard({
             </div>
 
             <div className={styles.stageBody}>
+              {createdReservationError ? (
+                <p className={styles.errorText}>{createdReservationError}</p>
+              ) : null}
+
               {mode === "places" ? (
                 <div className={`${styles.stage} ${styles.stagePlaces}`}>
                   <span className={styles.kicker}>Étape 1</span>

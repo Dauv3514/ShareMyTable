@@ -19,7 +19,7 @@ import { fr } from "date-fns/locale";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import {
   getReservationBadgeLabel,
@@ -385,6 +385,9 @@ export default function MesRepasPage() {
   const [hostingError, setHostingError] = useState<string | null>(null);
   const [activeMealId, setActiveMealId] = useState<number | null>(null);
   const [activePanel, setActivePanel] = useState<PanelMode>("attending");
+  const [attendingReservations, setAttendingReservations] = useState<ReservationItem[]>([]);
+  const [fetchingAttendingReservations, setFetchingAttendingReservations] = useState(true);
+  const [attendingError, setAttendingError] = useState<string | null>(null);
   const [hostingFilter, setHostingFilter] = useState<HostingFilter>("upcoming");
   const [attendingFilter, setAttendingFilter] = useState<AttendingFilter>("all");
   const [itemsPerPage, setItemsPerPage] = useState(6);
@@ -510,7 +513,32 @@ export default function MesRepasPage() {
     };
   }, [hostedMeals]);
 
-  const attendingReservations = useMemo(() => listGuestReservations(), []);
+  const loadAttendingReservations = useCallback(async () => {
+    try {
+      setFetchingAttendingReservations(true);
+      setAttendingError(null);
+
+      const nextReservations = await listGuestReservations();
+      setAttendingReservations(nextReservations);
+    } catch (error) {
+      setAttendingReservations([]);
+      setAttendingError(
+        error instanceof Error
+          ? error.message
+          : "Impossible de charger tes réservations pour le moment.",
+      );
+    } finally {
+      setFetchingAttendingReservations(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (loading || !isLoggedIn) {
+      return;
+    }
+
+    void loadAttendingReservations();
+  }, [isLoggedIn, loadAttendingReservations, loading]);
 
   const attendingStats = useMemo(
     () => ({
@@ -939,10 +967,36 @@ export default function MesRepasPage() {
             ))}
           </div>
 
-          {filteredAttendingReservations.length === 0 ? (
+          {fetchingAttendingReservations ? (
+            <div className={styles.loadingPanel}>
+              Chargement de tes réservations...
+            </div>
+          ) : attendingError ? (
+            <div className={styles.hostGuardCard}>
+              <div className={styles.hostGuardIcon}>
+                <CircleAlert />
+              </div>
+              <div className={styles.hostGuardContent}>
+                <h2>Impossible de charger tes réservations</h2>
+                <p>{attendingError}</p>
+              </div>
+              <div className={styles.hostGuardActions}>
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  onClick={() => void loadAttendingReservations()}
+                >
+                  Réessayer
+                </button>
+                <Link href="/" className={styles.primaryButton}>
+                  Explorer les repas
+                </Link>
+              </div>
+            </div>
+          ) : filteredAttendingReservations.length === 0 ? (
             <EmptyStateCard
               title="Aucune réservation dans cette vue"
-              description="Explore les repas publics pour réserver une nouvelle place ou change de filtre pour retrouver une réservation existante."
+              description="Explore les repas publics pour réserver une nouvelle place."
               actionLabel="Explorer les repas"
               actionHref="/"
             />

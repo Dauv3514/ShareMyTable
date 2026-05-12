@@ -1,3 +1,6 @@
+import axios from "axios";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import type { HostProfile, MealEvent } from "./data/types";
 import { MOCK_MEAL_EVENTS } from "./data/mocks/meal-events";
 import { MOCK_HOST_PROFILES } from "./data/mocks/host-profiles";
@@ -46,6 +49,54 @@ export type ReservationItem = {
   reminderLabels: string[];
 };
 
+type ApiBookingStatus =
+  | "pending"
+  | "confirmed"
+  | "refused"
+  | "cancelled"
+  | "completed";
+
+type ApiBookingPaymentMethod = ReservationPaymentMethod;
+type ApiBookingPaymentState = ReservationPaymentState;
+
+type ApiBookingResponse = {
+  id: number;
+  guestUserId: number;
+  mealId: number;
+  seats: number;
+  bookingStatus: ApiBookingStatus;
+  paymentMethod: ApiBookingPaymentMethod;
+  paymentState: ApiBookingPaymentState;
+  unitPriceCents: number;
+  totalPriceCents: number;
+  createdAt: string;
+  updatedAt: string;
+  confirmedAt: string | null;
+  refusedAt: string | null;
+  cancelledAt: string | null;
+  completedAt: string | null;
+  refusalReason: string | null;
+  mealTitle: string | null;
+  mealType: string | null;
+  mealDateTime: string;
+  host: {
+    userId: number;
+    pseudo: string | null;
+    firstName: string;
+    lastName: string;
+    city: string;
+    country: string;
+    profilePhotoUrl: string | null;
+  };
+  coverImageUrl: string | null;
+  locationLabel: string;
+  exactAddressLabel: string;
+  addressReleaseLabel: string;
+  cancellationPolicyLabel: string;
+  houseRules: string[];
+  reminderLabels: string[];
+};
+
 const DRAFT_STORAGE_PREFIX = "reservation-draft:";
 const RESERVATIONS_STORAGE_KEY = "guest-reservations-v1";
 
@@ -60,6 +111,119 @@ function toSlug(value: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function capitalize(value: string) {
+  if (!value) {
+    return value;
+  }
+
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function isNumericIdentifier(value: string) {
+  return /^\d+$/.test(value);
+}
+
+function getReservationApiContext() {
+  if (!isBrowser()) {
+    return null;
+  }
+
+  const token = window.localStorage.getItem("token");
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  if (!token || !apiUrl) {
+    return null;
+  }
+
+  return { token, apiUrl };
+}
+
+function getReservationErrorMessage(
+  error: unknown,
+  fallbackMessage: string,
+) {
+  if (axios.isAxiosError(error)) {
+    const message = error.response?.data?.message;
+
+    if (Array.isArray(message)) {
+      return message.join(", ");
+    }
+
+    if (typeof message === "string" && message.trim().length > 0) {
+      return message;
+    }
+  }
+
+  if (error instanceof Error && error.message.trim().length > 0) {
+    return error.message;
+  }
+
+  return fallbackMessage;
+}
+
+function buildReservationDateLabels(dateTime: string) {
+  const eventDate = new Date(dateTime);
+
+  return {
+    dateLabel: capitalize(format(eventDate, "EEE d MMM", { locale: fr })),
+    detailDateLabel: capitalize(format(eventDate, "EEEE d MMMM", { locale: fr })),
+    timeLabel: format(eventDate, "HH'h'mm"),
+  };
+}
+
+function buildHostName(host: ApiBookingResponse["host"]) {
+  const fullName = [host.firstName, host.lastName].filter(Boolean).join(" ").trim();
+  if (fullName) {
+    return fullName;
+  }
+
+  if (host.pseudo?.trim()) {
+    return host.pseudo.trim();
+  }
+
+  return "Hôte";
+}
+
+function mapApiBookingToReservationItem(booking: ApiBookingResponse): ReservationItem {
+  const labels = buildReservationDateLabels(booking.mealDateTime);
+  const reservationStatus: ReservationStatus =
+    booking.bookingStatus === "pending"
+      ? "pending"
+      : booking.bookingStatus === "confirmed" || booking.bookingStatus === "completed"
+        ? "confirmed"
+        : "refused";
+
+  return {
+    id: String(booking.id),
+    eventId: String(booking.mealId),
+    hostId: String(booking.host.userId),
+    mealTitle: booking.mealTitle?.trim() || "Repas sans titre",
+    mealType: booking.mealType?.trim() || "Repas",
+    hostName: buildHostName(booking.host),
+    hostPhotoUrl: booking.host.profilePhotoUrl ?? null,
+    city: booking.host.city,
+    locationLabel: booking.locationLabel,
+    detailDateLabel: labels.detailDateLabel,
+    dateLabel: labels.dateLabel,
+    timeLabel: labels.timeLabel,
+    coverImageUrl: booking.coverImageUrl ?? "/photoRepas.png",
+    seats: booking.seats,
+    pricePerSeat: booking.unitPriceCents / 100,
+    totalPrice: booking.totalPriceCents / 100,
+    status: reservationStatus,
+    paymentMethod: booking.paymentMethod,
+    paymentState: booking.paymentState,
+    createdAt: booking.createdAt,
+    exactAddressLabel: booking.exactAddressLabel,
+    addressReleaseLabel: booking.addressReleaseLabel,
+    cancellationPolicyLabel: booking.cancellationPolicyLabel,
+    houseRules: booking.houseRules,
+    dietaryTags: [],
+    ambianceTags: [],
+    reminderLabels: booking.reminderLabels,
+  };
 }
 
 function getHostById(hostId: string) {
@@ -249,6 +413,74 @@ function saveStorageReservations(reservations: ReservationItem[]) {
   window.localStorage.setItem(RESERVATIONS_STORAGE_KEY, JSON.stringify(reservations));
 }
 
+async function listBackendGuestReservations(): Promise<ReservationItem[]> {
+  const apiContext = getReservationApiContext();
+  if (!apiContext) {
+    return [];
+  }
+
+  const response = await axios.get<ApiBookingResponse[]>(
+    `${apiContext.apiUrl}/bookings/me`,
+    {
+      headers: {
+        Authorization: `Bearer ${apiContext.token}`,
+      },
+    },
+  );
+
+  return response.data.map(mapApiBookingToReservationItem);
+}
+
+async function getBackendGuestReservationById(
+  reservationId: string,
+): Promise<ReservationItem | null> {
+  const apiContext = getReservationApiContext();
+  if (!apiContext || !isNumericIdentifier(reservationId)) {
+    return null;
+  }
+
+  const response = await axios.get<ApiBookingResponse>(
+    `${apiContext.apiUrl}/bookings/me/${reservationId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${apiContext.token}`,
+      },
+    },
+  );
+
+  return mapApiBookingToReservationItem(response.data);
+}
+
+async function createBackendGuestReservation({
+  event,
+  draft,
+}: {
+  event: MealEvent;
+  draft: ReservationDraft;
+}): Promise<ReservationItem> {
+  const apiContext = getReservationApiContext();
+
+  if (!apiContext) {
+    throw new Error("Contexte API indisponible");
+  }
+
+  const response = await axios.post<ApiBookingResponse>(
+    `${apiContext.apiUrl}/bookings`,
+    {
+      mealId: Number(event.id),
+      seats: draft.seats,
+      paymentMethod: draft.paymentMethod,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${apiContext.token}`,
+      },
+    },
+  );
+
+  return mapApiBookingToReservationItem(response.data);
+}
+
 function getDraftStorageKey(eventId: string) {
   return `${DRAFT_STORAGE_PREFIX}${eventId}`;
 }
@@ -297,17 +529,61 @@ export function clearReservationDraft(eventId: string) {
   window.sessionStorage.removeItem(getDraftStorageKey(eventId));
 }
 
-export function listGuestReservations() {
+function listLocalGuestReservations() {
   return readStorageReservations().sort(
     (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
   );
 }
 
-export function getGuestReservationById(reservationId: string) {
-  return listGuestReservations().find((reservation) => reservation.id === reservationId) ?? null;
+function getLocalGuestReservationById(reservationId: string) {
+  return (
+    listLocalGuestReservations().find((reservation) => reservation.id === reservationId) ?? null
+  );
 }
 
-export function createGuestReservation({
+export async function listGuestReservations() {
+  const apiContext = getReservationApiContext();
+
+  if (apiContext) {
+    try {
+      return await listBackendGuestReservations();
+    } catch (error) {
+      throw new Error(
+        getReservationErrorMessage(
+          error,
+          "Impossible de charger tes réservations pour le moment.",
+        ),
+      );
+    }
+  }
+
+  return listLocalGuestReservations();
+}
+
+export async function getGuestReservationById(reservationId: string) {
+  if (isNumericIdentifier(reservationId)) {
+    const apiContext = getReservationApiContext();
+
+    if (!apiContext) {
+      throw new Error("Session invalide. Reconnecte-toi pour voir cette réservation.");
+    }
+
+    try {
+      return await getBackendGuestReservationById(reservationId);
+    } catch (error) {
+      throw new Error(
+        getReservationErrorMessage(
+          error,
+          "Impossible de charger cette réservation pour le moment.",
+        ),
+      );
+    }
+  }
+
+  return getLocalGuestReservationById(reservationId);
+}
+
+export async function createGuestReservation({
   event,
   hostProfile,
   draft,
@@ -315,7 +591,28 @@ export function createGuestReservation({
   event: MealEvent;
   hostProfile: HostProfile;
   draft: ReservationDraft;
-}) {
+}): Promise<ReservationItem> {
+  if (isNumericIdentifier(event.id)) {
+    const apiContext = getReservationApiContext();
+
+    if (!apiContext) {
+      throw new Error("Session invalide. Reconnecte-toi pour terminer la réservation.");
+    }
+
+    try {
+      const reservation = await createBackendGuestReservation({ event, draft });
+      clearReservationDraft(event.id);
+      return reservation;
+    } catch (error) {
+      throw new Error(
+        getReservationErrorMessage(
+          error,
+          "Impossible d'enregistrer cette réservation pour le moment.",
+        ),
+      );
+    }
+  }
+
   const createdAt = new Date().toISOString();
   const status: ReservationStatus = draft.seats > 2 ? "pending" : "confirmed";
   const reservation = buildReservationItem({

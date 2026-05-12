@@ -408,6 +408,15 @@
   color: #17120d;
 }
 
+.errorText {
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(217, 112, 112, 0.28);
+  background: rgba(255, 237, 237, 0.78);
+  color: #9a3737;
+  font-weight: 600;
+}
+
 .recapGrid,
 .paymentLayout {
   display: grid;

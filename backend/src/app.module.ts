@@ -5,6 +5,7 @@ import * as dotenv from 'dotenv';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { BookingsModule } from './bookings/bookings.module';
 import { validateEnvConfig } from './config/env.validation';
 import { HostProfilesModule } from './host-profiles/host-profiles.module';
 import { MealsModule } from './meals/meals.module';
@@ -26,6 +27,7 @@ dotenv.config();
     UsersModule,
     HostProfilesModule,
     MealsModule,
+    BookingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
