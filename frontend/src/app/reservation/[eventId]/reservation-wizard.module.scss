@@ -1,0 +1,702 @@
+.page {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+  padding: 20px 0 120px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.loadingState {
+  width: min(100%, 920px);
+  margin: 0 auto;
+  padding: 56px 28px;
+  border-radius: 30px;
+  border: 1px solid rgba(217, 203, 165, 0.9);
+  background: rgba(255, 253, 246, 0.9);
+  text-align: center;
+  color: #5c533d;
+}
+
+.sidebar {
+  position: sticky;
+  top: 24px;
+  display: grid;
+  gap: 14px;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #706637;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.backLink svg {
+  width: 18px;
+  height: 18px;
+}
+
+.sidebarCard,
+.stageCard {
+  border-radius: 32px;
+  border: 1px solid rgba(217, 204, 170, 0.88);
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.86), transparent 26%),
+    linear-gradient(180deg, #fffdf7 0%, #f7eedb 100%);
+  box-shadow: 0 18px 42px rgba(80, 60, 22, 0.08);
+}
+
+.sidebarCard {
+  padding: 28px;
+  display: grid;
+  gap: 20px;
+}
+
+.kicker {
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #8f8448;
+  font-weight: 700;
+}
+
+.sidebarCard h1,
+.stage h2 {
+  color: #17120d;
+}
+
+.sidebarCard h1 {
+  font-size: clamp(1.9rem, 3vw, 2.5rem);
+  line-height: 1;
+}
+
+.sidebarCard p,
+.stageIntro,
+.paymentMethod span,
+.emptyState p {
+  color: #5a503a;
+  line-height: 1.6;
+}
+
+.progressTrack,
+.mobileProgressBar {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(232, 224, 198, 0.86);
+  overflow: hidden;
+}
+
+.progressFill,
+.mobileProgressBar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #d6e353 0%, #eff777 100%);
+}
+
+.progressList {
+  display: grid;
+  gap: 12px;
+}
+
+.progressItem {
+  width: 100%;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  color: #6d654c;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.progressItem:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
+.progressItem:not(:disabled):hover {
+  transform: translateY(-1px);
+  border-color: #d9c86b;
+}
+
+.progressItem:disabled.progressItem--current,
+.progressItem:disabled.progressItem--done {
+  opacity: 1;
+  cursor: default;
+}
+
+.progressItem--current {
+  color: #1d1811;
+  border-color: #d9c86b;
+  background: rgba(246, 242, 205, 0.78);
+}
+
+.progressItem--done {
+  color: #4b5b1a;
+}
+
+.progressIndex {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(232, 224, 198, 0.95);
+  color: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+
+.progressItem--current .progressIndex,
+.progressItem--done .progressIndex {
+  background: #dce95f;
+}
+
+.progressIndex svg {
+  width: 16px;
+  height: 16px;
+}
+
+.summaryCard {
+  display: grid;
+  gap: 0;
+  border-radius: 24px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(217, 203, 165, 0.85);
+}
+
+.summaryMedia {
+  position: relative;
+  min-height: 180px;
+}
+
+.summaryImage {
+  object-fit: cover;
+}
+
+.summaryBody {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+}
+
+.summaryBody strong {
+  font-size: 1.2rem;
+  color: #17120d;
+}
+
+.summaryBody span {
+  color: #685e43;
+}
+
+.summaryBody dl {
+  display: grid;
+  gap: 10px;
+}
+
+.summaryBody dl div {
+  display: grid;
+  gap: 4px;
+}
+
+.summaryBody dt,
+.summaryBody dd {
+  margin: 0;
+}
+
+.summaryBody dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #6f6542;
+  font-size: 0.95rem;
+}
+
+.summaryBody dd {
+  color: #1f1a10;
+  font-weight: 700;
+}
+
+.summaryBody dt svg {
+  width: 16px;
+  height: 16px;
+}
+
+.contentColumn {
+  display: grid;
+  gap: 22px;
+}
+
+.stageCard {
+  min-height: calc(100vh - 180px);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.stageBody {
+  padding: 26px;
+  display: grid;
+  min-height: 0;
+}
+
+.mobileProgress {
+  display: none;
+}
+
+.mobileSteps {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mobileStepButton {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  border: 1px solid #d9c86b;
+  background: rgba(255, 255, 255, 0.7);
+  color: #645938;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mobileStepButton:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.mobileStepButton--active {
+  background: #2b2b2b;
+  border-color: #2b2b2b;
+  color: #ffffff;
+}
+
+.stage {
+  display: grid;
+  gap: 18px;
+}
+
+.stagePlaces {
+  align-content: start;
+}
+
+.stage h2 {
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  line-height: 0.96;
+}
+
+.stageIntro {
+  max-width: 62ch;
+}
+
+.heroPanel,
+.counterBox,
+.infoCard,
+.paymentSummary,
+.emptyState {
+  border: 1px solid rgba(217, 203, 165, 0.9);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.bookingCard {
+  border: 1px solid rgba(217, 203, 165, 0.9);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.84);
+  overflow: hidden;
+}
+
+.heroPanel {
+  padding: 18px 20px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  border-bottom: 1px solid rgba(217, 203, 165, 0.75);
+}
+
+.heroPanel strong {
+  display: block;
+  color: #17120d;
+  font-size: 1.25rem;
+  margin-bottom: 6px;
+}
+
+.heroPanel span {
+  display: block;
+  color: #675d44;
+}
+
+.heroPanel span:last-child {
+  color: #17120d;
+  font-size: 0.92rem;
+}
+
+.remainingSeatsBadge {
+  min-width: 140px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  text-align: center;
+  background: rgba(231, 241, 111, 0.24);
+  color: #5e6020;
+  font-weight: 700;
+}
+
+.counterBox {
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.counterButton {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 1px solid rgba(214, 197, 142, 0.95);
+  background: #fffdf7;
+  color: #5f552b;
+  font-size: 1.8rem;
+  cursor: pointer;
+}
+
+.counterButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.counterValue {
+  min-width: 72px;
+  text-align: center;
+  color: #17120d;
+  font-size: clamp(2.2rem, 5vw, 3rem);
+  font-weight: 800;
+}
+
+.helperText {
+  color: #5f553e;
+}
+
+.helperText strong {
+  color: #17120d;
+}
+
+.recapGrid,
+.paymentLayout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.infoCard,
+.paymentSummary,
+.emptyState {
+  padding: 20px;
+  display: grid;
+  gap: 14px;
+}
+
+.infoCardHighlight {
+  background:
+    radial-gradient(circle at top right, rgba(231, 241, 111, 0.18), transparent 36%),
+    rgba(255, 255, 255, 0.88);
+}
+
+.infoCard h3,
+.paymentSummary h3 {
+  color: #17120d;
+  font-size: 1.2rem;
+}
+
+.recapList {
+  display: grid;
+  gap: 12px;
+}
+
+.recapList div {
+  display: grid;
+  gap: 2px;
+}
+
+.recapList dt,
+.recapList dd {
+  margin: 0;
+}
+
+.recapList dt {
+  color: #6e6441;
+  font-size: 0.95rem;
+}
+
+.recapList dd {
+  color: #17120d;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.paymentNotes {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 10px;
+  color: #5a503a;
+}
+
+.noticeList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 12px;
+}
+
+.noticeList li {
+  position: relative;
+  padding: 14px 16px 14px 40px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(217, 203, 165, 0.72);
+  color: #5a503a;
+  line-height: 1.5;
+}
+
+.noticeList li::before {
+  content: "";
+  position: absolute;
+  top: 20px;
+  left: 16px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #e7f16f 0%, #c8d455 100%);
+  box-shadow: 0 0 0 4px rgba(231, 241, 111, 0.14);
+}
+
+.paymentMethods {
+  display: grid;
+  gap: 12px;
+}
+
+.paymentMethod {
+  width: 100%;
+  padding: 18px 20px;
+  border-radius: 22px;
+  border: 1px solid rgba(217, 203, 165, 0.9);
+  background: rgba(255, 255, 255, 0.82);
+  text-align: left;
+  display: grid;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.paymentMethod--active {
+  border-color: #cdbf74;
+  background: rgba(231, 241, 111, 0.18);
+  box-shadow: 0 10px 24px rgba(156, 145, 53, 0.12);
+}
+
+.paymentMethodTitle {
+  color: #17120d;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.paymentSummary strong {
+  color: #17120d;
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  line-height: 1;
+}
+
+.footerBar {
+  padding: 12px 24px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid rgba(217, 204, 170, 0.72);
+  align-self: end;
+}
+
+.footerGhostButton,
+.footerPrimaryButton {
+  min-height: 48px;
+  padding: 0 18px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.footerGhostButton {
+  background: transparent;
+  color: #726740;
+}
+
+.footerPrimaryButton {
+  min-width: 196px;
+  background: #e6f06f;
+  color: #2f2718;
+  border-color: #ccb956;
+  box-shadow: 0 12px 22px rgba(180, 167, 58, 0.22);
+}
+
+.footerGhostButton:hover,
+.footerPrimaryButton:hover,
+.counterButton:hover,
+.paymentMethod:hover {
+  transform: translateY(-1px);
+}
+
+.footerPrimaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+
+.confirmationHero {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 26px;
+  background: rgba(231, 241, 111, 0.14);
+  border: 1px solid rgba(210, 198, 108, 0.45);
+}
+
+.confirmationIcon {
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #5c6020;
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.confirmationIcon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.confirmationHero strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #17120d;
+  font-size: 1.35rem;
+}
+
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sidebar {
+    position: static;
+  }
+}
+
+@media (max-width: 820px) {
+  .page {
+    padding: 12px 0 120px;
+  }
+
+  .sidebarCard {
+    display: none;
+  }
+
+  .stageCard {
+    min-height: calc(100vh - 170px);
+  }
+
+  .mobileProgress {
+    display: grid;
+    gap: 10px;
+    padding: 20px 20px 0;
+  }
+
+  .mobileProgress p {
+    color: #736947;
+    font-size: 0.88rem;
+    font-weight: 700;
+  }
+
+  .recapGrid,
+  .paymentLayout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stageBody {
+    padding: 22px 18px 18px;
+  }
+
+  .heroPanel {
+    grid-template-columns: minmax(0, 1fr);
+    display: grid;
+  }
+
+  .footerBar {
+    padding: 16px 18px 22px;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 640px) {
+  .stageCard,
+  .bookingCard,
+  .infoCard,
+  .paymentSummary,
+  .emptyState {
+    border-radius: 24px;
+  }
+
+  .backLink {
+    padding-left: 4px;
+  }
+
+  .stage h2 {
+    font-size: 2rem;
+  }
+
+  .footerGhostButton,
+  .footerPrimaryButton {
+    width: 100%;
+  }
+}

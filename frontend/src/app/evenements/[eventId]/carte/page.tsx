@@ -71,7 +71,7 @@ export default async function EventMapPage({ params }: EventMapPageProps) {
         <Link href="/connexion" className={styles.contactButton}>
           <span>Contacter {hostFirstName}</span>
         </Link>
-        <Link href="/connexion" className={styles.registerButton}>
+        <Link href={`/reservation/${event.id}/places`} className={styles.registerButton}>
           <span>S&apos;inscrire</span>
         </Link>
       </div>

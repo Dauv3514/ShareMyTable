@@ -310,6 +310,12 @@
   gap: 18px;
 }
 
+.reservationsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
 .pagination,
 .paginationPages {
   display: flex;
@@ -420,6 +426,30 @@
   border-color: #cbd1dc;
 }
 
+.statusBadge--confirmed {
+  background: rgba(231, 241, 111, 0.24);
+  color: #5f6021;
+  border-color: rgba(201, 215, 93, 0.45);
+}
+
+.statusBadge--past {
+  background: rgba(223, 236, 255, 0.68);
+  color: #2756a6;
+  border-color: rgba(75, 126, 217, 0.3);
+}
+
+.statusBadge--pending {
+  background: rgba(255, 240, 195, 0.66);
+  color: #8a6210;
+  border-color: rgba(232, 198, 112, 0.45);
+}
+
+.statusBadge--refused {
+  background: rgba(255, 229, 229, 0.9);
+  color: #b14646;
+  border-color: rgba(221, 139, 139, 0.45);
+}
+
 .mealTypeChip {
   background: rgba(247, 240, 221, 0.74);
   color: #675b38;
@@ -484,6 +514,108 @@
   font-size: 0.92rem;
 }
 
+.reservationCard {
+  overflow: hidden;
+  border-radius: 28px;
+  border: 1px solid rgba(214, 203, 175, 0.9);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 14px 30px rgba(84, 62, 22, 0.08);
+}
+
+.reservationMedia {
+  position: relative;
+  min-height: 240px;
+}
+
+.reservationImage {
+  object-fit: cover;
+}
+
+.reservationBody {
+  padding: 20px;
+  display: grid;
+  gap: 14px;
+}
+
+.reservationTop {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.reservationStatusBadge {
+  gap: 8px;
+  padding: 9px 14px;
+  font-size: 0.92rem;
+}
+
+.reservationStatusBadge svg {
+  width: 16px;
+  height: 16px;
+}
+
+.reservationCopy {
+  display: grid;
+  gap: 8px;
+}
+
+.reservationCopy h2 {
+  font-size: 1.45rem;
+  line-height: 1.05;
+  color: #1c1710;
+}
+
+.reservationCopy p {
+  color: #5c5442;
+  line-height: 1.6;
+}
+
+.reservationMetaList {
+  display: grid;
+  gap: 10px;
+}
+
+.reservationMetaList div {
+  display: grid;
+  gap: 4px;
+}
+
+.reservationMetaList dt,
+.reservationMetaList dd {
+  margin: 0;
+}
+
+.reservationMetaList dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #6a5f45;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.reservationMetaList dt svg {
+  width: 16px;
+  height: 16px;
+}
+
+.reservationMetaList dd {
+  color: #17120d;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.reservationFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.reservationFooter span {
+  color: #6a6043;
+}
+
 .rulesBlock {
   display: grid;
   gap: 8px;
@@ -508,7 +640,8 @@
   .heroHeader,
   .statsGrid,
   .mealsGrid,
-  .mealMetaList {
+  .mealMetaList,
+  .reservationsGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -531,6 +664,10 @@
   .sectionCard,
   .mealCard {
     padding: 22px 18px;
+    border-radius: 24px;
+  }
+
+  .reservationCard {
     border-radius: 24px;
   }
 
@@ -562,8 +699,14 @@
 
   .statsGrid,
   .mealsGrid,
-  .mealMetaList {
+  .mealMetaList,
+  .reservationsGrid {
     grid-template-columns: 1fr;
+  }
+
+  .reservationFooter {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .sectionHead {

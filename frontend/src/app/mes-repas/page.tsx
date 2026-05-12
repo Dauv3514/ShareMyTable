@@ -8,7 +8,10 @@ import {
   Clock3,
   Euro,
   FileText,
+  History,
   Rocket,
+  ShieldCheck,
+  Ticket,
   Users,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -18,12 +21,21 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
+import {
+  getReservationBadgeLabel,
+  getReservationBadgeStatus,
+  isPastReservation,
+  listGuestReservations,
+  type ReservationItem,
+  type ReservationStatus,
+} from "@/lib/reservations";
 import { useAuth } from "../providers/AuthProvider";
 import styles from "./mes-repas.module.scss";
 
 type MealStatus = "draft" | "published" | "cancelled" | "done";
 type PanelMode = "attending" | "hosting";
 type HostingFilter = "upcoming" | "past" | "cancelled" | "draft" | "published";
+type AttendingFilter = "all" | "past" | ReservationStatus;
 
 type MealHostSummary = {
   userId: number;
@@ -55,6 +67,14 @@ const HOSTING_FILTER_OPTIONS: Array<{ key: HostingFilter; label: string }> = [
   { key: "published", label: "Publies" },
 ];
 
+const ATTENDING_FILTER_OPTIONS: Array<{ key: AttendingFilter; label: string }> = [
+  { key: "all", label: "Toutes" },
+  { key: "confirmed", label: "Confirmées" },
+  { key: "pending", label: "En attente de confirmation" },
+  { key: "refused", label: "Refusées" },
+  { key: "past", label: "Passées" },
+];
+
 function getStatusLabel(status: MealStatus) {
   if (status === "published") return "Publie";
   if (status === "cancelled") return "Annule";
@@ -73,6 +93,13 @@ function formatPrice(cents: number) {
     style: "currency",
     currency: "EUR",
   }).format(cents / 100);
+}
+
+function formatReservationPrice(value: number) {
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+  }).format(value);
 }
 
 function isUpcomingMeal(meal: MealItem) {
@@ -104,6 +131,22 @@ function paginateMeals(meals: MealItem[], currentPage: number, itemsPerPage: num
     currentPage: safePage,
     items: meals.slice(startIndex, startIndex + itemsPerPage),
   };
+}
+
+function getReservationStatusIcon(status: ReturnType<typeof getReservationBadgeStatus>) {
+  if (status === "past") {
+    return <History />;
+  }
+
+  if (status === "confirmed") {
+    return <ShieldCheck />;
+  }
+
+  if (status === "pending") {
+    return <Clock3 />;
+  }
+
+  return <CircleAlert />;
 }
 
 type MealCardProps = {
@@ -168,6 +211,79 @@ function MealCard({ meal, footer, hostLabel }: MealCardProps) {
       ) : null}
 
       {footer ? <div className={styles.mealActions}>{footer}</div> : null}
+    </article>
+  );
+}
+
+type ReservationCardProps = {
+  reservation: ReservationItem;
+};
+
+function ReservationCard({ reservation }: ReservationCardProps) {
+  const badgeStatus = getReservationBadgeStatus(reservation);
+
+  return (
+    <article className={styles.reservationCard}>
+      <div className={styles.reservationMedia}>
+        <Image
+          src={reservation.coverImageUrl}
+          alt={reservation.mealTitle}
+          fill
+          className={styles.reservationImage}
+          sizes="(max-width: 1100px) 100vw, 520px"
+        />
+      </div>
+
+      <div className={styles.reservationBody}>
+        <div className={styles.reservationTop}>
+          <span
+            className={`${styles.statusBadge} ${styles.reservationStatusBadge} ${
+              styles[`statusBadge--${badgeStatus}`]
+            }`}
+          >
+            {getReservationStatusIcon(badgeStatus)}
+            {getReservationBadgeLabel(badgeStatus)}
+          </span>
+        </div>
+
+        <div className={styles.reservationCopy}>
+          <h2>{reservation.mealTitle}</h2>
+          <p>Chez {reservation.hostName}</p>
+        </div>
+
+        <dl className={styles.reservationMetaList}>
+          <div>
+            <dt>
+              <CalendarDays />
+              Date
+            </dt>
+            <dd>{reservation.detailDateLabel}</dd>
+          </div>
+
+          <div>
+            <dt>
+              <Clock3 />
+              Heure
+            </dt>
+            <dd>{reservation.timeLabel}</dd>
+          </div>
+
+          <div>
+            <dt>
+              <Euro />
+              Total
+            </dt>
+            <dd>{formatReservationPrice(reservation.totalPrice)}</dd>
+          </div>
+        </dl>
+
+        <div className={styles.reservationFooter}>
+          <span>{reservation.seats} place(s)</span>
+          <Link href={`/reservations/${reservation.id}`} className={styles.secondaryButton}>
+            Voir le détail
+          </Link>
+        </div>
+      </div>
     </article>
   );
 }
@@ -270,10 +386,10 @@ export default function MesRepasPage() {
   const [activeMealId, setActiveMealId] = useState<number | null>(null);
   const [activePanel, setActivePanel] = useState<PanelMode>("attending");
   const [hostingFilter, setHostingFilter] = useState<HostingFilter>("upcoming");
+  const [attendingFilter, setAttendingFilter] = useState<AttendingFilter>("all");
   const [itemsPerPage, setItemsPerPage] = useState(6);
   const [hostingPage, setHostingPage] = useState(1);
-  const [upcomingAttendingPage, setUpcomingAttendingPage] = useState(1);
-  const [pastAttendingPage, setPastAttendingPage] = useState(1);
+  const [attendingPage, setAttendingPage] = useState(1);
 
   const isHostUser = user?.role?.toUpperCase() === "HOST";
 
@@ -311,9 +427,8 @@ export default function MesRepasPage() {
   }, [activePanel, hostingFilter, itemsPerPage]);
 
   useEffect(() => {
-    setUpcomingAttendingPage(1);
-    setPastAttendingPage(1);
-  }, [activePanel, itemsPerPage]);
+    setAttendingPage(1);
+  }, [activePanel, attendingFilter, itemsPerPage]);
 
   useEffect(() => {
     if (loading || !isLoggedIn) {
@@ -395,17 +510,37 @@ export default function MesRepasPage() {
     };
   }, [hostedMeals]);
 
-  const attendingMeals = useMemo(() => [] as MealItem[], []);
+  const attendingReservations = useMemo(() => listGuestReservations(), []);
 
-  const upcomingAttendingMeals = useMemo(
-    () => sortMealsByDate(attendingMeals.filter((meal) => isUpcomingMeal(meal)), "asc"),
-    [attendingMeals],
+  const attendingStats = useMemo(
+    () => ({
+      total: attendingReservations.length,
+      confirmed: attendingReservations.filter((reservation) => reservation.status === "confirmed")
+        .length,
+      pending: attendingReservations.filter((reservation) => reservation.status === "pending")
+        .length,
+      refused: attendingReservations.filter((reservation) => reservation.status === "refused")
+        .length,
+    }),
+    [attendingReservations],
   );
 
-  const pastAttendingMeals = useMemo(
-    () => sortMealsByDate(attendingMeals.filter((meal) => isPastMeal(meal)), "desc"),
-    [attendingMeals],
-  );
+  const filteredAttendingReservations = useMemo(() => {
+    if (attendingFilter === "all") {
+      return attendingReservations;
+    }
+
+    if (attendingFilter === "past") {
+      return attendingReservations.filter(
+        (reservation) =>
+          reservation.status === "confirmed" && isPastReservation(reservation),
+      );
+    }
+
+    return attendingReservations.filter(
+      (reservation) => reservation.status === attendingFilter,
+    );
+  }, [attendingFilter, attendingReservations]);
 
   const filteredHostedMeals = useMemo(() => {
     if (hostingFilter === "draft") {
@@ -460,15 +595,17 @@ export default function MesRepasPage() {
     [filteredHostedMeals, hostingPage, itemsPerPage],
   );
 
-  const paginatedUpcomingAttendingMeals = useMemo(
-    () => paginateMeals(upcomingAttendingMeals, upcomingAttendingPage, itemsPerPage),
-    [itemsPerPage, upcomingAttendingMeals, upcomingAttendingPage],
-  );
+  const paginatedAttendingReservations = useMemo(() => {
+    const totalPages = Math.max(1, Math.ceil(filteredAttendingReservations.length / itemsPerPage));
+    const safePage = Math.min(attendingPage, totalPages);
+    const startIndex = (safePage - 1) * itemsPerPage;
 
-  const paginatedPastAttendingMeals = useMemo(
-    () => paginateMeals(pastAttendingMeals, pastAttendingPage, itemsPerPage),
-    [itemsPerPage, pastAttendingMeals, pastAttendingPage],
-  );
+    return {
+      totalPages,
+      currentPage: safePage,
+      items: filteredAttendingReservations.slice(startIndex, startIndex + itemsPerPage),
+    };
+  }, [attendingPage, filteredAttendingReservations, itemsPerPage]);
 
   const updateMealInState = (nextMeal: MealItem) => {
     setHostedMeals((previousMeals) =>
@@ -536,17 +673,17 @@ export default function MesRepasPage() {
         <div className={styles.heroHeader}>
           <div className={styles.heroCopy}>
             <p className={styles.kicker}>
-              {activePanel === "hosting" ? "Espace hote" : "Mes repas"}
+              {activePanel === "hosting" ? "Espace hôte" : "Espace invité"}
             </p>
             <h1>
               {activePanel === "hosting"
-                ? "Gere les repas que tu organises et pilote leur publication."
-                : "Retrouve les repas que tu vas vivre, puis ceux auxquels tu as deja participe."}
+                ? "Gère les repas que tu organises et pilote leur publication."
+                : "Consulte facilement toutes tes réservations au même endroit."}
             </h1>
             <p className={styles.description}>
               {activePanel === "hosting"
-                ? "Retrouve tes repas a venir, passes, annules, brouillons et publies dans un seul espace."
-                : "En tant qu'invite, tu retrouves ici ton parcours repas. Si tu es aussi hote, tu peux basculer a tout moment sur le panneau de gestion de tes creations."}
+                ? "Retrouve tes repas à venir, passés, annulés, brouillons et publiés dans un seul espace."
+                : "Retrouve tes réservations confirmées, en attente, refusées et passées dans un seul espace."}
             </p>
           </div>
 
@@ -750,79 +887,81 @@ export default function MesRepasPage() {
           )}
         </>
       ) : (
-        <div className={styles.sectionStack}>
-          <section className={styles.sectionCard}>
-            <div className={styles.sectionHead}>
-              <div>
-                <p className={styles.sectionKicker}>En tant qu&apos;invite</p>
-                <h2>Mes prochains repas</h2>
+        <>
+          <div className={styles.statsGrid}>
+            <article className={styles.statCard}>
+              <span className={styles.statIcon}>
+                <Ticket />
+              </span>
+              <strong>{attendingStats.total}</strong>
+              <span>réservations</span>
+            </article>
+
+            <article className={styles.statCard}>
+              <span className={styles.statIcon}>
+                <ShieldCheck />
+              </span>
+              <strong>{attendingStats.confirmed}</strong>
+              <span>confirmées</span>
+            </article>
+
+            <article className={styles.statCard}>
+              <span className={styles.statIcon}>
+                <Clock3 />
+              </span>
+              <strong>{attendingStats.pending}</strong>
+              <span>en attente de confirmation</span>
+            </article>
+
+            <article className={styles.statCard}>
+              <span className={styles.statIcon}>
+                <CircleAlert />
+              </span>
+              <strong>{attendingStats.refused}</strong>
+              <span>refusées</span>
+            </article>
+          </div>
+
+          <div className={styles.filtersBar}>
+            {ATTENDING_FILTER_OPTIONS.map((filterOption) => (
+              <button
+                key={filterOption.key}
+                type="button"
+                className={`${styles.filterButton} ${
+                  attendingFilter === filterOption.key
+                    ? styles["filterButton--active"]
+                    : ""
+                }`}
+                onClick={() => setAttendingFilter(filterOption.key)}
+              >
+                {filterOption.label}
+              </button>
+            ))}
+          </div>
+
+          {filteredAttendingReservations.length === 0 ? (
+            <EmptyStateCard
+              title="Aucune réservation dans cette vue"
+              description="Explore les repas publics pour réserver une nouvelle place ou change de filtre pour retrouver une réservation existante."
+              actionLabel="Explorer les repas"
+              actionHref="/"
+            />
+          ) : (
+            <>
+              <div className={styles.reservationsGrid}>
+                {paginatedAttendingReservations.items.map((reservation) => (
+                  <ReservationCard key={reservation.id} reservation={reservation} />
+                ))}
               </div>
-              <span className={styles.sectionCount}>{upcomingAttendingMeals.length}</span>
-            </div>
 
-            {upcomingAttendingMeals.length === 0 ? (
-              <EmptyStateCard
-                title="Aucun repas a venir pour l'instant"
-                description="Tes prochaines reservations apparaitront ici pour te rappeler ou tu vas manger et quand t'y rendre."
-                actionLabel="Explorer les repas"
-                actionHref="/"
+              <Pagination
+                currentPage={paginatedAttendingReservations.currentPage}
+                totalPages={paginatedAttendingReservations.totalPages}
+                onPageChange={setAttendingPage}
               />
-            ) : (
-              <>
-                <div className={styles.mealsGrid}>
-                  {paginatedUpcomingAttendingMeals.items.map((meal) => (
-                    <MealCard
-                      key={meal.id}
-                      meal={meal}
-                      hostLabel={`Chez ${meal.host.pseudo || "ton hote"} - ${meal.host.city}, ${meal.host.country}`}
-                    />
-                  ))}
-                </div>
-
-                <Pagination
-                  currentPage={paginatedUpcomingAttendingMeals.currentPage}
-                  totalPages={paginatedUpcomingAttendingMeals.totalPages}
-                  onPageChange={setUpcomingAttendingPage}
-                />
-              </>
-            )}
-          </section>
-
-          <section className={styles.sectionCard}>
-            <div className={styles.sectionHead}>
-              <div>
-                <p className={styles.sectionKicker}>Souvenirs de table</p>
-                <h2>Repas deja participes</h2>
-              </div>
-              <span className={styles.sectionCount}>{pastAttendingMeals.length}</span>
-            </div>
-
-            {pastAttendingMeals.length === 0 ? (
-              <EmptyStateCard
-                title="Aucun repas participe pour le moment"
-                description="Une fois tes premieres experiences passees, tu retrouveras ici ton historique de repas partages."
-              />
-            ) : (
-              <>
-                <div className={styles.mealsGrid}>
-                  {paginatedPastAttendingMeals.items.map((meal) => (
-                    <MealCard
-                      key={meal.id}
-                      meal={meal}
-                      hostLabel={`Chez ${meal.host.pseudo || "ton hote"} - ${meal.host.city}, ${meal.host.country}`}
-                    />
-                  ))}
-                </div>
-
-                <Pagination
-                  currentPage={paginatedPastAttendingMeals.currentPage}
-                  totalPages={paginatedPastAttendingMeals.totalPages}
-                  onPageChange={setPastAttendingPage}
-                />
-              </>
-            )}
-          </section>
-        </div>
+            </>
+          )}
+        </>
       )}
     </section>
   );
