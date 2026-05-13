@@ -84,7 +84,7 @@ export class BookingsService {
 
     if (meal.host.id === userId) {
       throw new BadRequestException(
-        'Un hote ne peut pas reserver son propre repas',
+        'Un hôte ne peut pas réserver sur son propre événement',
       );
     }
 

@@ -7,6 +7,7 @@ import {
   buildMealEventHref,
   getMealEventById,
 } from "@/lib/meal-data";
+import RegisterEventLink from "../RegisterEventLink";
 import styles from "./event-map.module.scss";
 
 type EventMapPageProps = {
@@ -71,9 +72,13 @@ export default async function EventMapPage({ params }: EventMapPageProps) {
         <Link href="/connexion" className={styles.contactButton}>
           <span>Contacter {hostFirstName}</span>
         </Link>
-        <Link href={`/reservation/${event.id}/places`} className={styles.registerButton}>
-          <span>S&apos;inscrire</span>
-        </Link>
+        <RegisterEventLink
+          eventId={event.id}
+          hostUserId={event.hostId}
+          className={styles.registerButton}
+        >
+          <span>S&apos;inscrire à l'événement</span>
+        </RegisterEventLink>
       </div>
 
       <SearchMap location={event.city} eventCount={1} />

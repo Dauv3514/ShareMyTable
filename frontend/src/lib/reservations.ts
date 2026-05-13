@@ -14,6 +14,18 @@ export type ReservationPaymentState =
   | "awaiting_host"
   | "refunded";
 
+export type ReservationPaymentIntent = {
+  paymentId: number;
+  bookingId: number;
+  provider: "stripe";
+  providerIntentId: string;
+  clientSecret: string;
+  amountTotalCents: number;
+  platformFeeCents: number;
+  hostAmountCents: number;
+  status: "pending" | "authorized" | "succeeded" | "failed" | "canceled" | "refunded";
+};
+
 export type ReservationDraft = {
   seats: number;
   paymentMethod: ReservationPaymentMethod;
@@ -96,6 +108,8 @@ type ApiBookingResponse = {
   houseRules: string[];
   reminderLabels: string[];
 };
+
+type ApiPaymentIntentResponse = ReservationPaymentIntent;
 
 const DRAFT_STORAGE_PREFIX = "reservation-draft:";
 const RESERVATIONS_STORAGE_KEY = "guest-reservations-v1";
@@ -481,6 +495,30 @@ async function createBackendGuestReservation({
   return mapApiBookingToReservationItem(response.data);
 }
 
+async function createBackendReservationPaymentIntent(
+  bookingId: string | number,
+): Promise<ReservationPaymentIntent> {
+  const apiContext = getReservationApiContext();
+
+  if (!apiContext) {
+    throw new Error("Contexte API indisponible");
+  }
+
+  const response = await axios.post<ApiPaymentIntentResponse>(
+    `${apiContext.apiUrl}/payments/create-intent`,
+    {
+      bookingId: Number(bookingId),
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${apiContext.token}`,
+      },
+    },
+  );
+
+  return response.data;
+}
+
 function getDraftStorageKey(eventId: string) {
   return `${DRAFT_STORAGE_PREFIX}${eventId}`;
 }
@@ -629,6 +667,29 @@ export async function createGuestReservation({
   clearReservationDraft(event.id);
 
   return reservation;
+}
+
+export async function createReservationPaymentIntent(bookingId: string | number) {
+  if (!isNumericIdentifier(String(bookingId))) {
+    throw new Error("Le paiement Stripe n'est disponible que pour les réservations backend.");
+  }
+
+  const apiContext = getReservationApiContext();
+
+  if (!apiContext) {
+    throw new Error("Session invalide. Reconnecte-toi pour continuer le paiement.");
+  }
+
+  try {
+    return await createBackendReservationPaymentIntent(bookingId);
+  } catch (error) {
+    throw new Error(
+      getReservationErrorMessage(
+        error,
+        "Impossible de préparer le paiement pour cette réservation.",
+      ),
+    );
+  }
 }
 
 export function getReservationStatusLabel(status: ReservationStatus) {

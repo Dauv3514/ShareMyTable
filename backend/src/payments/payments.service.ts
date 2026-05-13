@@ -127,6 +127,8 @@ export class PaymentsService {
         guestUserId: String(booking.guestUser.id),
         mealId: String(booking.meal.id),
       },
+    }, {
+      idempotencyKey: `booking-${booking.id}-payment-intent`,
     });
 
     if (!paymentIntent.client_secret) {
@@ -147,7 +149,34 @@ export class PaymentsService {
     payment.releasedAt = null;
     payment.refundedAt = null;
 
-    const savedPayment = await this.paymentsRepository.save(payment);
+    let savedPayment: Payment;
+
+    try {
+      savedPayment = await this.paymentsRepository.save(payment);
+    } catch (error) {
+      if (this.isUniqueConstraintError(error)) {
+        const concurrentPayment = await this.findPaymentByBookingId(booking.id);
+
+        if (concurrentPayment?.providerIntentId) {
+          const concurrentIntent = await stripe.paymentIntents.retrieve(
+            concurrentPayment.providerIntentId,
+          );
+
+          if (!concurrentIntent.client_secret) {
+            throw new InternalServerErrorException(
+              'Stripe n’a pas renvoyé de client secret pour le paiement existant',
+            );
+          }
+
+          return this.toCreateIntentResponse(
+            concurrentPayment,
+            concurrentIntent.client_secret,
+          );
+        }
+      }
+
+      throw error;
+    }
 
     return this.toCreateIntentResponse(
       savedPayment,
@@ -323,6 +352,25 @@ export class PaymentsService {
       where: { providerIntentId },
       relations: ['booking'],
     });
+  }
+
+  private async findPaymentByBookingId(bookingId: number) {
+    return this.paymentsRepository.findOne({
+      where: { booking: { id: bookingId } },
+      relations: ['booking'],
+    });
+  }
+
+  private isUniqueConstraintError(error: unknown) {
+    const driverError = (error as { driverError?: { code?: string; errno?: number } })
+      ?.driverError;
+
+    return (
+      driverError?.code === 'ER_DUP_ENTRY' ||
+      driverError?.errno === 1062 ||
+      driverError?.code === '23505' ||
+      driverError?.code === 'SQLITE_CONSTRAINT'
+    );
   }
 
   private toCreateIntentResponse(
