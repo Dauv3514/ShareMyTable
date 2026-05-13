@@ -107,6 +107,7 @@ export class PaymentsService {
       return this.toCreateIntentResponse(
         existingPayment,
         existingIntent.client_secret,
+        booking.id,
       );
     }
 
@@ -119,6 +120,7 @@ export class PaymentsService {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: booking.totalPriceCents,
       currency: 'eur',
+      capture_method: 'manual',
       automatic_payment_methods: {
         enabled: true,
       },
@@ -171,6 +173,7 @@ export class PaymentsService {
           return this.toCreateIntentResponse(
             concurrentPayment,
             concurrentIntent.client_secret,
+            booking.id,
           );
         }
       }
@@ -181,6 +184,7 @@ export class PaymentsService {
     return this.toCreateIntentResponse(
       savedPayment,
       paymentIntent.client_secret,
+      booking.id,
     );
   }
 
@@ -212,6 +216,11 @@ export class PaymentsService {
     }
 
     switch (event.type) {
+      case 'payment_intent.amount_capturable_updated':
+        await this.markPaymentIntentAuthorized(
+          event.data.object as StripeIntentLike,
+        );
+        break;
       case 'payment_intent.succeeded':
         await this.markPaymentIntentSucceeded(
           event.data.object as StripeIntentLike,
@@ -282,6 +291,20 @@ export class PaymentsService {
     }
 
     return PaymentStatus.PENDING;
+  }
+
+  private async markPaymentIntentAuthorized(paymentIntent: StripeIntentLike) {
+    const payment = await this.findPaymentByIntentId(paymentIntent.id);
+
+    if (!payment) {
+      return;
+    }
+
+    payment.status = PaymentStatus.AUTHORIZED;
+    payment.booking.paymentState = BookingPaymentState.AUTHORIZED;
+
+    await this.paymentsRepository.save(payment);
+    await this.bookingsRepository.save(payment.booking);
   }
 
   private async markPaymentIntentSucceeded(paymentIntent: StripeIntentLike) {
@@ -376,10 +399,11 @@ export class PaymentsService {
   private toCreateIntentResponse(
     payment: Payment,
     clientSecret: string,
+    fallbackBookingId?: number,
   ): CreatePaymentIntentResponse {
     return {
       paymentId: payment.id,
-      bookingId: payment.booking.id,
+      bookingId: payment.booking?.id ?? fallbackBookingId ?? 0,
       provider: payment.provider,
       providerIntentId: payment.providerIntentId,
       clientSecret,
