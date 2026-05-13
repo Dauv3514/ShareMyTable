@@ -1,12 +1,31 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Headers,
+  HttpCode,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '../auth/auth.guard';
 import type { IAuthInfoRequest } from '../auth/auth.guard';
+import { Public } from '../auth/public.decorator';
 import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
 import { PaymentsService } from './payments.service';
 
 @Controller('payments')
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
+
+  @Public()
+  @HttpCode(200)
+  @Post('webhook')
+  async handleWebhook(
+    @Headers('stripe-signature') signature: string | undefined,
+    @Req() req: IAuthInfoRequest & { rawBody?: Buffer },
+  ) {
+    return this.paymentsService.handleWebhook(signature, req.rawBody);
+  }
 
   @UseGuards(AuthGuard)
   @Post('create-intent')

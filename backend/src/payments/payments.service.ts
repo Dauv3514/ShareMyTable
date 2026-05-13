@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import Stripe from 'stripe';
 import { Repository } from 'typeorm';
-import { Booking } from '../bookings/booking.entity';
+import { Booking, BookingPaymentState } from '../bookings/booking.entity';
 import {
   Payment,
   PaymentProvider,
@@ -25,6 +25,20 @@ type CreatePaymentIntentResponse = {
   platformFeeCents: number;
   hostAmountCents: number;
   status: PaymentStatus;
+};
+
+type HandleWebhookResponse = {
+  received: true;
+  type: string;
+};
+
+type StripeIntentLike = {
+  id: string;
+  status: string;
+};
+
+type StripeChargeLike = {
+  payment_intent?: string | { id: string } | null;
 };
 
 @Injectable()
@@ -141,6 +155,62 @@ export class PaymentsService {
     );
   }
 
+  async handleWebhook(
+    signature: string | undefined,
+    rawBody: Buffer | undefined,
+  ): Promise<HandleWebhookResponse> {
+    if (!signature?.trim()) {
+      throw new BadRequestException(
+        'L’en-tête stripe-signature est manquante',
+      );
+    }
+
+    if (!rawBody) {
+      throw new BadRequestException(
+        'Le corps brut de la requête webhook est manquant',
+      );
+    }
+
+    const stripe = this.getStripeClient();
+    const webhookSecret = this.getStripeWebhookSecret();
+
+    let event;
+
+    try {
+      event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
+    } catch {
+      throw new BadRequestException('Signature Stripe invalide');
+    }
+
+    switch (event.type) {
+      case 'payment_intent.succeeded':
+        await this.markPaymentIntentSucceeded(
+          event.data.object as StripeIntentLike,
+        );
+        break;
+      case 'payment_intent.payment_failed':
+        await this.markPaymentIntentFailed(
+          event.data.object as StripeIntentLike,
+        );
+        break;
+      case 'payment_intent.canceled':
+        await this.markPaymentIntentCanceled(
+          event.data.object as StripeIntentLike,
+        );
+        break;
+      case 'charge.refunded':
+        await this.markChargeRefunded(event.data.object as StripeChargeLike);
+        break;
+      default:
+        break;
+    }
+
+    return {
+      received: true,
+      type: event.type,
+    };
+  }
+
   private getStripeClient() {
     const secretKey = this.configService.get<string>('STRIPE_SECRET_KEY');
 
@@ -153,6 +223,20 @@ export class PaymentsService {
     return new Stripe(secretKey, {
       apiVersion: '2026-04-22.dahlia',
     });
+  }
+
+  private getStripeWebhookSecret() {
+    const webhookSecret = this.configService.get<string>(
+      'STRIPE_WEBHOOK_SECRET',
+    );
+
+    if (!webhookSecret?.trim()) {
+      throw new InternalServerErrorException(
+        'STRIPE_WEBHOOK_SECRET est manquante dans la configuration du backend',
+      );
+    }
+
+    return webhookSecret;
   }
 
   private mapStripeIntentStatus(status: string) {
@@ -169,6 +253,76 @@ export class PaymentsService {
     }
 
     return PaymentStatus.PENDING;
+  }
+
+  private async markPaymentIntentSucceeded(paymentIntent: StripeIntentLike) {
+    const payment = await this.findPaymentByIntentId(paymentIntent.id);
+
+    if (!payment) {
+      return;
+    }
+
+    payment.status = PaymentStatus.SUCCEEDED;
+    payment.paidAt = new Date();
+
+    payment.booking.paymentState = BookingPaymentState.AUTHORIZED;
+
+    await this.paymentsRepository.save(payment);
+    await this.bookingsRepository.save(payment.booking);
+  }
+
+  private async markPaymentIntentFailed(paymentIntent: StripeIntentLike) {
+    const payment = await this.findPaymentByIntentId(paymentIntent.id);
+
+    if (!payment) {
+      return;
+    }
+
+    payment.status = PaymentStatus.FAILED;
+    await this.paymentsRepository.save(payment);
+  }
+
+  private async markPaymentIntentCanceled(paymentIntent: StripeIntentLike) {
+    const payment = await this.findPaymentByIntentId(paymentIntent.id);
+
+    if (!payment) {
+      return;
+    }
+
+    payment.status = PaymentStatus.CANCELED;
+    await this.paymentsRepository.save(payment);
+  }
+
+  private async markChargeRefunded(charge: StripeChargeLike) {
+    const intentId =
+      typeof charge.payment_intent === 'string'
+        ? charge.payment_intent
+        : charge.payment_intent?.id;
+
+    if (!intentId) {
+      return;
+    }
+
+    const payment = await this.findPaymentByIntentId(intentId);
+
+    if (!payment) {
+      return;
+    }
+
+    payment.status = PaymentStatus.REFUNDED;
+    payment.refundedAt = new Date();
+
+    payment.booking.paymentState = BookingPaymentState.REFUNDED;
+
+    await this.paymentsRepository.save(payment);
+    await this.bookingsRepository.save(payment.booking);
+  }
+
+  private async findPaymentByIntentId(providerIntentId: string) {
+    return this.paymentsRepository.findOne({
+      where: { providerIntentId },
+      relations: ['booking'],
+    });
   }
 
   private toCreateIntentResponse(
