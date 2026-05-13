@@ -4,10 +4,12 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Meal } from '../meals/meal.entity';
+import { Payment } from '../payments/payment.entity';
 import { Utilisateur } from '../users/users.entity';
 
 export enum BookingStatus {
@@ -91,6 +93,11 @@ export class Booking {
 
   @Column({ name: 'refusal_reason', type: 'text', nullable: true })
   refusalReason!: string | null;
+
+  @OneToOne(() => Payment, (payment) => payment.booking, {
+    nullable: true,
+  })
+  payment!: Payment | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
