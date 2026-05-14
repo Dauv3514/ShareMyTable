@@ -60,11 +60,11 @@ type MealItem = {
 };
 
 const HOSTING_FILTER_OPTIONS: Array<{ key: HostingFilter; label: string }> = [
-  { key: "upcoming", label: "A venir" },
-  { key: "past", label: "Passes" },
-  { key: "cancelled", label: "Annules" },
+  { key: "upcoming", label: "À venir" },
+  { key: "past", label: "Passés" },
+  { key: "cancelled", label: "Annulés" },
   { key: "draft", label: "Brouillons" },
-  { key: "published", label: "Publies" },
+  { key: "published", label: "Publiés" },
 ];
 
 const ATTENDING_FILTER_OPTIONS: Array<{ key: AttendingFilter; label: string }> = [
@@ -76,9 +76,9 @@ const ATTENDING_FILTER_OPTIONS: Array<{ key: AttendingFilter; label: string }> =
 ];
 
 function getStatusLabel(status: MealStatus) {
-  if (status === "published") return "Publie";
-  if (status === "cancelled") return "Annule";
-  if (status === "done") return "Termine";
+  if (status === "published") return "Publié";
+  if (status === "cancelled") return "Annulé";
+  if (status === "done") return "Terminé";
   return "Brouillon";
 }
 
@@ -205,7 +205,7 @@ function MealCard({ meal, footer, hostLabel }: MealCardProps) {
 
       {meal.houseRules ? (
         <div className={styles.rulesBlock}>
-          <span>Regles de la maison</span>
+          <span>Règles de la maison</span>
           <p>{meal.houseRules}</p>
         </div>
       ) : null}
@@ -347,7 +347,7 @@ function Pagination({ currentPage, totalPages, onPageChange }: PaginationProps) 
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
       >
-        Precedent
+        Précédent
       </button>
 
       <div className={styles.paginationPages}>
@@ -450,7 +450,7 @@ export default function MesRepasPage() {
 
     if (!token || !apiUrl) {
       setFetchingHostedMeals(false);
-      setHostingError("Impossible de charger tes repas organises pour le moment.");
+      setHostingError("Impossible de charger tes repas organisés pour le moment.");
       return;
     }
 
@@ -476,7 +476,7 @@ export default function MesRepasPage() {
         }
 
         const fallbackMessage =
-          "Ton espace hote sera disponible des que ton profil hote sera approuve et actif.";
+          "Ton espace hôte sera disponible dès que ton profil hôte sera approuvé et actif.";
 
         const message = axios.isAxiosError(error)
           ? error.response?.data?.message ?? fallbackMessage
@@ -670,13 +670,13 @@ export default function MesRepasPage() {
       updateMealInState(response.data);
       toast.success(
         action === "publish"
-          ? "Le repas est maintenant publie."
-          : "Le repas a bien ete annule.",
+          ? "Le repas est maintenant publié."
+          : "Le repas a bien été annulé.",
       );
     } catch (error: unknown) {
       const message = axios.isAxiosError(error)
-        ? error.response?.data?.message ?? "L'action n'a pas pu etre effectuee."
-        : "L'action n'a pas pu etre effectuee.";
+        ? error.response?.data?.message ?? "L'action n'a pas pu être effectuée."
+        : "L'action n'a pas pu être effectuée.";
       toast.error(Array.isArray(message) ? message.join(", ") : message);
     } finally {
       setActiveMealId(null);
@@ -710,7 +710,7 @@ export default function MesRepasPage() {
             </h1>
             <p className={styles.description}>
               {activePanel === "hosting"
-                ? "Retrouve tes repas à venir, passés, annulés, brouillons et publiés dans un seul espace."
+                ? "Retrouve tes repas à venir, passés et annulés dans un même espace."
                 : "Retrouve tes réservations confirmées, en attente, refusées et passées dans un seul espace."}
             </p>
           </div>
@@ -748,7 +748,7 @@ export default function MesRepasPage() {
             <>
               <Link href="/mes-repas/creer" className={styles.primaryButton}>
                 <CirclePlus />
-                Creer un repas
+                Créer un repas
               </Link>
               <Link href="/" className={styles.secondaryButton}>
                 Voir les repas publics
@@ -757,7 +757,7 @@ export default function MesRepasPage() {
           ) : (
             <Link href="/" className={styles.primaryButton}>
               <Rocket />
-              Decouvrir les repas
+              Découvrir les repas
             </Link>
           )}
         </div>
@@ -771,7 +771,7 @@ export default function MesRepasPage() {
                 <FileText />
               </span>
               <strong>{hostedStats.total}</strong>
-              <span>repas crees</span>
+              <span>repas créés</span>
             </article>
 
             <article className={styles.statCard}>
@@ -779,7 +779,7 @@ export default function MesRepasPage() {
                 <Rocket />
               </span>
               <strong>{hostedStats.publishedCount}</strong>
-              <span>publies</span>
+              <span>publiés</span>
             </article>
 
             <article className={styles.statCard}>
@@ -795,7 +795,7 @@ export default function MesRepasPage() {
                 <CalendarDays />
               </span>
               <strong>{hostedStats.upcomingCount}</strong>
-              <span>a venir</span>
+              <span>à venir</span>
             </article>
           </div>
 
@@ -805,7 +805,7 @@ export default function MesRepasPage() {
                 <CircleAlert />
               </div>
               <div className={styles.hostGuardContent}>
-                <h2>Ton panneau hote n&apos;est pas encore disponible</h2>
+                <h2>Ton panneau hôte n&apos;est pas encore disponible</h2>
                 <p>{hostingError}</p>
               </div>
               <div className={styles.hostGuardActions}>
@@ -813,7 +813,7 @@ export default function MesRepasPage() {
                   Voir mon profil
                 </Link>
                 <Link href="/mes-repas/creer" className={styles.primaryButton}>
-                  Ouvrir la creation
+                  Ouvrir la création
                 </Link>
               </div>
             </div>
@@ -838,12 +838,12 @@ export default function MesRepasPage() {
 
               {fetchingHostedMeals ? (
                 <div className={styles.loadingPanel}>
-                  Chargement de tes repas organises...
+                  Chargement de tes repas organisés...
                 </div>
               ) : filteredHostedMeals.length === 0 ? (
                 <EmptyStateCard
                   title="Aucun repas dans cette vue"
-                  description="Change de filtre ou cree un nouveau repas pour commencer a remplir ton espace hote."
+                  description="Change de filtre ou crée un nouveau repas pour commencer à remplir ton espace hôte."
                   actionLabel="Organiser un repas"
                   actionHref="/mes-repas/creer"
                 />

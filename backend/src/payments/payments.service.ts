@@ -249,6 +249,37 @@ export class PaymentsService {
     };
   }
 
+  async cancelPaymentForBooking(bookingId: number): Promise<void> {
+    const payment = await this.findPaymentByBookingId(bookingId);
+
+    if (!payment) {
+      return;
+    }
+
+    if (payment.status === PaymentStatus.SUCCEEDED) {
+      throw new BadRequestException(
+        'Ce paiement a deja été capturé et doit être remboursé',
+      );
+    }
+
+    if (
+      [PaymentStatus.CANCELED, PaymentStatus.FAILED, PaymentStatus.REFUNDED].includes(
+        payment.status,
+      )
+    ) {
+      return;
+    }
+
+    const stripe = this.getStripeClient();
+
+    await stripe.paymentIntents.cancel(payment.providerIntentId, {
+      cancellation_reason: 'requested_by_customer',
+    });
+
+    payment.status = PaymentStatus.CANCELED;
+    await this.paymentsRepository.save(payment);
+  }
+
   private getStripeClient() {
     const secretKey = this.configService.get<string>('STRIPE_SECRET_KEY');
 

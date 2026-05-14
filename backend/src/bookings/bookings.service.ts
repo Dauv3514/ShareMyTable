@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HostProfile } from '../host-profiles/host-profile.entity';
 import { Meal, MealStatus } from '../meals/meal.entity';
+import { PaymentsService } from '../payments/payments.service';
 import { Utilisateur } from '../users/users.entity';
 import {
   Booking,
@@ -14,6 +15,7 @@ import {
   BookingStatus,
 } from './booking.entity';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { RefuseBookingDto } from './dto/refuse-booking.dto';
 
 type BookingResponse = {
   id: number;
@@ -53,6 +55,51 @@ type BookingResponse = {
   reminderLabels: string[];
 };
 
+type HostBookingGuestResponse = {
+  userId: number;
+  pseudo: string | null;
+  firstName: string;
+  lastName: string;
+  city: string;
+  country: string;
+  profilePhotoUrl: string | null;
+};
+
+type HostBookingResponse = {
+  id: number;
+  mealId: number;
+  seats: number;
+  bookingStatus: BookingStatus;
+  paymentState: BookingPaymentState;
+  totalPriceCents: number;
+  createdAt: Date;
+  updatedAt: Date;
+  confirmedAt: Date | null;
+  refusedAt: Date | null;
+  cancelledAt: Date | null;
+  completedAt: Date | null;
+  refusalReason: string | null;
+  guest: HostBookingGuestResponse;
+};
+
+type HostMealBookingSummaryResponse = {
+  mealId: number;
+  mealTitle: string | null;
+  mealStatus: MealStatus;
+  seatsTotal: number;
+  pendingBookingsCount: number;
+  pendingSeatsCount: number;
+  confirmedBookingsCount: number;
+  confirmedSeatsCount: number;
+  refusedBookingsCount: number;
+  cancelledBookingsCount: number;
+  totalActiveSeatsCount: number;
+};
+
+type HostMealBookingsResponse = HostMealBookingSummaryResponse & {
+  bookings: HostBookingResponse[];
+};
+
 @Injectable()
 export class BookingsService {
   constructor(
@@ -62,6 +109,7 @@ export class BookingsService {
     private readonly mealsRepository: Repository<Meal>,
     @InjectRepository(Utilisateur)
     private readonly usersRepository: Repository<Utilisateur>,
+    private readonly paymentsService: PaymentsService,
   ) {}
 
   async create(userId: number, dto: CreateBookingDto): Promise<BookingResponse> {
@@ -145,6 +193,96 @@ export class BookingsService {
     return this.toBookingResponse(booking);
   }
 
+  async findHostMealSummaries(
+    hostUserId: number,
+  ): Promise<HostMealBookingSummaryResponse[]> {
+    const meals = await this.mealsRepository.find({
+      where: { host: { id: hostUserId } },
+      relations: ['host'],
+      order: { dateTime: 'ASC' },
+    });
+
+    if (meals.length === 0) {
+      return [];
+    }
+
+    const bookings = await this.bookingsRepository.find({
+      where: { meal: { host: { id: hostUserId } } },
+      relations: ['meal', 'meal.host', 'guestUser'],
+      order: { createdAt: 'DESC' },
+    });
+
+    return meals.map((meal) => {
+      const mealBookings = bookings.filter((booking) => booking.meal.id === meal.id);
+      return this.toHostMealBookingSummaryResponse(meal, mealBookings);
+    });
+  }
+
+  async findHostMealBookings(
+    hostUserId: number,
+    mealId: number,
+  ): Promise<HostMealBookingsResponse> {
+    const meal = await this.findHostedMealEntity(hostUserId, mealId);
+
+    const bookings = await this.bookingsRepository.find({
+      where: { meal: { id: meal.id, host: { id: hostUserId } } },
+      relations: ['meal', 'meal.host', 'guestUser'],
+      order: { createdAt: 'DESC' },
+    });
+
+    return {
+      ...this.toHostMealBookingSummaryResponse(meal, bookings),
+      bookings: bookings.map((booking) => this.toHostBookingResponse(booking)),
+    };
+  }
+
+  async acceptHostBooking(
+    hostUserId: number,
+    bookingId: number,
+  ): Promise<HostBookingResponse> {
+    const booking = await this.findHostedBookingEntity(hostUserId, bookingId);
+
+    if (booking.bookingStatus !== BookingStatus.PENDING) {
+      throw new BadRequestException(
+        'Seules les demandes en attente peuvent etre acceptees',
+      );
+    }
+
+    booking.bookingStatus = BookingStatus.CONFIRMED;
+    booking.paymentState = BookingPaymentState.AUTHORIZED;
+    booking.confirmedAt = new Date();
+    booking.refusedAt = null;
+    booking.refusalReason = null;
+
+    const savedBooking = await this.bookingsRepository.save(booking);
+    return this.toHostBookingResponse(savedBooking);
+  }
+
+  async refuseHostBooking(
+    hostUserId: number,
+    bookingId: number,
+    dto: RefuseBookingDto,
+  ): Promise<HostBookingResponse> {
+    const booking = await this.findHostedBookingEntity(hostUserId, bookingId);
+
+    if (booking.bookingStatus !== BookingStatus.PENDING) {
+      throw new BadRequestException(
+        'Seules les demandes en attente peuvent etre refusees',
+      );
+    }
+
+    await this.paymentsService.cancelPaymentForBooking(booking.id);
+
+    booking.bookingStatus = BookingStatus.REFUSED;
+    booking.paymentState = BookingPaymentState.REFUNDED;
+    booking.refusedAt = new Date();
+    booking.confirmedAt = null;
+    booking.refusalReason = this.normalizeNullableString(dto.reason);
+
+    const savedBooking = await this.bookingsRepository.save(booking);
+    return this.toHostBookingResponse(savedBooking);
+  }
+
   private async findOwnedBookingEntity(
     userId: number,
     bookingId: number,
@@ -156,6 +294,38 @@ export class BookingsService {
 
     if (!booking) {
       throw new NotFoundException('Reservation introuvable');
+    }
+
+    return booking;
+  }
+
+  private async findHostedMealEntity(
+    hostUserId: number,
+    mealId: number,
+  ): Promise<Meal> {
+    const meal = await this.mealsRepository.findOne({
+      where: { id: mealId, host: { id: hostUserId } },
+      relations: ['host'],
+    });
+
+    if (!meal) {
+      throw new NotFoundException('Repas hote introuvable');
+    }
+
+    return meal;
+  }
+
+  private async findHostedBookingEntity(
+    hostUserId: number,
+    bookingId: number,
+  ): Promise<Booking> {
+    const booking = await this.bookingsRepository.findOne({
+      where: { id: bookingId, meal: { host: { id: hostUserId } } },
+      relations: ['guestUser', 'meal', 'meal.host'],
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Demande de reservation introuvable');
     }
 
     return booking;
@@ -229,6 +399,72 @@ export class BookingsService {
       houseRules: this.buildHouseRules(booking.meal, hostProfile),
       reminderLabels: ['Rappel automatique J-3', 'Rappel automatique J-1'],
     };
+  }
+
+  private toHostMealBookingSummaryResponse(
+    meal: Meal,
+    bookings: Booking[],
+  ): HostMealBookingSummaryResponse {
+    const pendingBookings = bookings.filter(
+      (booking) => booking.bookingStatus === BookingStatus.PENDING,
+    );
+    const confirmedBookings = bookings.filter(
+      (booking) => booking.bookingStatus === BookingStatus.CONFIRMED,
+    );
+    const refusedBookings = bookings.filter(
+      (booking) => booking.bookingStatus === BookingStatus.REFUSED,
+    );
+    const cancelledBookings = bookings.filter(
+      (booking) => booking.bookingStatus === BookingStatus.CANCELLED,
+    );
+
+    return {
+      mealId: meal.id,
+      mealTitle: meal.title,
+      mealStatus: meal.status,
+      seatsTotal: meal.seatsTotal,
+      pendingBookingsCount: pendingBookings.length,
+      pendingSeatsCount: this.sumBookingSeats(pendingBookings),
+      confirmedBookingsCount: confirmedBookings.length,
+      confirmedSeatsCount: this.sumBookingSeats(confirmedBookings),
+      refusedBookingsCount: refusedBookings.length,
+      cancelledBookingsCount: cancelledBookings.length,
+      totalActiveSeatsCount: this.sumBookingSeats([
+        ...pendingBookings,
+        ...confirmedBookings,
+      ]),
+    };
+  }
+
+  private toHostBookingResponse(booking: Booking): HostBookingResponse {
+    return {
+      id: booking.id,
+      mealId: booking.meal.id,
+      seats: booking.seats,
+      bookingStatus: booking.bookingStatus,
+      paymentState: booking.paymentState,
+      totalPriceCents: booking.totalPriceCents,
+      createdAt: booking.createdAt,
+      updatedAt: booking.updatedAt,
+      confirmedAt: booking.confirmedAt,
+      refusedAt: booking.refusedAt,
+      cancelledAt: booking.cancelledAt,
+      completedAt: booking.completedAt,
+      refusalReason: booking.refusalReason,
+      guest: {
+        userId: booking.guestUser.id,
+        pseudo: booking.guestUser.pseudo,
+        firstName: booking.guestUser.firstName,
+        lastName: booking.guestUser.lastName,
+        city: booking.guestUser.city,
+        country: booking.guestUser.country,
+        profilePhotoUrl: booking.guestUser.profilePhotoUrl,
+      },
+    };
+  }
+
+  private sumBookingSeats(bookings: Booking[]): number {
+    return bookings.reduce((total, booking) => total + booking.seats, 0);
   }
 
   private buildHouseRules(meal: Meal, hostProfile: HostProfile | null): string[] {
