@@ -47,6 +47,15 @@ export class BookingsController {
   }
 
   @UseGuards(AuthGuard)
+  @Patch('me/:id/cancel')
+  async cancelMyBooking(
+    @Req() req: IAuthInfoRequest,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.bookingsService.cancelMine(Number(req.user.sub), id);
+  }
+
+  @UseGuards(AuthGuard)
   @Get('host/meals')
   async findHostMealSummaries(@Req() req: IAuthInfoRequest) {
     return this.bookingsService.findHostMealSummaries(Number(req.user.sub));

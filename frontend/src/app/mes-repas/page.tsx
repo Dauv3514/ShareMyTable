@@ -22,6 +22,10 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import {
+  listHostMealBookingSummaries,
+  type HostMealBookingSummary,
+} from "@/lib/host-bookings";
+import {
   getReservationBadgeLabel,
   getReservationBadgeStatus,
   isPastReservation,
@@ -153,64 +157,89 @@ type MealCardProps = {
   meal: MealItem;
   footer?: React.ReactNode;
   hostLabel?: string;
+  bookingSummary?: HostMealBookingSummary | null;
 };
 
-function MealCard({ meal, footer, hostLabel }: MealCardProps) {
+function MealCard({ meal, footer, hostLabel, bookingSummary }: MealCardProps) {
   return (
     <article className={styles.mealCard}>
-      <div className={styles.mealCardTop}>
-        <span
-          className={`${styles.statusBadge} ${
-            styles[`statusBadge--${meal.status}`]
-          }`}
-        >
-          {getStatusLabel(meal.status)}
-        </span>
+      <div className={styles.mealCardMedia}>
+        <Image
+          src="/photoRepas.png"
+          alt={meal.title || "Repas"}
+          fill
+          className={styles.mealCardImage}
+          sizes="(max-width: 960px) 100vw, 520px"
+        />
+        <div className={styles.mealCardOverlay}>
+          <span
+            className={`${styles.statusBadge} ${
+              styles[`statusBadge--${meal.status}`]
+            }`}
+          >
+            {getStatusLabel(meal.status)}
+          </span>
 
-        <span className={styles.mealTypeChip}>{meal.mealType || "Repas"}</span>
+          <span className={styles.mealTypeChip}>{meal.mealType || "Repas"}</span>
+        </div>
       </div>
 
-      <div className={styles.mealCardBody}>
-        <h2>{meal.title || "Repas sans titre"}</h2>
-        <p>{meal.menuDescription || "Ajoute une description pour donner envie."}</p>
+      <div className={styles.mealCardContent}>
+        <div className={styles.mealCardBody}>
+          <h2>{meal.title || "Repas sans titre"}</h2>
+          <p>{meal.menuDescription || "Ajoute une description pour donner envie."}</p>
+        </div>
+
+        {hostLabel ? <p className={styles.hostHint}>{hostLabel}</p> : null}
+
+        {bookingSummary ? (
+          <div className={styles.bookingSummaryBox}>
+            <div>
+              <strong>{bookingSummary.confirmedSeatsCount}</strong>
+              <span>participant(s)</span>
+            </div>
+            <div>
+              <strong>{bookingSummary.pendingBookingsCount}</strong>
+              <span>demande(s) en attente</span>
+            </div>
+          </div>
+        ) : null}
+
+        <dl className={styles.mealMetaList}>
+          <div>
+            <dt>
+              <CalendarDays />
+              Date
+            </dt>
+            <dd>{formatMealDate(meal.dateTime)}</dd>
+          </div>
+
+          <div>
+            <dt>
+              <Users />
+              Places
+            </dt>
+            <dd>{meal.seatsTotal} convives</dd>
+          </div>
+
+          <div>
+            <dt>
+              <Euro />
+              Prix
+            </dt>
+            <dd>{formatPrice(meal.pricePerSeatCents)} / place</dd>
+          </div>
+        </dl>
+
+        {meal.houseRules ? (
+          <div className={styles.rulesBlock}>
+            <span>Règles de la maison</span>
+            <p>{meal.houseRules}</p>
+          </div>
+        ) : null}
+
+        {footer ? <div className={styles.mealActions}>{footer}</div> : null}
       </div>
-
-      {hostLabel ? <p className={styles.hostHint}>{hostLabel}</p> : null}
-
-      <dl className={styles.mealMetaList}>
-        <div>
-          <dt>
-            <CalendarDays />
-            Date
-          </dt>
-          <dd>{formatMealDate(meal.dateTime)}</dd>
-        </div>
-
-        <div>
-          <dt>
-            <Users />
-            Places
-          </dt>
-          <dd>{meal.seatsTotal} convives</dd>
-        </div>
-
-        <div>
-          <dt>
-            <Euro />
-            Prix
-          </dt>
-          <dd>{formatPrice(meal.pricePerSeatCents)} / place</dd>
-        </div>
-      </dl>
-
-      {meal.houseRules ? (
-        <div className={styles.rulesBlock}>
-          <span>Règles de la maison</span>
-          <p>{meal.houseRules}</p>
-        </div>
-      ) : null}
-
-      {footer ? <div className={styles.mealActions}>{footer}</div> : null}
     </article>
   );
 }
@@ -383,6 +412,11 @@ export default function MesRepasPage() {
   const [hostedMeals, setHostedMeals] = useState<MealItem[]>([]);
   const [fetchingHostedMeals, setFetchingHostedMeals] = useState(true);
   const [hostingError, setHostingError] = useState<string | null>(null);
+  const [hostBookingSummaries, setHostBookingSummaries] = useState<
+    HostMealBookingSummary[]
+  >([]);
+  const [fetchingHostBookingSummaries, setFetchingHostBookingSummaries] =
+    useState(false);
   const [activeMealId, setActiveMealId] = useState<number | null>(null);
   const [activePanel, setActivePanel] = useState<PanelMode>("attending");
   const [attendingReservations, setAttendingReservations] = useState<ReservationItem[]>([]);
@@ -492,6 +526,39 @@ export default function MesRepasPage() {
     };
 
     void loadHostedMeals();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isHostUser, isLoggedIn, loading]);
+
+  useEffect(() => {
+    if (loading || !isLoggedIn || !isHostUser) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadHostBookingSummaries = async () => {
+      try {
+        setFetchingHostBookingSummaries(true);
+        const summaries = await listHostMealBookingSummaries();
+
+        if (!cancelled) {
+          setHostBookingSummaries(summaries);
+        }
+      } catch {
+        if (!cancelled) {
+          setHostBookingSummaries([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setFetchingHostBookingSummaries(false);
+        }
+      }
+    };
+
+    void loadHostBookingSummaries();
 
     return () => {
       cancelled = true;
@@ -621,6 +688,14 @@ export default function MesRepasPage() {
   const paginatedHostedMeals = useMemo(
     () => paginateMeals(filteredHostedMeals, hostingPage, itemsPerPage),
     [filteredHostedMeals, hostingPage, itemsPerPage],
+  );
+
+  const hostBookingSummariesByMealId = useMemo(
+    () =>
+      new Map(
+        hostBookingSummaries.map((summary) => [summary.mealId, summary]),
+      ),
+    [hostBookingSummaries],
   );
 
   const paginatedAttendingReservations = useMemo(() => {
@@ -861,8 +936,18 @@ export default function MesRepasPage() {
                         <MealCard
                           key={meal.id}
                           meal={meal}
+                          bookingSummary={hostBookingSummariesByMealId.get(meal.id) ?? null}
                           footer={
                             <>
+                              {meal.status === "published" || meal.status === "done" ? (
+                                <Link
+                                  href={`/mes-repas/${meal.id}/demandes`}
+                                  className={styles.secondaryButton}
+                                >
+                                  Voir les demandes
+                                </Link>
+                              ) : null}
+
                               {canEdit ? (
                                 <Link
                                   href={`/mes-repas/creer?mealId=${meal.id}&step=4`}
@@ -911,6 +996,12 @@ export default function MesRepasPage() {
                   />
                 </>
               )}
+
+              {fetchingHostBookingSummaries ? (
+                <div className={styles.loadingPanel}>
+                  Mise à jour des demandes en cours...
+                </div>
+              ) : null}
             </>
           )}
         </>

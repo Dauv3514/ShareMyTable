@@ -6,7 +6,7 @@ import { MOCK_MEAL_EVENTS } from "./data/mocks/meal-events";
 import { MOCK_HOST_PROFILES } from "./data/mocks/host-profiles";
 import { getMealFilterById } from "./search-data";
 
-export type ReservationStatus = "confirmed" | "pending" | "refused";
+export type ReservationStatus = "confirmed" | "pending" | "refused" | "cancelled";
 export type ReservationBadgeStatus = ReservationStatus | "past";
 export type ReservationPaymentMethod = "card" | "apple-pay" | "paypal";
 export type ReservationPaymentState =
@@ -52,6 +52,7 @@ export type ReservationItem = {
   paymentMethod: ReservationPaymentMethod;
   paymentState: ReservationPaymentState;
   createdAt: string;
+  mealDateTime: string;
   exactAddressLabel: string;
   addressReleaseLabel: string;
   cancellationPolicyLabel: string;
@@ -110,6 +111,14 @@ type ApiBookingResponse = {
 };
 
 type ApiPaymentIntentResponse = ReservationPaymentIntent;
+
+export type ReservationCancellationQuote = {
+  canCancel: boolean;
+  refundAmount: number;
+  retainedAmount: number;
+  hoursUntilMeal: number;
+  label: string;
+};
 
 const DRAFT_STORAGE_PREFIX = "reservation-draft:";
 const RESERVATIONS_STORAGE_KEY = "guest-reservations-v1";
@@ -205,6 +214,8 @@ function mapApiBookingToReservationItem(booking: ApiBookingResponse): Reservatio
   const reservationStatus: ReservationStatus =
     booking.bookingStatus === "pending"
       ? "pending"
+      : booking.bookingStatus === "cancelled"
+        ? "cancelled"
       : booking.bookingStatus === "confirmed" || booking.bookingStatus === "completed"
         ? "confirmed"
         : "refused";
@@ -230,6 +241,7 @@ function mapApiBookingToReservationItem(booking: ApiBookingResponse): Reservatio
     paymentMethod: booking.paymentMethod,
     paymentState: booking.paymentState,
     createdAt: booking.createdAt,
+    mealDateTime: booking.mealDateTime,
     exactAddressLabel: booking.exactAddressLabel,
     addressReleaseLabel: booking.addressReleaseLabel,
     cancellationPolicyLabel: booking.cancellationPolicyLabel,
@@ -298,6 +310,10 @@ function buildReservationItem({
   createdAt: string;
 }): ReservationItem {
   const filters = splitEventFilters(event);
+  const normalizedTime = event.timeLabel.replace("h", ":");
+  const mealDateTime = event.date
+    ? `${event.date}T${normalizedTime}:00`
+    : createdAt;
 
   return {
     id: `reservation-${toSlug(`${event.id}-${createdAt}`)}`,
@@ -319,12 +335,13 @@ function buildReservationItem({
     status,
     paymentMethod,
     paymentState:
-      status === "refused"
+      status === "refused" || status === "cancelled"
         ? "refunded"
         : status === "pending"
           ? "awaiting_host"
           : "authorized",
     createdAt,
+    mealDateTime,
     exactAddressLabel: hostProfile.address
       ? `${hostProfile.address}, ${event.city}`
       : `${event.locationLabel}, ${event.city}`,
@@ -427,6 +444,19 @@ function saveStorageReservations(reservations: ReservationItem[]) {
   window.localStorage.setItem(RESERVATIONS_STORAGE_KEY, JSON.stringify(reservations));
 }
 
+function dedupeReservationsByMeal(reservations: ReservationItem[]) {
+  const seenMealIds = new Set<string>();
+
+  return reservations.filter((reservation) => {
+    if (seenMealIds.has(reservation.eventId)) {
+      return false;
+    }
+
+    seenMealIds.add(reservation.eventId);
+    return true;
+  });
+}
+
 async function listBackendGuestReservations(): Promise<ReservationItem[]> {
   const apiContext = getReservationApiContext();
   if (!apiContext) {
@@ -442,7 +472,7 @@ async function listBackendGuestReservations(): Promise<ReservationItem[]> {
     },
   );
 
-  return response.data.map(mapApiBookingToReservationItem);
+  return dedupeReservationsByMeal(response.data.map(mapApiBookingToReservationItem));
 }
 
 async function getBackendGuestReservationById(
@@ -519,6 +549,28 @@ async function createBackendReservationPaymentIntent(
   return response.data;
 }
 
+async function cancelBackendGuestReservation(
+  reservationId: string | number,
+): Promise<ReservationItem> {
+  const apiContext = getReservationApiContext();
+
+  if (!apiContext) {
+    throw new Error("Contexte API indisponible");
+  }
+
+  const response = await axios.patch<ApiBookingResponse>(
+    `${apiContext.apiUrl}/bookings/me/${Number(reservationId)}/cancel`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${apiContext.token}`,
+      },
+    },
+  );
+
+  return mapApiBookingToReservationItem(response.data);
+}
+
 function getDraftStorageKey(eventId: string) {
   return `${DRAFT_STORAGE_PREFIX}${eventId}`;
 }
@@ -568,8 +620,10 @@ export function clearReservationDraft(eventId: string) {
 }
 
 function listLocalGuestReservations() {
-  return readStorageReservations().sort(
-    (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+  return dedupeReservationsByMeal(
+    readStorageReservations().sort(
+      (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+    ),
   );
 }
 
@@ -692,6 +746,37 @@ export async function createReservationPaymentIntent(bookingId: string | number)
   }
 }
 
+export async function cancelGuestReservation(reservationId: string) {
+  if (isNumericIdentifier(reservationId)) {
+    const apiContext = getReservationApiContext();
+
+    if (!apiContext) {
+      throw new Error("Session invalide. Reconnecte-toi pour annuler cette réservation.");
+    }
+
+    try {
+      return await cancelBackendGuestReservation(reservationId);
+    } catch (error) {
+      throw new Error(
+        getReservationErrorMessage(
+          error,
+          "Impossible d'annuler cette réservation pour le moment.",
+        ),
+      );
+    }
+  }
+
+  const reservations = readStorageReservations();
+  const updatedReservations = reservations.map((reservation) =>
+    reservation.id === reservationId
+      ? { ...reservation, status: "cancelled" as const, paymentState: "refunded" as const }
+      : reservation,
+  );
+
+  saveStorageReservations(updatedReservations);
+  return getLocalGuestReservationById(reservationId);
+}
+
 export function getReservationStatusLabel(status: ReservationStatus) {
   if (status === "confirmed") {
     return "Confirmée";
@@ -701,10 +786,18 @@ export function getReservationStatusLabel(status: ReservationStatus) {
     return "En attente";
   }
 
+  if (status === "cancelled") {
+    return "Annulée";
+  }
+
   return "Refusée / remboursée";
 }
 
 export function isPastReservation(reservation: ReservationItem) {
+  if (reservation.mealDateTime) {
+    return new Date(reservation.mealDateTime).getTime() < Date.now();
+  }
+
   const event = MOCK_MEAL_EVENTS.find((item) => item.id === reservation.eventId);
 
   if (!event?.date) {
@@ -744,5 +837,69 @@ export function getReservationPaymentLabel(paymentState: ReservationPaymentState
     return "Paiement autorisé, en attente de validation hôte";
   }
 
-  return "Paiement remboursé";
+  return "Paiement remboursé ou autorisation annulée";
+}
+
+export function getReservationCancellationQuote(
+  reservation: ReservationItem,
+): ReservationCancellationQuote {
+  const eventTime = new Date(reservation.mealDateTime).getTime();
+  const hoursUntilMeal = Number.isFinite(eventTime)
+    ? (eventTime - Date.now()) / (1000 * 60 * 60)
+    : 0;
+  const canCancel =
+    hoursUntilMeal > 0 &&
+    ["pending", "confirmed"].includes(reservation.status);
+
+  if (reservation.status === "cancelled") {
+    return {
+      canCancel: false,
+      refundAmount:
+        reservation.paymentState === "refunded" ? reservation.totalPrice : 0,
+      retainedAmount:
+        reservation.paymentState === "refunded" ? 0 : reservation.totalPrice,
+      hoursUntilMeal,
+      label: "Cette réservation est annulée.",
+    };
+  }
+
+  if (!canCancel) {
+    return {
+      canCancel: false,
+      refundAmount: 0,
+      retainedAmount: reservation.totalPrice,
+      hoursUntilMeal,
+      label: "Cette réservation ne peut plus être annulée.",
+    };
+  }
+
+  if (hoursUntilMeal >= 48) {
+    return {
+      canCancel,
+      refundAmount: reservation.totalPrice,
+      retainedAmount: 0,
+      hoursUntilMeal,
+      label: "Annulation gratuite : remboursement total.",
+    };
+  }
+
+  if (hoursUntilMeal >= 24) {
+    const refundAmount = reservation.totalPrice / 2;
+
+    return {
+      canCancel,
+      refundAmount,
+      retainedAmount: reservation.totalPrice - refundAmount,
+      hoursUntilMeal,
+      label: "Annulation tardive : remboursement partiel estimé.",
+    };
+  }
+
+  return {
+    canCancel,
+    refundAmount: 0,
+    retainedAmount: reservation.totalPrice,
+    hoursUntilMeal,
+    label: "Annulation très tardive : aucun remboursement prévu.",
+  };
 }

@@ -91,6 +91,11 @@
   background: #fff0e9;
 }
 
+.warningButton:disabled {
+  opacity: 0.56;
+  cursor: not-allowed;
+}
+
 .backLink:hover,
 .secondaryButton:hover,
 .primaryButton:hover,
@@ -131,6 +136,11 @@
 .statusBadge--refused {
   background: rgba(255, 229, 229, 0.9);
   color: #b14646;
+}
+
+.statusBadge--cancelled {
+  background: rgba(255, 238, 222, 0.94);
+  color: #9a5c30;
 }
 
 .headline {
@@ -329,6 +339,24 @@
   border-radius: 50%;
   background: linear-gradient(180deg, #e7f16f 0%, #c8d455 100%);
   box-shadow: 0 0 0 4px rgba(231, 241, 111, 0.14);
+}
+
+.cancellationPreview {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(239, 198, 182, 0.86);
+  background: linear-gradient(135deg, rgba(255, 248, 238, 0.96), rgba(255, 255, 255, 0.82));
+  color: #5c5039;
+}
+
+.cancellationPreview strong {
+  color: #17120d;
+}
+
+.cancellationPreview span {
+  font-weight: 700;
 }
 
 .ruleList {

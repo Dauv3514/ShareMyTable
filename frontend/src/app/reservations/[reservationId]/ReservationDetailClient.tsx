@@ -17,8 +17,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import { useAuth } from "@/app/providers/AuthProvider";
 import {
+  cancelGuestReservation,
+  getReservationCancellationQuote,
   getReservationBadgeLabel,
   getReservationBadgeStatus,
   getGuestReservationById,
@@ -71,6 +74,7 @@ export default function ReservationDetailClient({
   const { isLoggedIn, loading } = useAuth();
   const [reservation, setReservation] = useState<ReservationItem | null>(null);
   const [isFetchingReservation, setIsFetchingReservation] = useState(true);
+  const [isCancellingReservation, setIsCancellingReservation] = useState(false);
   const [reservationError, setReservationError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -149,6 +153,43 @@ export default function ReservationDetailClient({
 
   const addressVisible = reservation.status === "confirmed";
   const badgeStatus = getReservationBadgeStatus(reservation);
+  const cancellationQuote = getReservationCancellationQuote(reservation);
+
+  const handleCancelReservation = async () => {
+    if (!cancellationQuote.canCancel) {
+      toast.error(cancellationQuote.label);
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Confirmer l'annulation ?\n\n${cancellationQuote.label}\nMontant remboursé estimé : ${formatPrice(
+        cancellationQuote.refundAmount,
+      )}\nMontant retenu estimé : ${formatPrice(cancellationQuote.retainedAmount)}`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setIsCancellingReservation(true);
+      const cancelledReservation = await cancelGuestReservation(reservation.id);
+
+      if (cancelledReservation) {
+        setReservation(cancelledReservation);
+      }
+
+      toast.success("Ta réservation a bien été annulée.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Impossible d'annuler cette réservation pour le moment.",
+      );
+    } finally {
+      setIsCancellingReservation(false);
+    }
+  };
 
   return (
     <section className={styles.page}>
@@ -281,12 +322,27 @@ export default function ReservationDetailClient({
                 <li>{reservation.cancellationPolicyLabel}</li>
               </ul>
 
+              <div className={styles.cancellationPreview}>
+                <strong>{cancellationQuote.label}</strong>
+                <span>
+                  Montant remboursé estimé : {formatPrice(cancellationQuote.refundAmount)}
+                </span>
+                <span>
+                  Montant retenu estimé : {formatPrice(cancellationQuote.retainedAmount)}
+                </span>
+              </div>
+
               <div className={styles.actions}>
                 <Link href={`/profil/${reservation.hostId}`} className={styles.secondaryButton}>
                   Voir l&apos;hôte
                 </Link>
-                <button type="button" className={styles.warningButton}>
-                  Annuler la réservation
+                <button
+                  type="button"
+                  className={styles.warningButton}
+                  disabled={!cancellationQuote.canCancel || isCancellingReservation}
+                  onClick={() => void handleCancelReservation()}
+                >
+                  {isCancellingReservation ? "Annulation..." : "Annuler la réservation"}
                 </button>
               </div>
             </article>

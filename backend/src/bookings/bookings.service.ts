@@ -86,6 +86,7 @@ type HostMealBookingSummaryResponse = {
   mealId: number;
   mealTitle: string | null;
   mealStatus: MealStatus;
+  mealDateTime: Date;
   seatsTotal: number;
   pendingBookingsCount: number;
   pendingSeatsCount: number;
@@ -142,6 +143,13 @@ export class BookingsService {
       );
     }
 
+    const existingActiveBooking =
+      await this.findActiveBookingForMealAndGuest(meal.id, userId);
+
+    if (existingActiveBooking) {
+      return this.toBookingResponse(existingActiveBooking);
+    }
+
     const alreadyReservedSeats = await this.getReservedSeatsCount(meal.id);
     if (alreadyReservedSeats + dto.seats > meal.seatsTotal) {
       throw new BadRequestException(
@@ -149,24 +157,16 @@ export class BookingsService {
       );
     }
 
-    const now = new Date();
-    const bookingStatus =
-      dto.seats > 2 ? BookingStatus.PENDING : BookingStatus.CONFIRMED;
-    const paymentState =
-      bookingStatus === BookingStatus.PENDING
-        ? BookingPaymentState.AWAITING_HOST
-        : BookingPaymentState.AUTHORIZED;
-
     const booking = this.bookingsRepository.create({
       guestUser,
       meal,
       seats: dto.seats,
-      bookingStatus,
+      bookingStatus: BookingStatus.PENDING,
       paymentMethod: dto.paymentMethod,
-      paymentState,
+      paymentState: BookingPaymentState.AWAITING_HOST,
       unitPriceCents: meal.pricePerSeatCents,
       totalPriceCents: meal.pricePerSeatCents * dto.seats,
-      confirmedAt: bookingStatus === BookingStatus.CONFIRMED ? now : null,
+      confirmedAt: null,
       refusedAt: null,
       cancelledAt: null,
       completedAt: null,
@@ -193,6 +193,40 @@ export class BookingsService {
     return this.toBookingResponse(booking);
   }
 
+  async cancelMine(userId: number, bookingId: number): Promise<BookingResponse> {
+    const booking = await this.findOwnedBookingEntity(userId, bookingId);
+
+    if (
+      [BookingStatus.CANCELLED, BookingStatus.REFUSED, BookingStatus.COMPLETED].includes(
+        booking.bookingStatus,
+      )
+    ) {
+      throw new BadRequestException(
+        'Cette reservation ne peut plus etre annulee',
+      );
+    }
+
+    if (booking.meal.dateTime.getTime() <= Date.now()) {
+      throw new BadRequestException(
+        'Ce repas est deja passe et ne peut plus etre annule',
+      );
+    }
+
+    const refundAmountCents = this.getCancellationRefundAmountCents(booking);
+    const paymentResult =
+      await this.paymentsService.cancelOrRefundPaymentForBooking(
+        booking.id,
+        refundAmountCents,
+      );
+
+    booking.bookingStatus = BookingStatus.CANCELLED;
+    booking.paymentState = paymentResult.paymentState;
+    booking.cancelledAt = new Date();
+
+    const savedBooking = await this.bookingsRepository.save(booking);
+    return this.toBookingResponse(savedBooking);
+  }
+
   async findHostMealSummaries(
     hostUserId: number,
   ): Promise<HostMealBookingSummaryResponse[]> {
@@ -213,7 +247,9 @@ export class BookingsService {
     });
 
     return meals.map((meal) => {
-      const mealBookings = bookings.filter((booking) => booking.meal.id === meal.id);
+      const mealBookings = this.dedupeBookingsByGuest(
+        bookings.filter((booking) => booking.meal.id === meal.id),
+      );
       return this.toHostMealBookingSummaryResponse(meal, mealBookings);
     });
   }
@@ -230,9 +266,11 @@ export class BookingsService {
       order: { createdAt: 'DESC' },
     });
 
+    const visibleBookings = this.dedupeBookingsByGuest(bookings);
+
     return {
-      ...this.toHostMealBookingSummaryResponse(meal, bookings),
-      bookings: bookings.map((booking) => this.toHostBookingResponse(booking)),
+      ...this.toHostMealBookingSummaryResponse(meal, visibleBookings),
+      bookings: visibleBookings.map((booking) => this.toHostBookingResponse(booking)),
     };
   }
 
@@ -242,9 +280,14 @@ export class BookingsService {
   ): Promise<HostBookingResponse> {
     const booking = await this.findHostedBookingEntity(hostUserId, bookingId);
 
-    if (booking.bookingStatus !== BookingStatus.PENDING) {
+    const canBeAccepted = [
+      BookingStatus.PENDING,
+      BookingStatus.REFUSED,
+    ].includes(booking.bookingStatus);
+
+    if (!canBeAccepted) {
       throw new BadRequestException(
-        'Seules les demandes en attente peuvent etre acceptees',
+        'Seules les demandes en attente ou declinees peuvent etre acceptees',
       );
     }
 
@@ -331,6 +374,33 @@ export class BookingsService {
     return booking;
   }
 
+  private async findActiveBookingForMealAndGuest(
+    mealId: number,
+    guestUserId: number,
+  ): Promise<Booking | null> {
+    return this.bookingsRepository.findOne({
+      where: [
+        {
+          meal: { id: mealId },
+          guestUser: { id: guestUserId },
+          bookingStatus: BookingStatus.PENDING,
+        },
+        {
+          meal: { id: mealId },
+          guestUser: { id: guestUserId },
+          bookingStatus: BookingStatus.CONFIRMED,
+        },
+        {
+          meal: { id: mealId },
+          guestUser: { id: guestUserId },
+          bookingStatus: BookingStatus.COMPLETED,
+        },
+      ],
+      relations: ['guestUser', 'meal', 'meal.host', 'meal.host.hostProfile'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   private async getReservedSeatsCount(mealId: number): Promise<number> {
     const activeStatuses = [
       BookingStatus.PENDING,
@@ -338,17 +408,33 @@ export class BookingsService {
       BookingStatus.COMPLETED,
     ];
 
-    const result = await this.bookingsRepository
+    const bookings = await this.bookingsRepository
       .createQueryBuilder('booking')
-      .select('COALESCE(SUM(booking.seats), 0)', 'reservedSeats')
-      .innerJoin('booking.meal', 'meal')
+      .innerJoinAndSelect('booking.meal', 'meal')
+      .innerJoinAndSelect('booking.guestUser', 'guestUser')
       .where('meal.id = :mealId', { mealId })
       .andWhere('booking.bookingStatus IN (:...activeStatuses)', {
         activeStatuses,
       })
-      .getRawOne<{ reservedSeats: string }>();
+      .orderBy('booking.createdAt', 'DESC')
+      .getMany();
 
-    return Number(result?.reservedSeats ?? 0);
+    return this.sumBookingSeats(this.dedupeBookingsByGuest(bookings));
+  }
+
+  private getCancellationRefundAmountCents(booking: Booking): number {
+    const millisecondsUntilMeal = booking.meal.dateTime.getTime() - Date.now();
+    const hoursUntilMeal = millisecondsUntilMeal / (1000 * 60 * 60);
+
+    if (hoursUntilMeal >= 48) {
+      return booking.totalPriceCents;
+    }
+
+    if (hoursUntilMeal >= 24) {
+      return Math.round(booking.totalPriceCents / 2);
+    }
+
+    return 0;
   }
 
   private toBookingResponse(booking: Booking): BookingResponse {
@@ -422,6 +508,7 @@ export class BookingsService {
       mealId: meal.id,
       mealTitle: meal.title,
       mealStatus: meal.status,
+      mealDateTime: meal.dateTime,
       seatsTotal: meal.seatsTotal,
       pendingBookingsCount: pendingBookings.length,
       pendingSeatsCount: this.sumBookingSeats(pendingBookings),
@@ -465,6 +552,57 @@ export class BookingsService {
 
   private sumBookingSeats(bookings: Booking[]): number {
     return bookings.reduce((total, booking) => total + booking.seats, 0);
+  }
+
+  private dedupeBookingsByGuest(bookings: Booking[]): Booking[] {
+    const bookingsByGuest = new Map<number, Booking>();
+
+    for (const booking of bookings) {
+      const existingBooking = bookingsByGuest.get(booking.guestUser.id);
+
+      if (
+        !existingBooking ||
+        this.compareBookingVisibilityPriority(booking, existingBooking) > 0
+      ) {
+        bookingsByGuest.set(booking.guestUser.id, booking);
+      }
+    }
+
+    return [...bookingsByGuest.values()].sort(
+      (left, right) => right.createdAt.getTime() - left.createdAt.getTime(),
+    );
+  }
+
+  private compareBookingVisibilityPriority(left: Booking, right: Booking): number {
+    const priorityDifference =
+      this.getBookingVisibilityPriority(left.bookingStatus) -
+      this.getBookingVisibilityPriority(right.bookingStatus);
+
+    if (priorityDifference !== 0) {
+      return priorityDifference;
+    }
+
+    return left.createdAt.getTime() - right.createdAt.getTime();
+  }
+
+  private getBookingVisibilityPriority(status: BookingStatus): number {
+    if (status === BookingStatus.COMPLETED) {
+      return 5;
+    }
+
+    if (status === BookingStatus.CONFIRMED) {
+      return 4;
+    }
+
+    if (status === BookingStatus.PENDING) {
+      return 3;
+    }
+
+    if (status === BookingStatus.REFUSED) {
+      return 2;
+    }
+
+    return 1;
   }
 
   private buildHouseRules(meal: Meal, hostProfile: HostProfile | null): string[] {

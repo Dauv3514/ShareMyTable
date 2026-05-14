@@ -32,6 +32,13 @@ type HandleWebhookResponse = {
   type: string;
 };
 
+export type CancelOrRefundPaymentResult = {
+  paymentState: BookingPaymentState;
+  releasedAmountCents: number;
+  refundedAmountCents: number;
+  retainedAmountCents: number;
+};
+
 type StripeIntentLike = {
   id: string;
   status: string;
@@ -250,34 +257,93 @@ export class PaymentsService {
   }
 
   async cancelPaymentForBooking(bookingId: number): Promise<void> {
+    await this.cancelOrRefundPaymentForBooking(bookingId, Number.MAX_SAFE_INTEGER);
+  }
+
+  async cancelOrRefundPaymentForBooking(
+    bookingId: number,
+    requestedRefundAmountCents: number,
+  ): Promise<CancelOrRefundPaymentResult> {
     const payment = await this.findPaymentByBookingId(bookingId);
 
     if (!payment) {
-      return;
+      return {
+        paymentState: BookingPaymentState.REFUNDED,
+        releasedAmountCents: 0,
+        refundedAmountCents: 0,
+        retainedAmountCents: 0,
+      };
+    }
+
+    const safeRefundAmountCents = Math.min(
+      payment.amountTotalCents,
+      Math.max(0, requestedRefundAmountCents),
+    );
+
+    if (
+      [PaymentStatus.PENDING, PaymentStatus.AUTHORIZED].includes(payment.status)
+    ) {
+      const stripe = this.getStripeClient();
+
+      await stripe.paymentIntents.cancel(payment.providerIntentId, {
+        cancellation_reason: 'requested_by_customer',
+      });
+
+      payment.status = PaymentStatus.CANCELED;
+      payment.refundedAt = new Date();
+      await this.paymentsRepository.save(payment);
+
+      return {
+        paymentState: BookingPaymentState.REFUNDED,
+        releasedAmountCents: payment.amountTotalCents,
+        refundedAmountCents: payment.amountTotalCents,
+        retainedAmountCents: 0,
+      };
     }
 
     if (payment.status === PaymentStatus.SUCCEEDED) {
-      throw new BadRequestException(
-        'Ce paiement a deja été capturé et doit être remboursé',
-      );
+      if (safeRefundAmountCents > 0) {
+        const stripe = this.getStripeClient();
+
+        await stripe.refunds.create({
+          payment_intent: payment.providerIntentId,
+          amount: safeRefundAmountCents,
+        });
+
+        payment.status =
+          safeRefundAmountCents >= payment.amountTotalCents
+            ? PaymentStatus.REFUNDED
+            : PaymentStatus.SUCCEEDED;
+        payment.refundedAt = new Date();
+        await this.paymentsRepository.save(payment);
+      }
+
+      return {
+        paymentState:
+          safeRefundAmountCents > 0
+            ? BookingPaymentState.REFUNDED
+            : BookingPaymentState.AUTHORIZED,
+        releasedAmountCents: 0,
+        refundedAmountCents: safeRefundAmountCents,
+        retainedAmountCents: payment.amountTotalCents - safeRefundAmountCents,
+      };
     }
 
-    if (
-      [PaymentStatus.CANCELED, PaymentStatus.FAILED, PaymentStatus.REFUNDED].includes(
-        payment.status,
-      )
-    ) {
-      return;
+    if (payment.status === PaymentStatus.REFUNDED) {
+      return {
+        paymentState: BookingPaymentState.REFUNDED,
+        releasedAmountCents: 0,
+        refundedAmountCents: payment.amountTotalCents,
+        retainedAmountCents: 0,
+      };
     }
 
-    const stripe = this.getStripeClient();
-
-    await stripe.paymentIntents.cancel(payment.providerIntentId, {
-      cancellation_reason: 'requested_by_customer',
-    });
-
-    payment.status = PaymentStatus.CANCELED;
-    await this.paymentsRepository.save(payment);
+    return {
+      paymentState: BookingPaymentState.REFUNDED,
+      releasedAmountCents: 0,
+      refundedAmountCents: 0,
+      retainedAmountCents: 0,
+    };
   }
 
   private getStripeClient() {

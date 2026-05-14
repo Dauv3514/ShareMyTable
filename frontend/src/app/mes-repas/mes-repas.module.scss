@@ -371,12 +371,50 @@
 
 .mealCard {
   display: grid;
-  gap: 18px;
-  padding: 24px;
+  overflow: hidden;
+  gap: 0;
+  padding: 0;
   border-radius: 28px;
   border: 1px solid rgba(214, 203, 175, 0.9);
   background: rgba(255, 255, 255, 0.88);
   box-shadow: 0 14px 30px rgba(84, 62, 22, 0.08);
+}
+
+.mealCardMedia {
+  position: relative;
+  min-height: 230px;
+  overflow: hidden;
+  background: #f4ead6;
+}
+
+.mealCardImage {
+  object-fit: cover;
+  transform: scale(1.01);
+}
+
+.mealCardMedia::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(23, 18, 13, 0.08) 0%, rgba(23, 18, 13, 0.36) 100%),
+    radial-gradient(circle at top right, rgba(231, 241, 111, 0.18), transparent 38%);
+}
+
+.mealCardOverlay {
+  position: absolute;
+  z-index: 1;
+  inset: 18px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mealCardContent {
+  padding: 24px;
+  display: grid;
+  gap: 18px;
 }
 
 .mealCardTop {
@@ -451,8 +489,9 @@
 }
 
 .mealTypeChip {
-  background: rgba(247, 240, 221, 0.74);
+  background: rgba(255, 253, 246, 0.9);
   color: #675b38;
+  box-shadow: 0 8px 18px rgba(42, 33, 16, 0.12);
 }
 
 .mealCardBody {
@@ -480,6 +519,43 @@
   background: #fbf6e9;
   border: 1px solid #eadfc2;
   font-size: 0.94rem;
+}
+
+.bookingSummaryBox {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 12px;
+  border-radius: 22px;
+  border: 1px solid rgba(213, 201, 167, 0.82);
+  background:
+    radial-gradient(circle at top right, rgba(231, 241, 111, 0.26), transparent 42%),
+    rgba(255, 253, 246, 0.92);
+  color: #5c5442;
+  line-height: 1.5;
+}
+
+.bookingSummaryBox div {
+  min-height: 86px;
+  padding: 14px;
+  border-radius: 18px;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(224, 212, 178, 0.72);
+}
+
+.bookingSummaryBox strong {
+  color: #17120d;
+  font-size: clamp(1.55rem, 3vw, 2.15rem);
+  line-height: 1;
+}
+
+.bookingSummaryBox span {
+  color: #665d43;
+  font-size: 0.88rem;
+  font-weight: 800;
 }
 
 .mealMetaList {
@@ -661,10 +737,25 @@
   .hostGuardCard,
   .loadingPanel,
   .emptyState,
-  .sectionCard,
-  .mealCard {
+  .sectionCard {
     padding: 22px 18px;
     border-radius: 24px;
+  }
+
+  .mealCard {
+    border-radius: 24px;
+  }
+
+  .mealCardMedia {
+    min-height: 190px;
+  }
+
+  .mealCardContent {
+    padding: 20px 18px;
+  }
+
+  .bookingSummaryBox {
+    grid-template-columns: 1fr;
   }
 
   .reservationCard {
