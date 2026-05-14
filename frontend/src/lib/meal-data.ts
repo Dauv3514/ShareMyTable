@@ -18,6 +18,7 @@ type ApiMealItem = {
   menuDescription: string | null;
   dateTime: string;
   seatsTotal: number;
+  currentParticipants?: number;
   pricePerSeatCents: number;
   houseRules: string | null;
   status: "draft" | "published" | "cancelled" | "done";
@@ -319,7 +320,10 @@ function mapMealToEvent(
     variant: inferVariant(meal, fallbackEvent.variant),
     filters: derivedFilters,
     pricePerPerson: Math.round(meal.pricePerSeatCents / 100),
-    currentParticipants: fallbackEvent.currentParticipants,
+    currentParticipants:
+      typeof meal.currentParticipants === "number"
+        ? meal.currentParticipants
+        : fallbackEvent.currentParticipants,
     maxParticipants: meal.seatsTotal || fallbackEvent.maxParticipants,
     participantProfileIds: fallbackEvent.participantProfileIds,
     menuSections: buildMenuSections(meal, fallbackEvent.menuSections),

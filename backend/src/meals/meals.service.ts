@@ -5,7 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
+import { Booking, BookingStatus } from '../bookings/booking.entity';
 import {
   HostProfile,
   HostValidationStatus,
@@ -30,6 +31,7 @@ type MealResponse = {
   menuDescription: string | null;
   dateTime: Date;
   seatsTotal: number;
+  currentParticipants: number;
   pricePerSeatCents: number;
   houseRules: string | null;
   status: MealStatus;
@@ -68,6 +70,8 @@ export class MealsService {
     private readonly usersRepository: Repository<Utilisateur>,
     @InjectRepository(HostProfile)
     private readonly hostProfilesRepository: Repository<HostProfile>,
+    @InjectRepository(Booking)
+    private readonly bookingsRepository: Repository<Booking>,
   ) {}
 
   async create(userId: number, dto: CreateMealDto): Promise<MealResponse> {
@@ -142,8 +146,14 @@ export class MealsService {
 
     const [meals, total] = await queryBuilder.getManyAndCount();
 
+    const participantCounts = await this.getCurrentParticipantCounts(
+      meals.map((meal) => meal.id),
+    );
+
     return {
-      items: meals.map((meal) => this.toMealResponse(meal)),
+      items: meals.map((meal) =>
+        this.toMealResponse(meal, participantCounts.get(meal.id) ?? 0),
+      ),
       page,
       limit,
       total,
@@ -161,7 +171,9 @@ export class MealsService {
       throw new NotFoundException('Repas publie introuvable');
     }
 
-    return this.toMealResponse(meal);
+    const participantCounts = await this.getCurrentParticipantCounts([meal.id]);
+
+    return this.toMealResponse(meal, participantCounts.get(meal.id) ?? 0);
   }
 
   async findMine(userId: number): Promise<MealResponse[]> {
@@ -173,13 +185,21 @@ export class MealsService {
       order: { createdAt: 'DESC' },
     });
 
-    return meals.map((meal) => this.toMealResponse(meal));
+    const participantCounts = await this.getCurrentParticipantCounts(
+      meals.map((meal) => meal.id),
+    );
+
+    return meals.map((meal) =>
+      this.toMealResponse(meal, participantCounts.get(meal.id) ?? 0),
+    );
   }
 
   async findOneMine(userId: number, mealId: number): Promise<MealResponse> {
     await this.ensureApprovedActiveHost(userId);
     const meal = await this.findOwnedMealEntity(userId, mealId);
-    return this.toMealResponse(meal);
+    const participantCounts = await this.getCurrentParticipantCounts([meal.id]);
+
+    return this.toMealResponse(meal, participantCounts.get(meal.id) ?? 0);
   }
 
   async updateMine(
@@ -402,7 +422,55 @@ export class MealsService {
     }
   }
 
-  private toMealResponse(meal: Meal): MealResponse {
+  private async getCurrentParticipantCounts(
+    mealIds: number[],
+  ): Promise<Map<number, number>> {
+    if (mealIds.length === 0) {
+      return new Map();
+    }
+
+    const activeStatuses = [
+      BookingStatus.PENDING,
+      BookingStatus.CONFIRMED,
+      BookingStatus.COMPLETED,
+    ];
+
+    const bookings = await this.bookingsRepository.find({
+      where: {
+        meal: { id: In(mealIds) },
+        bookingStatus: In(activeStatuses),
+      },
+      relations: ['meal', 'guestUser'],
+      order: { createdAt: 'DESC' },
+    });
+
+    const bookingsByMealAndGuest = new Map<string, Booking>();
+
+    for (const booking of bookings) {
+      const key = `${booking.meal.id}:${booking.guestUser.id}`;
+      const existingBooking = bookingsByMealAndGuest.get(key);
+
+      if (
+        !existingBooking ||
+        booking.createdAt.getTime() > existingBooking.createdAt.getTime()
+      ) {
+        bookingsByMealAndGuest.set(key, booking);
+      }
+    }
+
+    const participantCounts = new Map<number, number>();
+
+    for (const booking of bookingsByMealAndGuest.values()) {
+      participantCounts.set(
+        booking.meal.id,
+        (participantCounts.get(booking.meal.id) ?? 0) + booking.seats,
+      );
+    }
+
+    return participantCounts;
+  }
+
+  private toMealResponse(meal: Meal, currentParticipants = 0): MealResponse {
     return {
       id: meal.id,
       title: meal.title,
@@ -410,6 +478,7 @@ export class MealsService {
       menuDescription: meal.menuDescription,
       dateTime: meal.dateTime,
       seatsTotal: meal.seatsTotal,
+      currentParticipants,
       pricePerSeatCents: meal.pricePerSeatCents,
       houseRules: meal.houseRules,
       status: meal.status,
