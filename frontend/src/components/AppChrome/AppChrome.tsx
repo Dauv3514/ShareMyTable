@@ -31,7 +31,7 @@ export default function AppChrome({ children }: AppChromeProps) {
         </main>
       </div>
 
-      <BottomMenu />
+      {!isMessagingConversationRoute ? <BottomMenu /> : null}
     </div>
   );
 }
