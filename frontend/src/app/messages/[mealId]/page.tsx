@@ -11,7 +11,6 @@ import {
   useMemo,
   useState,
 } from "react";
-import UserAvatar from "@/components/UserAvatar";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { buildMealEventHref } from "@/lib/meal-data";
 import ConversationAvatar from "../ConversationAvatar";
@@ -21,12 +20,32 @@ import {
   fetchMessagingConversations,
   formatConversationDate,
   formatConversationTime,
-  getConversationSubtitle,
   getConversationTitle,
   getMessagePreview,
   type MessagingConversationSummary,
 } from "@/lib/messaging";
 import styles from "../messaging-ui.module.scss";
+
+function getLatestSenderLabel(
+  conversation: MessagingConversationSummary,
+  currentUserId: number,
+) {
+  const message = conversation.latestMessage;
+
+  if (!message) {
+    return conversation.type === "meal_group" ? "Discussion repas" : "Participant";
+  }
+
+  if (message.sender.userId === currentUserId) {
+    return "Vous";
+  }
+
+  return message.sender.firstName || message.sender.pseudo || "Participant";
+}
+
+function getLatestMessageBody(conversation: MessagingConversationSummary) {
+  return conversation.latestMessage?.body || "Aucun message pour le moment.";
+}
 
 function sortMealConversations(conversations: MessagingConversationSummary[]) {
   return [...conversations].sort((firstConversation, secondConversation) => {
@@ -196,28 +215,12 @@ export default function MealMessagesPage() {
   return (
     <section className={styles.page}>
       <div className={styles.shell}>
-        <Link href="/messages" className={styles.backButton}>
-          <ChevronRight style={{ transform: "rotate(180deg)" }} />
-          Retour aux repas
-        </Link>
-
-        <header className={styles.topBar}>
-          <div className={styles.topBarTitle}>
-            <p>Discussions du repas</p>
-            <h1>{mealDetails?.title || mealConversations[0]?.meal?.title || "Nom du repas"}</h1>
-          </div>
-
-          <div className={styles.topBarAvatar}>
-            <UserAvatar src={user.profilePhotoUrl} alt={user.firstName} size={54} />
-          </div>
-        </header>
-
         <label className={styles.searchBar} aria-label="Rechercher dans les discussions du repas">
           <input
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Ville, type de nourriture, date..."
+            placeholder="Rechercher un repas"
           />
           <Search className={styles.searchIcon} />
         </label>
@@ -241,8 +244,13 @@ export default function MealMessagesPage() {
             </p>
           </div>
         ) : (
-          <div className={styles.contentGrid}>
-            <article className={styles.sectionCard}>
+          <>
+            <section className={styles.mealPreviewSection}>
+              <h1 className={styles.mealPreviewTitle}>
+                {mealDetails?.title || mealConversations[0]?.meal?.title || "Nom du repas"}
+              </h1>
+
+              <article className={styles.sectionCard}>
               <div className={styles.mealCard}>
                 <div className={styles.mealCardMedia}>
                   <Image
@@ -292,13 +300,9 @@ export default function MealMessagesPage() {
                 </div>
               </div>
             </article>
+            </section>
 
             <article className={styles.listSection}>
-              <div className={`${styles.sectionHead} ${styles.sectionHeadCompact}`}>
-                <h2>Discussions</h2>
-                <span className={styles.sectionCount}>{filteredMealConversations.length}</span>
-              </div>
-
               <div className={styles.conversationSection}>
                 <div className={styles.conversationList}>
                   {groupConversation ? (
@@ -325,14 +329,12 @@ export default function MealMessagesPage() {
                         </div>
 
                         <p className={styles.threadMeta}>
-                          {groupConversation.members.length} personnes
+                          {getLatestSenderLabel(groupConversation, user.id)} :
                         </p>
                         <p className={styles.threadPreview}>
-                          {getMessagePreview(groupConversation.latestMessage, user.id)}
+                          {getLatestMessageBody(groupConversation)}
                         </p>
                       </div>
-
-                      <ChevronRight className={styles.threadArrow} />
                     </Link>
                   ) : null}
 
@@ -351,9 +353,9 @@ export default function MealMessagesPage() {
 
                         <div className={styles.threadBody}>
                           <div className={styles.threadTitleRow}>
-                            <h3 className={styles.threadTitle}>
-                              {getConversationTitle(conversation, user.id)}
-                            </h3>
+                            <p className={`${styles.threadMeta} ${styles.threadMetaSolo}`}>
+                              {getLatestSenderLabel(conversation, user.id)} :
+                            </p>
                             <span className={styles.threadTime}>
                               {formatConversationTime(
                                 conversation.latestMessage?.createdAt ??
@@ -362,15 +364,10 @@ export default function MealMessagesPage() {
                             </span>
                           </div>
 
-                          <p className={styles.threadMeta}>
-                            {getConversationSubtitle(conversation, user.id)}
-                          </p>
                           <p className={styles.threadPreview}>
-                            {getMessagePreview(conversation.latestMessage, user.id)}
+                            {getLatestMessageBody(conversation)}
                           </p>
                         </div>
-
-                        <ChevronRight className={styles.threadArrow} />
                       </Link>
                     );
                   })}
@@ -384,7 +381,7 @@ export default function MealMessagesPage() {
                 </div>
               </div>
             </article>
-          </div>
+          </>
         )}
       </div>
     </section>

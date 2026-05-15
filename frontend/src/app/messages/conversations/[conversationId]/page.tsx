@@ -347,8 +347,8 @@ export default function ConversationPage() {
   const mealHref = conversation.meal ? `/messages/${conversation.meal.mealId}` : "/messages";
 
   return (
-    <section className={styles.page}>
-      <div className={styles.shell}>
+    <section className={`${styles.page} ${styles.chatPage}`}>
+      <div className={`${styles.shell} ${styles.chatShell}`}>
         <div className={styles.chatFrame}>
           <header className={styles.chatHeader}>
             <div className={styles.chatHeaderMain}>
@@ -476,7 +476,7 @@ export default function ConversationPage() {
                   void handleSubmit();
                 }
               }}
-              placeholder="Je suis disponible"
+              placeholder=""
               className={styles.composerInput}
             />
 
