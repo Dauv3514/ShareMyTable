@@ -227,6 +227,21 @@ $message-other: #292d06;
   height: 48px !important;
 }
 
+.avatarPanelAnchor {
+  position: relative;
+  width: 57px;
+  height: 57px;
+  flex-shrink: 0;
+  z-index: 8;
+}
+
+.avatarPanelTrigger {
+  display: block;
+  width: 57px;
+  height: 57px;
+  cursor: pointer;
+}
+
 .avatarStack {
   position: relative;
   width: 57px;
@@ -329,6 +344,88 @@ $message-other: #292d06;
   height: 14px;
   border-width: 1px;
   font-size: 7px;
+}
+
+.membersPanel {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 12px);
+  z-index: 30;
+  width: min(280px, calc(100vw - 32px));
+  padding: 14px;
+  border: 1px solid $stroke-thin;
+  border-radius: 18px;
+  background: $bg-secondary;
+  box-shadow: 0 18px 42px rgba(74, 66, 28, 0.16);
+  color: $text-classic;
+}
+
+.membersPanel::before {
+  content: "";
+  position: absolute;
+  left: 22px;
+  top: -7px;
+  width: 14px;
+  height: 14px;
+  border-left: 1px solid $stroke-thin;
+  border-top: 1px solid $stroke-thin;
+  background: $bg-secondary;
+  transform: rotate(45deg);
+}
+
+.membersPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+
+  p {
+    margin: 0;
+    color: $text-heading;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  button {
+    border: 0;
+    background: transparent;
+    color: $text-muted;
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+  }
+}
+
+.membersPanelList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.membersPanelItem {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  color: $text-classic;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.membersPanelAvatar {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid $stroke-thin;
+  border-radius: 50%;
+  background: $bg-primary;
 }
 
 .mealPreviewSection {
@@ -502,15 +599,25 @@ $message-other: #292d06;
 }
 
 .chatHeaderMain > .avatarWrap,
-.chatHeaderMain > .avatarStack {
+.chatHeaderMain > .avatarPanelAnchor {
   grid-column: 2;
   grid-row: 1;
   justify-self: center;
   margin-bottom: 18px;
 }
 
+.chatHeaderMain .membersPanel {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.chatHeaderMain .membersPanel::before {
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+}
+
 .chatHeaderMain > .avatarWrap + .chatHeaderCopy,
-.chatHeaderMain > .avatarStack + .chatHeaderCopy {
+.chatHeaderMain > .avatarPanelAnchor + .chatHeaderCopy {
   grid-column: 2;
   grid-row: 1;
   align-self: end;
@@ -919,13 +1026,13 @@ $message-other: #292d06;
   }
 
   .chatHeaderMain > .avatarWrap,
-  .chatHeaderMain > .avatarStack {
+  .chatHeaderMain > .avatarPanelAnchor {
     grid-column: 2;
     justify-self: center;
   }
 
   .chatHeaderMain > .avatarWrap + .chatHeaderCopy,
-  .chatHeaderMain > .avatarStack + .chatHeaderCopy {
+  .chatHeaderMain > .avatarPanelAnchor + .chatHeaderCopy {
     grid-column: 2;
     justify-self: center;
   }
@@ -986,12 +1093,12 @@ $message-other: #292d06;
   }
 
   .chatHeaderMain > .avatarWrap,
-  .chatHeaderMain > .avatarStack {
+  .chatHeaderMain > .avatarPanelAnchor {
     margin-bottom: 18px;
   }
 
   .chatHeaderMain > .avatarWrap + .chatHeaderCopy,
-  .chatHeaderMain > .avatarStack + .chatHeaderCopy {
+  .chatHeaderMain > .avatarPanelAnchor + .chatHeaderCopy {
     position: absolute;
     left: 50%;
     bottom: 0;
