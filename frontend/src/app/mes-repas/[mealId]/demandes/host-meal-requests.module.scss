@@ -445,6 +445,15 @@
   text-align: center;
 }
 
+.modalSheet--accept {
+  width: min(365px, 100%);
+  padding: 27px 16px;
+  gap: 27px;
+  border-radius: 27px;
+  background: #ffffff;
+  color: #000000;
+}
+
 .modalClose {
   position: absolute;
   top: 18px;
@@ -480,6 +489,16 @@
   letter-spacing: -0.065em;
 }
 
+.modalSheet--accept .modalTitle {
+  max-width: 100%;
+  padding-inline: 0;
+  color: #000000;
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
 .modalGuest {
   display: grid;
   justify-items: center;
@@ -489,12 +508,23 @@
   font-weight: 900;
 }
 
+.modalSheet--accept .modalGuest {
+  gap: 4px;
+  font-size: 14px;
+}
+
 .modalGuest :global(.user-avatar),
 .modalGuest :global(.user-avatar--photo) {
   width: 94px;
   height: 94px;
   border-radius: 999px;
   overflow: hidden;
+}
+
+.modalSheet--accept .modalGuest :global(.user-avatar),
+.modalSheet--accept .modalGuest :global(.user-avatar--photo) {
+  width: 78px;
+  height: 78px;
 }
 
 .modalGuest span {
@@ -510,6 +540,12 @@
   border-left-width: 10px;
 }
 
+.modalSheet--accept .modalGuest .arrowLogo {
+  border-top-width: 4px;
+  border-bottom-width: 4px;
+  border-left-width: 6px;
+}
+
 .modalBody {
   width: min(100%, 390px);
   display: grid;
@@ -519,6 +555,14 @@
   font-weight: 500;
   line-height: 1.2;
   text-align: left;
+}
+
+.modalSheet--accept .modalBody {
+  width: 100%;
+  color: #000000;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1;
 }
 
 .modalBody strong {
@@ -565,6 +609,11 @@
   gap: 12px;
 }
 
+.modalSheet--accept .modalFooter {
+  width: min(206px, 100%);
+  gap: 10px;
+}
+
 .modalPrimaryButton,
 .modalSecondaryButton,
 .modalDangerButton {
@@ -580,16 +629,38 @@
   cursor: pointer;
 }
 
+.modalSheet--accept .modalPrimaryButton,
+.modalSheet--accept .modalSecondaryButton {
+  min-height: 30px;
+  padding: 7px 20px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .modalPrimaryButton {
   border: 2px solid #c9ba48;
   color: #2e270f;
   background: #e6ef5e;
 }
 
+.modalSheet--accept .modalPrimaryButton {
+  border: 1px solid #b8a547;
+  color: #25210e;
+  background: #e1ec79;
+}
+
 .modalSecondaryButton {
   border: 2px solid #71631f;
   color: #635836;
   background: rgba(255, 255, 255, 0.86);
+}
+
+.modalSheet--accept .modalSecondaryButton {
+  border: 1px solid #525a0c;
+  color: #525a0c;
+  background: #ffffff;
 }
 
 .modalDangerButton {
@@ -657,6 +728,11 @@
     gap: 20px;
   }
 
+  .modalSheet--accept {
+    padding: 27px 16px;
+    gap: 27px;
+  }
+
   .modalClose {
     top: 12px;
     right: 12px;
@@ -665,6 +741,11 @@
   .modalTitle {
     max-width: 320px;
     font-size: 2rem;
+  }
+
+  .modalSheet--accept .modalTitle {
+    max-width: 100%;
+    font-size: 28px;
   }
 
   .modalGuest {
