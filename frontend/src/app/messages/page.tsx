@@ -250,7 +250,7 @@ export default function MessagesPage() {
         <div className={styles.shell}>
           <div className={styles.stateCard}>
             <h2>Chargement de la messagerie</h2>
-            <p>On prepare tes discussions repas...</p>
+            <p>On prépare tes discussions repas...</p>
           </div>
         </div>
       </section>

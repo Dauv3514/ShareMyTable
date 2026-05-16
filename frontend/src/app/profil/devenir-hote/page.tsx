@@ -127,7 +127,7 @@ export default function DevenirHotePage() {
           });
           setHomePhotoPreviewUrl(null);
         } else {
-          toast.error("Impossible de charger le formulaire hote pour le moment.");
+          toast.error("Impossible de charger le formulaire hôte pour le moment.");
         }
       } finally {
         if (!cancelled) {
@@ -146,37 +146,37 @@ export default function DevenirHotePage() {
   const pageMeta = useMemo(() => {
     if (!hostProfile) {
       return {
-        title: "Faire ma demande hote",
+        title: "Faire ma demande hôte",
         description:
-          "Nous avons pre-rempli les informations deja connues. Tu peux les ajuster avant l'envoi.",
-        submitLabel: "Envoyer ma demande hote",
+          "Nous avons pré-rempli les informations déjà connues. Tu peux les ajuster avant l'envoi.",
+        submitLabel: "Envoyer ma demande hôte",
       };
     }
 
     if (hostProfile.validationStatus === "rejected") {
       return {
-        title: "Corriger ma demande hote",
+        title: "Corriger ma demande hôte",
         description:
           hostProfile.rejectionReason?.trim() ||
-          "Ta demande a ete refusee. Corrige ton dossier, puis renvoie-le.",
-        submitLabel: "Mettre a jour et renvoyer",
+          "Ta demande a été refusée. Corrige ton dossier, puis renvoie-le.",
+        submitLabel: "Mettre à jour et renvoyer",
       };
     }
 
     if (hostProfile.validationStatus === "pending") {
       return {
-        title: "Mettre a jour ma demande hote",
+        title: "Mettre à jour ma demande hôte",
         description:
-          "Ta demande est en attente. Tu peux encore ajuster les informations envoyees.",
+          "Ta demande est en attente. Tu peux encore ajuster les informations envoyées.",
         submitLabel: "Enregistrer mes modifications",
       };
     }
 
     return {
-      title: "Profil hote deja valide",
+      title: "Profil hôte déjà valide",
       description:
-        "Ton profil hote est deja approuve. Tu peux desormais creer des repas.",
-      submitLabel: "Creer un repas",
+        "Ton profil hôte est déjà approuvé. Tu peux désormais créer des repas.",
+      submitLabel: "Créer un repas",
     };
   }, [hostProfile]);
 
@@ -199,7 +199,7 @@ export default function DevenirHotePage() {
     }
 
     if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
-      toast.error("La photo du logement doit etre en PNG, JPG, JPEG ou WebP.");
+      toast.error("La photo du logement doit être en PNG, JPG, JPEG ou WebP.");
       event.target.value = "";
       return;
     }
@@ -259,7 +259,7 @@ export default function DevenirHotePage() {
           },
         });
 
-        toast.success("Ta demande hote a bien ete envoyee.");
+        toast.success("Ta demande hôte a bien été envoyée.");
       } else if (hostProfile.validationStatus === "rejected") {
         await axios.patch(`${apiUrl}/host-profiles/me`, payload, {
           headers: {
@@ -277,7 +277,7 @@ export default function DevenirHotePage() {
           },
         );
 
-        toast.success("Ta demande hote a ete corrigee puis renvoyee.");
+        toast.success("Ta demande hôte a été corrigée puis renvoyée.");
       } else {
         await axios.patch(`${apiUrl}/host-profiles/me`, payload, {
           headers: {
@@ -285,14 +285,14 @@ export default function DevenirHotePage() {
           },
         });
 
-        toast.success("Ta demande hote a bien ete mise a jour.");
+        toast.success("Ta demande hôte a bien été mise à jour.");
       }
 
       router.push("/profil");
     } catch (error: unknown) {
       const message = axios.isAxiosError(error)
-        ? error.response?.data?.message ?? "Impossible d'envoyer la demande hote."
-        : "Impossible d'envoyer la demande hote.";
+        ? error.response?.data?.message ?? "Impossible d'envoyer la demande hôte."
+        : "Impossible d'envoyer la demande hôte.";
 
       toast.error(Array.isArray(message) ? message.join(", ") : message);
     } finally {
@@ -304,7 +304,7 @@ export default function DevenirHotePage() {
     return (
       <section className={styles.page}>
         <div className={styles.card}>
-          <p className={styles.loading}>Chargement du formulaire hote...</p>
+          <p className={styles.loading}>Chargement du formulaire hôte...</p>
         </div>
       </section>
     );
@@ -329,7 +329,7 @@ export default function DevenirHotePage() {
 
           <div className={styles.header}>
             <span className={`${styles.statusBadge} ${styles.statusApproved}`}>
-              Profil hote valide
+              Profil hôte valide
             </span>
             <h1>{pageMeta.title}</h1>
             <p>{pageMeta.description}</p>
@@ -371,7 +371,7 @@ export default function DevenirHotePage() {
               }`}
             >
               {hostProfile.validationStatus === "rejected"
-                ? "Demande refusee"
+                ? "Demande refusée"
                 : "Demande en attente"}
             </span>
           ) : (
@@ -442,7 +442,7 @@ export default function DevenirHotePage() {
             <label className={styles.field}>
               <span>
                 <Home />
-                Adresse complete
+                Adresse complète
               </span>
               <input
                 name="address"
@@ -486,7 +486,7 @@ export default function DevenirHotePage() {
                 </div>
               ) : (
                 <div className={styles.photoPlaceholder}>
-                  Aucune photo du logement ajoutee
+                  Aucune photo du logement ajoutée
                 </div>
               )}
             </div>

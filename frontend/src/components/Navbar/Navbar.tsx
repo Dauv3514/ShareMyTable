@@ -10,7 +10,7 @@ import "./navbar.scss";
 const navItems = [
   { label: "Rechercher", href: "/rechercher" },
   { label: "Mes repas", href: "/mes-repas" },
-  { label: "Creer un evenement", href: "/mes-repas/creer" },
+  { label: "Créer un événement", href: "/mes-repas/creer" },
   { label: "Messagerie", href: "/messages" },
 ];
 

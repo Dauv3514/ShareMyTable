@@ -1087,11 +1087,11 @@ const ProfilPage = () => {
   const hostStatusMeta = useMemo(() => {
     if (!hostProfile) {
       return {
-        label: "Aucune demande envoyee",
+        label: "Aucune demande envoyée",
         toneClassName: styles.hostStatusNeutral,
         description:
-          "Tu peux envoyer une demande hote pour proposer tes repas sur la plateforme.",
-        actionLabel: "Faire ma demande hote",
+          "Tu peux envoyer une demande hôte pour proposer tes repas sur la plateforme.",
+        actionLabel: "Faire ma demande hôte",
         actionHref: "/profil/devenir-hote",
       };
     }
@@ -1101,7 +1101,7 @@ const ProfilPage = () => {
         label: "Demande en attente",
         toneClassName: styles.hostStatusPending,
         description:
-          "Ta demande hote est en cours de verification. Tu peux encore ajuster les informations deja envoyees.",
+          "Ta demande hôte est en cours de vérification. Tu peux encore ajuster les informations déjà envoyées.",
         actionLabel: "Modifier ma demande",
         actionHref: "/profil/devenir-hote",
       };
@@ -1109,22 +1109,22 @@ const ProfilPage = () => {
 
     if (hostProfile.validationStatus === "rejected") {
       return {
-        label: "Demande refusee",
+        label: "Demande refusée",
         toneClassName: styles.hostStatusRejected,
         description:
           hostProfile.rejectionReason?.trim() ||
-          "Ta demande a ete refusee. Tu peux la corriger puis la renvoyer.",
+          "Ta demande a été refusée. Tu peux la corriger puis la renvoyer.",
         actionLabel: "Corriger et renvoyer",
         actionHref: "/profil/devenir-hote",
       };
     }
 
     return {
-      label: "Profil hote valide",
+      label: "Profil hôte valide",
       toneClassName: styles.hostStatusApproved,
       description:
-        "Ton profil hote est approuve. Tu peux maintenant organiser des repas.",
-      actionLabel: "Creer un repas",
+        "Ton profil hôte est approuvé. Tu peux maintenant organiser des repas.",
+      actionLabel: "Créer un repas",
       actionHref: "/mes-repas/creer",
     };
   }, [hostProfile]);
@@ -1383,15 +1383,15 @@ const ProfilPage = () => {
           <section className={styles.sectionCard}>
             <div className={styles.sectionHead}>
               <div>
-                <h2>Statut hote</h2>
+                <h2>Statut hôte</h2>
                 <p className={styles.sectionHint}>
-                  Suis ta candidature et avance vers la creation de repas.
+                  Suis ta candidature et avance vers la création de repas.
                 </p>
               </div>
             </div>
 
             {hostProfileLoading ? (
-              <p className={styles.sectionHint}>Chargement de la demande hote...</p>
+              <p className={styles.sectionHint}>Chargement de la demande hôte...</p>
             ) : (
               <div className={styles.hostStatusCard}>
                 <div className={styles.hostStatusTop}>

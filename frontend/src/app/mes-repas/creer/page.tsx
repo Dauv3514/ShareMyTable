@@ -75,9 +75,9 @@ const MEAL_TYPE_PRESETS = [
 ] as const;
 
 const HOUSE_RULE_PRESETS = [
-  "Merci d'arriver a l'heure.",
-  "Previens-moi en cas d'allergie.",
-  "Repas convivial, ambiance detendue.",
+  "Merci d'arriver à l'heure.",
+  "Préviens-moi en cas d'allergie.",
+  "Repas convivial, ambiance détendue.",
   "Apporte ta bonne humeur.",
 ] as const;
 
@@ -199,7 +199,7 @@ export default function CreerRepasPage() {
 
     if (!token || !apiUrl) {
       setHostProfileLoading(false);
-      setHostProfileError("Impossible de recuperer ton profil hote.");
+      setHostProfileError("Impossible de récupérer ton profil hôte.");
       return;
     }
 
@@ -228,8 +228,8 @@ export default function CreerRepasPage() {
         }
 
         const message = axios.isAxiosError(error)
-          ? error.response?.data?.message ?? "Profil hote introuvable."
-          : "Profil hote introuvable.";
+          ? error.response?.data?.message ?? "Profil hôte introuvable."
+          : "Profil hôte introuvable.";
 
         setHostProfileError(Array.isArray(message) ? message.join(", ") : message);
         setHostProfile(null);
@@ -429,21 +429,21 @@ export default function CreerRepasPage() {
             Authorization: `Bearer ${token}`,
           },
         });
-        toast.success("Le repas a ete mis a jour.");
+        toast.success("Le repas a été mis à jour.");
       } else {
         await axios.post(`${apiUrl}/meals`, payload, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        toast.success("Ton repas a ete cree en brouillon.");
+        toast.success("Ton repas a été créé en brouillon.");
       }
 
       router.push("/mes-repas");
     } catch (error: unknown) {
       const message = axios.isAxiosError(error)
-        ? error.response?.data?.message ?? "L'enregistrement du repas a echoue."
-        : "L'enregistrement du repas a echoue.";
+        ? error.response?.data?.message ?? "L'enregistrement du repas a échoué."
+        : "L'enregistrement du repas a échoué.";
       toast.error(Array.isArray(message) ? message.join(", ") : message);
     } finally {
       setSubmitting(false);
@@ -454,7 +454,7 @@ export default function CreerRepasPage() {
     return (
       <section className={styles.page}>
         <div className={styles.loadingState}>
-          {loadingMeal ? "Chargement du repas..." : "Preparation du createur de repas..."}
+          {loadingMeal ? "Chargement du repas..." : "Préparation du créateur de repas..."}
         </div>
       </section>
     );
@@ -470,16 +470,16 @@ export default function CreerRepasPage() {
         <aside className={styles.sidebar}>
           <div className={styles.sidebarCard}>
             <p className={styles.sidebarKicker}>
-              {isEditingMeal ? "Modification de repas" : "Creation de repas"}
+              {isEditingMeal ? "Modification de repas" : "Création de repas"}
             </p>
             <h1>
               {isEditingMeal
                 ? "Reprends ton repas et ajuste seulement ce qui compte."
-                : "Organiser un repas devient plus simple, etape par etape."}
+                : "Organiser un repas devient plus simple, étape par étape."}
             </h1>
             <p className={styles.sidebarDescription}>
               Compose d&apos;abord l&apos;essentiel, puis ajoute les informations qui
-              rassurent tes futurs invites. Le repas restera brouillon tant que tu
+              rassurent tes futurs invités. Le repas restera brouillon tant que tu
               ne le publies pas.
             </p>
 
@@ -524,7 +524,7 @@ export default function CreerRepasPage() {
                     <Users />
                     Convives
                   </dt>
-                  <dd>{seatsTotalValue > 0 ? seatsTotalValue : "A definir"}</dd>
+                  <dd>{seatsTotalValue > 0 ? seatsTotalValue : "À définir"}</dd>
                 </div>
                 <div>
                   <dt>
@@ -538,14 +538,14 @@ export default function CreerRepasPage() {
                     <Clock3 />
                     Heure
                   </dt>
-                  <dd>{form.time || "A definir"}</dd>
+                  <dd>{form.time || "À définir"}</dd>
                 </div>
                 <div>
                   <dt>
                     <MapPin />
                     Adresse
                   </dt>
-                  <dd>{hostProfile?.city || "Profil hote requis"}</dd>
+                  <dd>{hostProfile?.city || "Profil hôte requis"}</dd>
                 </div>
               </dl>
             </div>
@@ -589,8 +589,8 @@ export default function CreerRepasPage() {
                 </h2>
                 <p className={styles.introDescription}>
                   {isEditingMeal
-                    ? "Toutes les informations deja saisies sont reprises pour que tu puisses ajuster ton repas sans recommencer."
-                    : "Vous souhaitez cuisiner et accueillir des gens ? On construit d'abord l'essentiel, puis on affine les details pour rassurer vos invites."}
+                    ? "Toutes les informations déjà saisies sont reprises pour que tu puisses ajuster ton repas sans recommencer."
+                    : "Vous souhaitez cuisiner et accueillir des gens ? On construit d'abord l'essentiel, puis on affine les détails pour rassurer vos invités."}
                 </p>
               </div>
             ) : null}
@@ -709,10 +709,10 @@ export default function CreerRepasPage() {
 
             {step === 3 ? (
               <div className={styles.centerStage}>
-                <h2>Ou les invites doivent-ils se rendre ?</h2>
+                <h2>Où les invités doivent-ils se rendre ?</h2>
 
                 {hostProfileLoading ? (
-                  <p>Chargement de l&apos;adresse du profil hote...</p>
+                  <p>Chargement de l&apos;adresse du profil hôte...</p>
                 ) : hostProfileError ? (
                   <div className={styles.locationErrorCard}>
                     <p>{hostProfileError}</p>
@@ -721,7 +721,7 @@ export default function CreerRepasPage() {
                       className={styles.inlineActionButton}
                       onClick={() => router.push("/profil")}
                     >
-                      Completer mon profil
+                      Compléter mon profil
                     </button>
                   </div>
                 ) : (
@@ -757,7 +757,7 @@ export default function CreerRepasPage() {
                       className={styles.inlineActionButton}
                       onClick={() => router.push("/profil")}
                     >
-                      Mettre a jour mon profil hote
+                      Mettre à jour mon profil hôte
                     </button>
                   </div>
                 )}
@@ -767,10 +767,10 @@ export default function CreerRepasPage() {
             {step === 4 ? (
               <div className={styles.detailsStage}>
                 <div className={styles.sectionTitle}>
-                  <h2>Quelques informations supplementaires</h2>
+                  <h2>Quelques informations supplémentaires</h2>
                   <p>
                     Afin d&apos;organiser correctement votre repas, nous avons besoin
-                    de quelques details.
+                    de quelques détails.
                   </p>
                 </div>
 
@@ -824,7 +824,7 @@ export default function CreerRepasPage() {
                     <CookingPot />
                     <div>
                       <h3>Au menu</h3>
-                      <p>Choisis le type de moment que tu proposes, puis decris le menu.</p>
+                      <p>Choisis le type de moment que tu proposes, puis décris le menu.</p>
                     </div>
                   </div>
 
@@ -874,7 +874,7 @@ export default function CreerRepasPage() {
                           menuDescription: event.target.value,
                         }))
                       }
-                      placeholder="Decris les plats, l'ambiance et ce que les invites peuvent attendre."
+                      placeholder="Décris les plats, l'ambiance et ce que les invités peuvent attendre."
                     />
                   </label>
                 </div>
@@ -883,10 +883,10 @@ export default function CreerRepasPage() {
                   <div className={styles.formSectionHead}>
                     <Users />
                     <div>
-                      <h3>Pour bien accueillir tes hotes</h3>
+                      <h3>Pour bien accueillir tes hôtes</h3>
                       <p>
-                        Quelques regles simples evitent les malentendus et rassurent
-                        les invites des la publication.
+                        Quelques règles simples évitent les malentendus et rassurent
+                        les invités dès la publication.
                       </p>
                     </div>
                   </div>
@@ -935,7 +935,7 @@ export default function CreerRepasPage() {
               onClick={step === 0 ? () => router.push("/mes-repas") : handlePrevious}
             >
               <ChevronLeft />
-              {step === 0 ? "Retour en arriere" : "Etape precedente"}
+              {step === 0 ? "Retour en arrière" : "Étape précédente"}
             </button>
 
             {step < 4 ? (
@@ -957,11 +957,11 @@ export default function CreerRepasPage() {
               >
                 {submitting
                   ? isEditingMeal
-                    ? "Mise a jour..."
-                    : "Creation..."
+                    ? "Mise à jour..."
+                    : "Création..."
                   : isEditingMeal
                     ? "Enregistrer"
-                    : "Creer"}
+                    : "Créer"}
                 <Check />
               </button>
             )}

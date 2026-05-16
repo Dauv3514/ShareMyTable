@@ -152,7 +152,7 @@ export default function AdminPage() {
         },
       );
 
-      toast.success("Demande hote approuvee.");
+      toast.success("Demande hôte approuvée.");
       await loadAdminData();
     } catch (error: unknown) {
       const message = axios.isAxiosError(error)
@@ -192,7 +192,7 @@ export default function AdminPage() {
         },
       );
 
-      toast.success("Demande hote rejetee.");
+      toast.success("Demande hôte rejetée.");
       setRejectionDrafts((previousDrafts) => {
         const nextDrafts = { ...previousDrafts };
         delete nextDrafts[hostProfileId];
@@ -230,7 +230,7 @@ export default function AdminPage() {
         <header className={styles.hero}>
           <div className={styles.heroCopy}>
             <span className={styles.kicker}>Administration</span>
-            <h1>Moderation des demandes hote</h1>
+            <h1>Modération des demandes hôte</h1>
             <p>
               Valide ou refuse les candidatures en attente, puis retrouve tout
               l&apos;historique des decisions et l&apos;admin qui les a prises.
@@ -243,7 +243,7 @@ export default function AdminPage() {
               <strong>{pendingRequests.length}</strong>
             </article>
             <article className={styles.statCard}>
-              <span>Decisions historisees</span>
+              <span>Décisions historisées</span>
               <strong>{history.length}</strong>
             </article>
           </div>
@@ -280,8 +280,8 @@ export default function AdminPage() {
                       }`}
                     >
                       {request.addressVerified
-                        ? "Adresse verifiee"
-                        : "Adresse a verifier"}
+                        ? "Adresse vérifiée"
+                        : "Adresse à vérifier"}
                     </span>
                   </div>
 
@@ -309,7 +309,7 @@ export default function AdminPage() {
                   <div className={styles.flagList}>
                     {request.verificationRiskFlags.length === 0 ? (
                       <span className={`${styles.badge} ${styles.badgeSoft}`}>
-                        Aucun risque detecte
+                        Aucun risque détecté
                       </span>
                     ) : (
                       request.verificationRiskFlags.map((riskFlag) => (
@@ -372,15 +372,15 @@ export default function AdminPage() {
         <section className={styles.sectionCard}>
           <div className={styles.sectionHead}>
             <div>
-              <h2>Historique des decisions</h2>
-              <p>Retrouve les demandes acceptees ou refusees et l&apos;admin responsable.</p>
+              <h2>Historique des décisions</h2>
+              <p>Retrouve les demandes acceptées ou refusées et l&apos;admin responsable.</p>
             </div>
           </div>
 
           {history.length === 0 ? (
             <div className={styles.emptyState}>
               <ShieldCheck />
-              <p>Aucune decision admin n&apos;a encore ete historisee.</p>
+              <p>Aucune décision admin n&apos;a encore été historisée.</p>
             </div>
           ) : (
             <div className={styles.historyList}>
@@ -395,7 +395,7 @@ export default function AdminPage() {
                             : styles.badgeDanger
                         }`}
                       >
-                        {entry.decision === "approved" ? "Acceptee" : "Refusee"}
+                        {entry.decision === "approved" ? "Acceptée" : "Refusée"}
                       </span>
                       <h3>{entry.applicant.pseudo || entry.applicant.email}</h3>
                     </div>
