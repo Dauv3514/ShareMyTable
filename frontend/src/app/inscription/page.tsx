@@ -64,12 +64,15 @@ function InscriptionPageContent() {
   const hostPhotoInputRef = useRef<HTMLInputElement | null>(null);
   const objectUrlRef = useRef<string | null>(null);
   const hostPhotoObjectUrlRef = useRef<string | null>(null);
+  const hostRequestSectionRef = useRef<HTMLElement | null>(null);
   const [formData, setFormData] = useState<RegistrationFormState>(INITIAL_FORM_STATE);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState("");
   const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
   const [hostPhotoPreviewUrl, setHostPhotoPreviewUrl] = useState("");
   const [selectedHostPhotoFile, setSelectedHostPhotoFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCertificationPrompt, setShowCertificationPrompt] = useState(false);
+  const [skipCertificationPrompt, setSkipCertificationPrompt] = useState(false);
 
   useEffect(() => {
     const reason = searchParams.get("reason");
@@ -215,44 +218,7 @@ function InscriptionPageContent() {
   const isValidEmail = (email: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  const resetForm = () => {
-    setFormData(INITIAL_FORM_STATE);
-
-    if (objectUrlRef.current) {
-      URL.revokeObjectURL(objectUrlRef.current);
-      objectUrlRef.current = null;
-    }
-
-    if (hostPhotoObjectUrlRef.current) {
-      URL.revokeObjectURL(hostPhotoObjectUrlRef.current);
-      hostPhotoObjectUrlRef.current = null;
-    }
-
-    setSelectedPhotoFile(null);
-    setPhotoPreviewUrl("");
-    setSelectedHostPhotoFile(null);
-    setHostPhotoPreviewUrl("");
-  };
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    if (isSubmitting) {
-      return;
-    }
-
-    if (!isValidEmail(formData.email)) {
-      toast.error("Adresse email invalide.");
-      return;
-    }
-
-    if (formData.request_host && !isHostRequestReady) {
-      toast.error(
-        "Renseigne le quartier et l'adresse pour envoyer la demande hote.",
-      );
-      return;
-    }
-
+  const submitRegistration = async () => {
     try {
       setIsSubmitting(true);
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -298,6 +264,7 @@ function InscriptionPageContent() {
       }
 
       resetForm();
+      setSkipCertificationPrompt(false);
     } catch (error: unknown) {
       let message = "Erreur inconnue.";
 
@@ -313,6 +280,75 @@ function InscriptionPageContent() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const resetForm = () => {
+    setFormData(INITIAL_FORM_STATE);
+
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
+
+    if (hostPhotoObjectUrlRef.current) {
+      URL.revokeObjectURL(hostPhotoObjectUrlRef.current);
+      hostPhotoObjectUrlRef.current = null;
+    }
+
+    setSelectedPhotoFile(null);
+    setPhotoPreviewUrl("");
+    setSelectedHostPhotoFile(null);
+    setHostPhotoPreviewUrl("");
+    setShowCertificationPrompt(false);
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (isSubmitting) {
+      return;
+    }
+
+    if (!isValidEmail(formData.email)) {
+      toast.error("Adresse email invalide.");
+      return;
+    }
+
+    if (formData.request_host && !isHostRequestReady) {
+      toast.error(
+        "Renseigne le quartier et l'adresse pour envoyer la demande hote.",
+      );
+      return;
+    }
+
+    if (!formData.request_host && !skipCertificationPrompt) {
+      setShowCertificationPrompt(true);
+      return;
+    }
+
+    await submitRegistration();
+  };
+
+  const handleContinueWithoutCertification = async () => {
+    setShowCertificationPrompt(false);
+    setSkipCertificationPrompt(true);
+    await submitRegistration();
+  };
+
+  const handleStartCertification = () => {
+    setShowCertificationPrompt(false);
+    setSkipCertificationPrompt(false);
+    setFormData((previousForm) => ({
+      ...previousForm,
+      request_host: true,
+    }));
+
+    window.requestAnimationFrame(() => {
+      hostRequestSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
   };
 
   const handleOAuth = (provider: "google" | "apple") => {
@@ -541,7 +577,7 @@ function InscriptionPageContent() {
               </label>
             </section>
 
-            <section className={styles.formSection}>
+            <section ref={hostRequestSectionRef} className={styles.formSection}>
               <div className={styles.sectionHeader}>
                 <div className={styles.sectionTitleRow}>
                   <h3>Demande hote a l&apos;inscription</h3>
@@ -701,6 +737,59 @@ function InscriptionPageContent() {
           </p>
         </section>
       </div>
+
+      {showCertificationPrompt ? (
+        <div
+          className={styles.modalOverlay}
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setShowCertificationPrompt(false);
+            }
+          }}
+        >
+          <section
+            className={styles.certificationModal}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="certification-modal-title"
+          >
+            <div className={styles.certificationText}>
+              <h2 id="certification-modal-title">Certifiez votre compte</h2>
+              <div className={styles.certificationCopy}>
+                <p>
+                  Si vous souhaitez organiser un evenement, et{" "}
+                  <strong>devenir hote</strong> sur la plateforme, vous devez
+                  d&apos;abord <strong>valider votre compte</strong>.
+                </p>
+                <p>
+                  Pas de panique, vous pourrez vous{" "}
+                  <strong>certifier</strong> plus tard !
+                </p>
+              </div>
+            </div>
+
+            <div className={styles.certificationActions}>
+              <button
+                type="button"
+                className={styles.certificationSecondaryButton}
+                onClick={handleContinueWithoutCertification}
+                disabled={isSubmitting}
+              >
+                Valider plus tard
+              </button>
+              <button
+                type="button"
+                className={styles.certificationPrimaryButton}
+                onClick={handleStartCertification}
+                disabled={isSubmitting}
+              >
+                Je me certifie !
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </main>
   );
 }
