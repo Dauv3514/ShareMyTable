@@ -77,7 +77,7 @@ export default async function EventMapPage({ params }: EventMapPageProps) {
           hostUserId={event.hostId}
           className={styles.registerButton}
         >
-          <span>S&apos;inscrire à l'événement</span>
+          <span>S&apos;inscrire à l&apos;événement</span>
         </RegisterEventLink>
       </div>
 

@@ -140,11 +140,11 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
               hostUserId={event.hostId}
               className={styles.registerButton}
             >
-              <span>S&apos;inscrire à l'événement</span>
+              <span>S&apos;inscrire à l&apos;événement</span>
             </RegisterEventLink>
           </div>
 
-          <section className={styles.locationSection} aria-label="Lieu de l'événement">
+          <section className={styles.locationSection} aria-label="Lieu de l&apos;événement">
             <div className={styles.locationBlock}>
               <span className={styles.locationIcon} aria-hidden="true">
                 <House />
@@ -165,7 +165,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
             </Link>
           </section>
 
-          <section className={styles.hostSection} aria-label="Profil de l'hôte">
+          <section className={styles.hostSection} aria-label="Profil de l&apos;hôte">
             <article className={styles.hostCard}>
               <div className={styles.hostCardTop}>
                 <div className={styles.hostAvatarFrame}>

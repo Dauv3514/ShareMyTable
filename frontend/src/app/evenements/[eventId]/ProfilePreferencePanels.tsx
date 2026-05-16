@@ -87,7 +87,7 @@ export function EventDietaryPreferenceSection({
 
       <div className={styles.preferenceGrid}>
         <section className={styles.preferenceGroup}>
-          <span className={styles.preferenceTitle}>Tags concernant l'événement</span>
+          <span className={styles.preferenceTitle}>Tags concernant l&apos;événement</span>
 
           <div className={styles.preferenceBox}>
             {visibleDietaryTags.map((item) => (
