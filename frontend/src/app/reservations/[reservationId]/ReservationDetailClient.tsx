@@ -14,11 +14,15 @@ import {
   Users,
 } from "lucide-react";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import { useAuth } from "@/app/providers/AuthProvider";
 import {
+  cancelGuestReservation,
+  getReservationCancellationQuote,
   getReservationBadgeLabel,
   getReservationBadgeStatus,
   getGuestReservationById,
@@ -26,6 +30,17 @@ import {
   type ReservationItem,
 } from "@/lib/reservations";
 import styles from "./reservation-detail.module.scss";
+
+const ReservationExactMap = dynamic(() => import("./ReservationExactMap"), {
+  ssr: false,
+  loading: () => (
+    <div className={styles.exactMapLoading} aria-live="polite">
+      Chargement de la carte...
+    </div>
+  ),
+});
+
+const ADDRESS_RELEASE_DELAY_MS = 24 * 60 * 60 * 1000;
 
 function formatPrice(value: number) {
   return new Intl.NumberFormat("fr-FR", {
@@ -62,6 +77,38 @@ function getStatusIcon(status: ReturnType<typeof getReservationBadgeStatus>) {
   return <CircleAlert />;
 }
 
+function isExactAddressVisible(reservation: ReservationItem) {
+  if (reservation.status !== "confirmed") {
+    return false;
+  }
+
+  const mealDateTime = new Date(reservation.mealDateTime).getTime();
+
+  if (!Number.isFinite(mealDateTime)) {
+    return false;
+  }
+
+  return Date.now() >= mealDateTime - ADDRESS_RELEASE_DELAY_MS;
+}
+
+function getExactMapCenter(reservation: ReservationItem): [number, number] | null {
+  if (
+    typeof reservation.exactLocationLat !== "number" ||
+    typeof reservation.exactLocationLng !== "number"
+  ) {
+    return null;
+  }
+
+  if (
+    !Number.isFinite(reservation.exactLocationLat) ||
+    !Number.isFinite(reservation.exactLocationLng)
+  ) {
+    return null;
+  }
+
+  return [reservation.exactLocationLat, reservation.exactLocationLng];
+}
+
 export default function ReservationDetailClient({
   reservationId,
 }: {
@@ -69,9 +116,10 @@ export default function ReservationDetailClient({
 }) {
   const router = useRouter();
   const { isLoggedIn, loading } = useAuth();
-  const [reservation] = useState<ReservationItem | null>(() =>
-    getGuestReservationById(reservationId),
-  );
+  const [reservation, setReservation] = useState<ReservationItem | null>(null);
+  const [isFetchingReservation, setIsFetchingReservation] = useState(true);
+  const [isCancellingReservation, setIsCancellingReservation] = useState(false);
+  const [reservationError, setReservationError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !isLoggedIn) {
@@ -79,7 +127,46 @@ export default function ReservationDetailClient({
     }
   }, [isLoggedIn, loading, router]);
 
-  if (loading) {
+  useEffect(() => {
+    if (loading || !isLoggedIn) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadReservation = async () => {
+      try {
+        setIsFetchingReservation(true);
+        setReservationError(null);
+        const nextReservation = await getGuestReservationById(reservationId);
+
+        if (!cancelled) {
+          setReservation(nextReservation);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setReservation(null);
+          setReservationError(
+            error instanceof Error
+              ? error.message
+              : "Impossible de charger cette réservation pour le moment.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setIsFetchingReservation(false);
+        }
+      }
+    };
+
+    void loadReservation();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn, loading, reservationId]);
+
+  if (loading || isFetchingReservation) {
     return <section className={styles.loadingState}>Chargement de ta réservation...</section>;
   }
 
@@ -94,10 +181,11 @@ export default function ReservationDetailClient({
           <div className={styles.emptyIcon}>
             <Ticket />
           </div>
-          <h1>Réservation introuvable</h1>
+          <h1>{reservationError ? "Impossible de charger la réservation" : "Réservation introuvable"}</h1>
           <p>
-            Cette réservation n&apos;existe pas dans les données mock enregistrées
-            localement.
+            {reservationError
+              ? reservationError
+              : "Cette réservation n'existe pas ou n'est plus disponible."}
           </p>
           <Link href="/mes-repas" className={styles.primaryButton}>
             Retour à mes réservations
@@ -107,8 +195,46 @@ export default function ReservationDetailClient({
     );
   }
 
-  const addressVisible = reservation.status === "confirmed";
+  const addressVisible = isExactAddressVisible(reservation);
+  const exactMapCenter = addressVisible ? getExactMapCenter(reservation) : null;
   const badgeStatus = getReservationBadgeStatus(reservation);
+  const cancellationQuote = getReservationCancellationQuote(reservation);
+
+  const handleCancelReservation = async () => {
+    if (!cancellationQuote.canCancel) {
+      toast.error(cancellationQuote.label);
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Confirmer l'annulation ?\n\n${cancellationQuote.label}\nMontant remboursé estimé : ${formatPrice(
+        cancellationQuote.refundAmount,
+      )}\nMontant retenu estimé : ${formatPrice(cancellationQuote.retainedAmount)}`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setIsCancellingReservation(true);
+      const cancelledReservation = await cancelGuestReservation(reservation.id);
+
+      if (cancelledReservation) {
+        setReservation(cancelledReservation);
+      }
+
+      toast.success("Ta réservation a bien été annulée.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Impossible d'annuler cette réservation pour le moment.",
+      );
+    } finally {
+      setIsCancellingReservation(false);
+    }
+  };
 
   return (
     <section className={styles.page}>
@@ -188,6 +314,21 @@ export default function ReservationDetailClient({
                 <span>{addressVisible ? "Adresse visible" : reservation.addressReleaseLabel}</span>
               </div>
             </div>
+
+            {addressVisible && (
+              <div className={styles.exactMap}>
+                <div className={styles.exactMapHeader}>
+                  <div>
+                    <h2>Adresse exacte</h2>
+                    <p>Le point indique l&apos;adresse du repas.</p>
+                  </div>
+                </div>
+                <ReservationExactMap
+                  center={exactMapCenter}
+                  addressLabel={reservation.exactAddressLabel}
+                />
+              </div>
+            )}
           </section>
 
           <section className={styles.detailGrid}>
@@ -241,12 +382,27 @@ export default function ReservationDetailClient({
                 <li>{reservation.cancellationPolicyLabel}</li>
               </ul>
 
+              <div className={styles.cancellationPreview}>
+                <strong>{cancellationQuote.label}</strong>
+                <span>
+                  Montant remboursé estimé : {formatPrice(cancellationQuote.refundAmount)}
+                </span>
+                <span>
+                  Montant retenu estimé : {formatPrice(cancellationQuote.retainedAmount)}
+                </span>
+              </div>
+
               <div className={styles.actions}>
                 <Link href={`/profil/${reservation.hostId}`} className={styles.secondaryButton}>
                   Voir l&apos;hôte
                 </Link>
-                <button type="button" className={styles.warningButton}>
-                  Annuler la réservation
+                <button
+                  type="button"
+                  className={styles.warningButton}
+                  disabled={!cancellationQuote.canCancel || isCancellingReservation}
+                  onClick={() => void handleCancelReservation()}
+                >
+                  {isCancellingReservation ? "Annulation..." : "Annuler la réservation"}
                 </button>
               </div>
             </article>

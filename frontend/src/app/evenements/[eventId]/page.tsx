@@ -16,6 +16,7 @@ import {
   EventDietaryPreferenceSection,
   EventProfileFilters,
 } from "./ProfilePreferencePanels";
+import RegisterEventLink from "./RegisterEventLink";
 import styles from "./event-detail.module.scss";
 
 type EventDetailPageProps = {
@@ -134,9 +135,13 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
             <Link href="/connexion" className={styles.contactButton}>
               <span>Contacter {hostFirstName}</span>
             </Link>
-            <Link href={`/reservation/${event.id}/places`} className={styles.registerButton}>
-              <span>S&apos;inscrire</span>
-            </Link>
+            <RegisterEventLink
+              eventId={event.id}
+              hostUserId={event.hostId}
+              className={styles.registerButton}
+            >
+              <span>S&apos;inscrire à l'événement</span>
+            </RegisterEventLink>
           </div>
 
           <section className={styles.locationSection} aria-label="Lieu de l'événement">

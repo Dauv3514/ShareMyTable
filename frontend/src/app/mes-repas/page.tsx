@@ -19,8 +19,12 @@ import { fr } from "date-fns/locale";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
+import {
+  listHostMealBookingSummaries,
+  type HostMealBookingSummary,
+} from "@/lib/host-bookings";
 import {
   getReservationBadgeLabel,
   getReservationBadgeStatus,
@@ -60,11 +64,11 @@ type MealItem = {
 };
 
 const HOSTING_FILTER_OPTIONS: Array<{ key: HostingFilter; label: string }> = [
-  { key: "upcoming", label: "A venir" },
-  { key: "past", label: "Passes" },
-  { key: "cancelled", label: "Annules" },
+  { key: "upcoming", label: "À venir" },
+  { key: "past", label: "Passés" },
+  { key: "cancelled", label: "Annulés" },
   { key: "draft", label: "Brouillons" },
-  { key: "published", label: "Publies" },
+  { key: "published", label: "Publiés" },
 ];
 
 const ATTENDING_FILTER_OPTIONS: Array<{ key: AttendingFilter; label: string }> = [
@@ -76,9 +80,9 @@ const ATTENDING_FILTER_OPTIONS: Array<{ key: AttendingFilter; label: string }> =
 ];
 
 function getStatusLabel(status: MealStatus) {
-  if (status === "published") return "Publie";
-  if (status === "cancelled") return "Annule";
-  if (status === "done") return "Termine";
+  if (status === "published") return "Publié";
+  if (status === "cancelled") return "Annulé";
+  if (status === "done") return "Terminé";
   return "Brouillon";
 }
 
@@ -153,64 +157,89 @@ type MealCardProps = {
   meal: MealItem;
   footer?: React.ReactNode;
   hostLabel?: string;
+  bookingSummary?: HostMealBookingSummary | null;
 };
 
-function MealCard({ meal, footer, hostLabel }: MealCardProps) {
+function MealCard({ meal, footer, hostLabel, bookingSummary }: MealCardProps) {
   return (
     <article className={styles.mealCard}>
-      <div className={styles.mealCardTop}>
-        <span
-          className={`${styles.statusBadge} ${
-            styles[`statusBadge--${meal.status}`]
-          }`}
-        >
-          {getStatusLabel(meal.status)}
-        </span>
+      <div className={styles.mealCardMedia}>
+        <Image
+          src="/photoRepas.png"
+          alt={meal.title || "Repas"}
+          fill
+          className={styles.mealCardImage}
+          sizes="(max-width: 960px) 100vw, 520px"
+        />
+        <div className={styles.mealCardOverlay}>
+          <span
+            className={`${styles.statusBadge} ${
+              styles[`statusBadge--${meal.status}`]
+            }`}
+          >
+            {getStatusLabel(meal.status)}
+          </span>
 
-        <span className={styles.mealTypeChip}>{meal.mealType || "Repas"}</span>
+          <span className={styles.mealTypeChip}>{meal.mealType || "Repas"}</span>
+        </div>
       </div>
 
-      <div className={styles.mealCardBody}>
-        <h2>{meal.title || "Repas sans titre"}</h2>
-        <p>{meal.menuDescription || "Ajoute une description pour donner envie."}</p>
+      <div className={styles.mealCardContent}>
+        <div className={styles.mealCardBody}>
+          <h2>{meal.title || "Repas sans titre"}</h2>
+          <p>{meal.menuDescription || "Ajoute une description pour donner envie."}</p>
+        </div>
+
+        {hostLabel ? <p className={styles.hostHint}>{hostLabel}</p> : null}
+
+        {bookingSummary ? (
+          <div className={styles.bookingSummaryBox}>
+            <div>
+              <strong>{bookingSummary.confirmedSeatsCount}</strong>
+              <span>participant(s)</span>
+            </div>
+            <div>
+              <strong>{bookingSummary.pendingBookingsCount}</strong>
+              <span>demande(s) en attente</span>
+            </div>
+          </div>
+        ) : null}
+
+        <dl className={styles.mealMetaList}>
+          <div>
+            <dt>
+              <CalendarDays />
+              Date
+            </dt>
+            <dd>{formatMealDate(meal.dateTime)}</dd>
+          </div>
+
+          <div>
+            <dt>
+              <Users />
+              Places
+            </dt>
+            <dd>{meal.seatsTotal} convives</dd>
+          </div>
+
+          <div>
+            <dt>
+              <Euro />
+              Prix
+            </dt>
+            <dd>{formatPrice(meal.pricePerSeatCents)} / place</dd>
+          </div>
+        </dl>
+
+        {meal.houseRules ? (
+          <div className={styles.rulesBlock}>
+            <span>Règles de la maison</span>
+            <p>{meal.houseRules}</p>
+          </div>
+        ) : null}
+
+        {footer ? <div className={styles.mealActions}>{footer}</div> : null}
       </div>
-
-      {hostLabel ? <p className={styles.hostHint}>{hostLabel}</p> : null}
-
-      <dl className={styles.mealMetaList}>
-        <div>
-          <dt>
-            <CalendarDays />
-            Date
-          </dt>
-          <dd>{formatMealDate(meal.dateTime)}</dd>
-        </div>
-
-        <div>
-          <dt>
-            <Users />
-            Places
-          </dt>
-          <dd>{meal.seatsTotal} convives</dd>
-        </div>
-
-        <div>
-          <dt>
-            <Euro />
-            Prix
-          </dt>
-          <dd>{formatPrice(meal.pricePerSeatCents)} / place</dd>
-        </div>
-      </dl>
-
-      {meal.houseRules ? (
-        <div className={styles.rulesBlock}>
-          <span>Regles de la maison</span>
-          <p>{meal.houseRules}</p>
-        </div>
-      ) : null}
-
-      {footer ? <div className={styles.mealActions}>{footer}</div> : null}
     </article>
   );
 }
@@ -347,7 +376,7 @@ function Pagination({ currentPage, totalPages, onPageChange }: PaginationProps) 
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
       >
-        Precedent
+        Précédent
       </button>
 
       <div className={styles.paginationPages}>
@@ -383,8 +412,16 @@ export default function MesRepasPage() {
   const [hostedMeals, setHostedMeals] = useState<MealItem[]>([]);
   const [fetchingHostedMeals, setFetchingHostedMeals] = useState(true);
   const [hostingError, setHostingError] = useState<string | null>(null);
+  const [hostBookingSummaries, setHostBookingSummaries] = useState<
+    HostMealBookingSummary[]
+  >([]);
+  const [fetchingHostBookingSummaries, setFetchingHostBookingSummaries] =
+    useState(false);
   const [activeMealId, setActiveMealId] = useState<number | null>(null);
   const [activePanel, setActivePanel] = useState<PanelMode>("attending");
+  const [attendingReservations, setAttendingReservations] = useState<ReservationItem[]>([]);
+  const [fetchingAttendingReservations, setFetchingAttendingReservations] = useState(true);
+  const [attendingError, setAttendingError] = useState<string | null>(null);
   const [hostingFilter, setHostingFilter] = useState<HostingFilter>("upcoming");
   const [attendingFilter, setAttendingFilter] = useState<AttendingFilter>("all");
   const [itemsPerPage, setItemsPerPage] = useState(6);
@@ -447,7 +484,7 @@ export default function MesRepasPage() {
 
     if (!token || !apiUrl) {
       setFetchingHostedMeals(false);
-      setHostingError("Impossible de charger tes repas organises pour le moment.");
+      setHostingError("Impossible de charger tes repas organisés pour le moment.");
       return;
     }
 
@@ -473,7 +510,7 @@ export default function MesRepasPage() {
         }
 
         const fallbackMessage =
-          "Ton espace hote sera disponible des que ton profil hote sera approuve et actif.";
+          "Ton espace hôte sera disponible dès que ton profil hôte sera approuvé et actif.";
 
         const message = axios.isAxiosError(error)
           ? error.response?.data?.message ?? fallbackMessage
@@ -495,6 +532,39 @@ export default function MesRepasPage() {
     };
   }, [isHostUser, isLoggedIn, loading]);
 
+  useEffect(() => {
+    if (loading || !isLoggedIn || !isHostUser) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadHostBookingSummaries = async () => {
+      try {
+        setFetchingHostBookingSummaries(true);
+        const summaries = await listHostMealBookingSummaries();
+
+        if (!cancelled) {
+          setHostBookingSummaries(summaries);
+        }
+      } catch {
+        if (!cancelled) {
+          setHostBookingSummaries([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setFetchingHostBookingSummaries(false);
+        }
+      }
+    };
+
+    void loadHostBookingSummaries();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isHostUser, isLoggedIn, loading]);
+
   const hostedStats = useMemo(() => {
     const draftCount = hostedMeals.filter((meal) => meal.status === "draft").length;
     const publishedCount = hostedMeals.filter(
@@ -510,7 +580,32 @@ export default function MesRepasPage() {
     };
   }, [hostedMeals]);
 
-  const attendingReservations = useMemo(() => listGuestReservations(), []);
+  const loadAttendingReservations = useCallback(async () => {
+    try {
+      setFetchingAttendingReservations(true);
+      setAttendingError(null);
+
+      const nextReservations = await listGuestReservations();
+      setAttendingReservations(nextReservations);
+    } catch (error) {
+      setAttendingReservations([]);
+      setAttendingError(
+        error instanceof Error
+          ? error.message
+          : "Impossible de charger tes réservations pour le moment.",
+      );
+    } finally {
+      setFetchingAttendingReservations(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (loading || !isLoggedIn) {
+      return;
+    }
+
+    void loadAttendingReservations();
+  }, [isLoggedIn, loadAttendingReservations, loading]);
 
   const attendingStats = useMemo(
     () => ({
@@ -595,6 +690,14 @@ export default function MesRepasPage() {
     [filteredHostedMeals, hostingPage, itemsPerPage],
   );
 
+  const hostBookingSummariesByMealId = useMemo(
+    () =>
+      new Map(
+        hostBookingSummaries.map((summary) => [summary.mealId, summary]),
+      ),
+    [hostBookingSummaries],
+  );
+
   const paginatedAttendingReservations = useMemo(() => {
     const totalPages = Math.max(1, Math.ceil(filteredAttendingReservations.length / itemsPerPage));
     const safePage = Math.min(attendingPage, totalPages);
@@ -642,13 +745,13 @@ export default function MesRepasPage() {
       updateMealInState(response.data);
       toast.success(
         action === "publish"
-          ? "Le repas est maintenant publie."
-          : "Le repas a bien ete annule.",
+          ? "Le repas est maintenant publié."
+          : "Le repas a bien été annulé.",
       );
     } catch (error: unknown) {
       const message = axios.isAxiosError(error)
-        ? error.response?.data?.message ?? "L'action n'a pas pu etre effectuee."
-        : "L'action n'a pas pu etre effectuee.";
+        ? error.response?.data?.message ?? "L'action n'a pas pu être effectuée."
+        : "L'action n'a pas pu être effectuée.";
       toast.error(Array.isArray(message) ? message.join(", ") : message);
     } finally {
       setActiveMealId(null);
@@ -682,7 +785,7 @@ export default function MesRepasPage() {
             </h1>
             <p className={styles.description}>
               {activePanel === "hosting"
-                ? "Retrouve tes repas à venir, passés, annulés, brouillons et publiés dans un seul espace."
+                ? "Retrouve tes repas à venir, passés et annulés dans un même espace."
                 : "Retrouve tes réservations confirmées, en attente, refusées et passées dans un seul espace."}
             </p>
           </div>
@@ -720,7 +823,7 @@ export default function MesRepasPage() {
             <>
               <Link href="/mes-repas/creer" className={styles.primaryButton}>
                 <CirclePlus />
-                Creer un repas
+                Créer un repas
               </Link>
               <Link href="/" className={styles.secondaryButton}>
                 Voir les repas publics
@@ -729,7 +832,7 @@ export default function MesRepasPage() {
           ) : (
             <Link href="/" className={styles.primaryButton}>
               <Rocket />
-              Decouvrir les repas
+              Découvrir les repas
             </Link>
           )}
         </div>
@@ -743,7 +846,7 @@ export default function MesRepasPage() {
                 <FileText />
               </span>
               <strong>{hostedStats.total}</strong>
-              <span>repas crees</span>
+              <span>repas créés</span>
             </article>
 
             <article className={styles.statCard}>
@@ -751,7 +854,7 @@ export default function MesRepasPage() {
                 <Rocket />
               </span>
               <strong>{hostedStats.publishedCount}</strong>
-              <span>publies</span>
+              <span>publiés</span>
             </article>
 
             <article className={styles.statCard}>
@@ -767,7 +870,7 @@ export default function MesRepasPage() {
                 <CalendarDays />
               </span>
               <strong>{hostedStats.upcomingCount}</strong>
-              <span>a venir</span>
+              <span>à venir</span>
             </article>
           </div>
 
@@ -777,7 +880,7 @@ export default function MesRepasPage() {
                 <CircleAlert />
               </div>
               <div className={styles.hostGuardContent}>
-                <h2>Ton panneau hote n&apos;est pas encore disponible</h2>
+                <h2>Ton panneau hôte n&apos;est pas encore disponible</h2>
                 <p>{hostingError}</p>
               </div>
               <div className={styles.hostGuardActions}>
@@ -785,7 +888,7 @@ export default function MesRepasPage() {
                   Voir mon profil
                 </Link>
                 <Link href="/mes-repas/creer" className={styles.primaryButton}>
-                  Ouvrir la creation
+                  Ouvrir la création
                 </Link>
               </div>
             </div>
@@ -810,12 +913,12 @@ export default function MesRepasPage() {
 
               {fetchingHostedMeals ? (
                 <div className={styles.loadingPanel}>
-                  Chargement de tes repas organises...
+                  Chargement de tes repas organisés...
                 </div>
               ) : filteredHostedMeals.length === 0 ? (
                 <EmptyStateCard
                   title="Aucun repas dans cette vue"
-                  description="Change de filtre ou cree un nouveau repas pour commencer a remplir ton espace hote."
+                  description="Change de filtre ou crée un nouveau repas pour commencer à remplir ton espace hôte."
                   actionLabel="Organiser un repas"
                   actionHref="/mes-repas/creer"
                 />
@@ -833,8 +936,18 @@ export default function MesRepasPage() {
                         <MealCard
                           key={meal.id}
                           meal={meal}
+                          bookingSummary={hostBookingSummariesByMealId.get(meal.id) ?? null}
                           footer={
                             <>
+                              {meal.status === "published" || meal.status === "done" ? (
+                                <Link
+                                  href={`/mes-repas/${meal.id}/demandes`}
+                                  className={styles.secondaryButton}
+                                >
+                                  Voir les demandes
+                                </Link>
+                              ) : null}
+
                               {canEdit ? (
                                 <Link
                                   href={`/mes-repas/creer?mealId=${meal.id}&step=4`}
@@ -883,6 +996,12 @@ export default function MesRepasPage() {
                   />
                 </>
               )}
+
+              {fetchingHostBookingSummaries ? (
+                <div className={styles.loadingPanel}>
+                  Mise à jour des demandes en cours...
+                </div>
+              ) : null}
             </>
           )}
         </>
@@ -939,10 +1058,36 @@ export default function MesRepasPage() {
             ))}
           </div>
 
-          {filteredAttendingReservations.length === 0 ? (
+          {fetchingAttendingReservations ? (
+            <div className={styles.loadingPanel}>
+              Chargement de tes réservations...
+            </div>
+          ) : attendingError ? (
+            <div className={styles.hostGuardCard}>
+              <div className={styles.hostGuardIcon}>
+                <CircleAlert />
+              </div>
+              <div className={styles.hostGuardContent}>
+                <h2>Impossible de charger tes réservations</h2>
+                <p>{attendingError}</p>
+              </div>
+              <div className={styles.hostGuardActions}>
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  onClick={() => void loadAttendingReservations()}
+                >
+                  Réessayer
+                </button>
+                <Link href="/" className={styles.primaryButton}>
+                  Explorer les repas
+                </Link>
+              </div>
+            </div>
+          ) : filteredAttendingReservations.length === 0 ? (
             <EmptyStateCard
               title="Aucune réservation dans cette vue"
-              description="Explore les repas publics pour réserver une nouvelle place ou change de filtre pour retrouver une réservation existante."
+              description="Explore les repas publics pour réserver une nouvelle place."
               actionLabel="Explorer les repas"
               actionHref="/"
             />

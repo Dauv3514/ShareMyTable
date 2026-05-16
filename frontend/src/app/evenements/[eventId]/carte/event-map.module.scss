@@ -148,6 +148,7 @@
   align-items: center;
   justify-content: center;
   padding: 0 16px;
+  text-align: center;
   text-decoration: none;
   font-size: 15px;
   line-height: 1.15;
@@ -213,5 +214,6 @@
     border-radius: 13px;
     padding: 0 14px;
     font-size: 14px;
+    text-wrap: balance;
   }
 }

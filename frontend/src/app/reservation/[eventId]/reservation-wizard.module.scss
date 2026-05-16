@@ -408,10 +408,20 @@
   color: #17120d;
 }
 
+.errorText {
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(217, 112, 112, 0.28);
+  background: rgba(255, 237, 237, 0.78);
+  color: #9a3737;
+  font-weight: 600;
+}
+
 .recapGrid,
 .paymentLayout {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
   gap: 18px;
 }
 
@@ -420,6 +430,7 @@
 .emptyState {
   padding: 20px;
   display: grid;
+  align-self: start;
   gap: 14px;
 }
 
@@ -528,6 +539,46 @@
   font-weight: 700;
 }
 
+.stripeForm {
+  display: grid;
+  gap: 16px;
+}
+
+.stripeElementCard,
+.stripeLoadingCard {
+  padding: 20px;
+  border-radius: 22px;
+  border: 1px solid rgba(217, 203, 165, 0.9);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.stripeLoadingCard {
+  color: #5a503a;
+  line-height: 1.6;
+}
+
+.inlinePrimaryButton {
+  min-height: 50px;
+  padding: 0 20px;
+  border-radius: 999px;
+  border: 1px solid #ccb956;
+  background: #e6f06f;
+  color: #2f2718;
+  box-shadow: 0 12px 22px rgba(180, 167, 58, 0.22);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.inlinePrimaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+
 .paymentSummary strong {
   color: #17120d;
   font-size: clamp(2rem, 4vw, 2.8rem);
@@ -578,6 +629,7 @@
 
 .footerGhostButton:hover,
 .footerPrimaryButton:hover,
+.inlinePrimaryButton:hover,
 .counterButton:hover,
 .paymentMethod:hover {
   transform: translateY(-1px);
