@@ -284,16 +284,22 @@ function ModerationModal({
         aria-label="Fermer la fenêtre"
         onClick={isBusy ? undefined : onClose}
       />
-      <section className={styles.modalSheet}>
-        <button
-          type="button"
-          className={styles.modalClose}
-          onClick={onClose}
-          disabled={isBusy}
-          aria-label="Fermer"
-        >
-          <X />
-        </button>
+      <section
+        className={`${styles.modalSheet} ${
+          isAccept ? styles["modalSheet--accept"] : ""
+        }`}
+      >
+        {!isAccept ? (
+          <button
+            type="button"
+            className={styles.modalClose}
+            onClick={onClose}
+            disabled={isBusy}
+            aria-label="Fermer"
+          >
+            <X />
+          </button>
+        ) : null}
 
         <h3 className={styles.modalTitle}>{title}</h3>
 
