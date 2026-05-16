@@ -71,6 +71,9 @@ function InscriptionPageContent() {
   const [hostPhotoPreviewUrl, setHostPhotoPreviewUrl] = useState("");
   const [selectedHostPhotoFile, setSelectedHostPhotoFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
+  const [termsCheckboxChecked, setTermsCheckboxChecked] = useState(false);
   const [showCertificationPrompt, setShowCertificationPrompt] = useState(false);
   const [skipCertificationPrompt, setSkipCertificationPrompt] = useState(false);
 
@@ -264,6 +267,8 @@ function InscriptionPageContent() {
       }
 
       resetForm();
+      setHasAcceptedTerms(false);
+      setTermsCheckboxChecked(false);
       setSkipCertificationPrompt(false);
     } catch (error: unknown) {
       let message = "Erreur inconnue.";
@@ -299,7 +304,26 @@ function InscriptionPageContent() {
     setPhotoPreviewUrl("");
     setSelectedHostPhotoFile(null);
     setHostPhotoPreviewUrl("");
+    setShowTermsModal(false);
     setShowCertificationPrompt(false);
+  };
+
+  const continueRegistrationFlow = async ({
+    acceptedTerms = hasAcceptedTerms,
+    skipCertification = skipCertificationPrompt,
+  } = {}) => {
+    if (!acceptedTerms) {
+      setTermsCheckboxChecked(false);
+      setShowTermsModal(true);
+      return;
+    }
+
+    if (!formData.request_host && !skipCertification) {
+      setShowCertificationPrompt(true);
+      return;
+    }
+
+    await submitRegistration();
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -321,12 +345,18 @@ function InscriptionPageContent() {
       return;
     }
 
-    if (!formData.request_host && !skipCertificationPrompt) {
-      setShowCertificationPrompt(true);
+    await continueRegistrationFlow();
+  };
+
+  const handleAcceptTerms = async () => {
+    if (!termsCheckboxChecked) {
+      toast.error("Accepte les conditions d'utilisation pour continuer.");
       return;
     }
 
-    await submitRegistration();
+    setHasAcceptedTerms(true);
+    setShowTermsModal(false);
+    await continueRegistrationFlow({ acceptedTerms: true });
   };
 
   const handleContinueWithoutCertification = async () => {
@@ -737,6 +767,79 @@ function InscriptionPageContent() {
           </p>
         </section>
       </div>
+
+      {showTermsModal ? (
+        <div className={styles.modalOverlay} role="presentation">
+          <section
+            className={styles.termsModal}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="terms-modal-title"
+          >
+            <div className={styles.termsText}>
+              <h2 id="terms-modal-title">Conditions générales d&apos;utilisation</h2>
+
+              <div className={styles.termsScrollArea}>
+                <div className={styles.termsContent}>
+                  <section className={styles.termsSection}>
+                    <h3>CGU</h3>
+                    <p>Obligations des utilisateurs</p>
+                    <ul>
+                      <li>Créer un profil vérifié avec des informations exactes et à jour</li>
+                      <li>Respecter les règles de sécurité de la plateforme</li>
+                      <li>{"Accepter la politique d'annulation de la plateforme"}</li>
+                      <li>{"Accepter la publication d'avis apres chaque repas"}</li>
+                      <li>Ne pas utiliser la plateforme à des fins commerciales ou frauduleuses</li>
+                    </ul>
+
+                    <p>Rôle et limites de la plateforme</p>
+                    <ul>
+                      <li>Ramène Ta Poire agit comme intermédiaire technique entre hôtes et invités</li>
+                      <li>La plateforme ne garantit pas la qualité des repas proposés</li>
+                      <li>La plateforme sécurise les paiements et les données personnelles</li>
+                      <li>{"La plateforme se reserve le droit de suspendre tout compte en cas d'abus"}</li>
+                    </ul>
+                  </section>
+
+                  <section className={styles.termsSection}>
+                    <h3>CGV</h3>
+                    <ul>
+                      <li>{"Paiement securise exclusivement via l'application (Stripe, Apple Pay, PayPal, Samsung Pay)"}</li>
+                      <li>{"Paiement bloqué jusqu'au repas - libéré 24-48h après l'événement"}</li>
+                      <li>{"Remboursement selon la politique d'annulation (délai, conditions) - à préciser"}</li>
+                      <li>{"Commission Ramène Ta Poire déduite automatiquement avant virement à l'hôte"}</li>
+                      <li>Prix affichés toutes taxes comprises</li>
+                    </ul>
+                  </section>
+                </div>
+              </div>
+            </div>
+
+            <label className={styles.termsAcceptance}>
+              <input
+                type="checkbox"
+                checked={termsCheckboxChecked}
+                onChange={(event) => setTermsCheckboxChecked(event.target.checked)}
+              />
+              <span className={styles.termsCheckbox} aria-hidden="true" />
+              <span>
+                {"J’ai lu et j’accepte les "}
+                <strong>Conditions d&apos;utilisation</strong>
+                {" de l’application."}
+              </span>
+            </label>
+
+            <button
+              type="button"
+              className={styles.termsSubmitButton}
+              onClick={handleAcceptTerms}
+              disabled={!termsCheckboxChecked || isSubmitting}
+            >
+              Créer un compte
+            </button>
+          </section>
+        </div>
+      ) : null}
 
       {showCertificationPrompt ? (
         <div
