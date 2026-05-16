@@ -2,9 +2,11 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import Stripe from 'stripe';
 import { Repository } from 'typeorm';
@@ -66,6 +68,8 @@ type StripeChargeLike = {
 
 @Injectable()
 export class PaymentsService {
+  private readonly logger = new Logger(PaymentsService.name);
+
   constructor(
     @InjectRepository(Payment)
     private readonly paymentsRepository: Repository<Payment>,
@@ -317,28 +321,52 @@ export class PaymentsService {
       );
     }
 
-    const stripe = this.getStripeClient();
-    const capturedIntent = await stripe.paymentIntents.capture(
-      payment.providerIntentId,
-    );
-
-    payment.status = this.mapStripeIntentStatus(capturedIntent.status);
-
-    if (payment.status !== PaymentStatus.SUCCEEDED) {
-      throw new InternalServerErrorException(
-        'Stripe n a pas confirme la capture du paiement',
-      );
-    }
-
-    payment.paidAt = new Date();
-    booking.completedAt = new Date();
-    booking.bookingStatus = BookingStatus.COMPLETED;
-    booking.paymentState = BookingPaymentState.AUTHORIZED;
-
-    await this.bookingsRepository.save(booking);
-    const savedPayment = await this.paymentsRepository.save(payment);
+    const savedPayment = await this.captureAuthorizedPayment(payment);
 
     return this.toCapturePaymentResponse(savedPayment);
+  }
+
+  @Cron(CronExpression.EVERY_HOUR)
+  async captureEligiblePaymentsAfterMeals(): Promise<void> {
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    const eligiblePayments = await this.paymentsRepository
+      .createQueryBuilder('payment')
+      .innerJoinAndSelect('payment.booking', 'booking')
+      .innerJoinAndSelect('booking.meal', 'meal')
+      .where('payment.status = :paymentStatus', {
+        paymentStatus: PaymentStatus.AUTHORIZED,
+      })
+      .andWhere('booking.bookingStatus = :bookingStatus', {
+        bookingStatus: BookingStatus.CONFIRMED,
+      })
+      .andWhere('meal.dateTime <= :twentyFourHoursAgo', {
+        twentyFourHoursAgo,
+      })
+      .getMany();
+
+    if (eligiblePayments.length === 0) {
+      return;
+    }
+
+    this.logger.log(
+      `${eligiblePayments.length} paiement(s) eligible(s) a capturer automatiquement`,
+    );
+
+    for (const payment of eligiblePayments) {
+      try {
+        await this.captureAuthorizedPayment(payment);
+        this.logger.log(
+          `Paiement #${payment.id} capture automatiquement pour la reservation #${payment.booking.id}`,
+        );
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Erreur inconnue';
+        this.logger.error(
+          `Echec de capture automatique du paiement #${payment.id}: ${message}`,
+        );
+      }
+    }
   }
 
   async cancelOrRefundPaymentForBooking(
@@ -469,6 +497,29 @@ export class PaymentsService {
     }
 
     return PaymentStatus.PENDING;
+  }
+
+  private async captureAuthorizedPayment(payment: Payment) {
+    const stripe = this.getStripeClient();
+    const capturedIntent = await stripe.paymentIntents.capture(
+      payment.providerIntentId,
+    );
+
+    payment.status = this.mapStripeIntentStatus(capturedIntent.status);
+
+    if (payment.status !== PaymentStatus.SUCCEEDED) {
+      throw new InternalServerErrorException(
+        'Stripe n a pas confirme la capture du paiement',
+      );
+    }
+
+    payment.paidAt = new Date();
+    payment.booking.completedAt = new Date();
+    payment.booking.bookingStatus = BookingStatus.COMPLETED;
+    payment.booking.paymentState = BookingPaymentState.AUTHORIZED;
+
+    await this.bookingsRepository.save(payment.booking);
+    return this.paymentsRepository.save(payment);
   }
 
   private async markPaymentIntentAuthorized(paymentIntent: StripeIntentLike) {
