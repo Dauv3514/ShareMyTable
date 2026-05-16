@@ -270,6 +270,97 @@
   font-weight: 700;
 }
 
+.exactMap {
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid rgba(217, 203, 165, 0.82);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 14px 32px rgba(83, 61, 22, 0.08);
+}
+
+.exactMapHeader {
+  min-height: 76px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid rgba(217, 203, 165, 0.7);
+  background:
+    radial-gradient(circle at top right, rgba(231, 241, 111, 0.22), transparent 34%),
+    #fffdf7;
+}
+
+.exactMapHeader h2,
+.exactMapHeader p {
+  margin: 0;
+}
+
+.exactMapHeader h2 {
+  color: #17120d;
+  font-size: 1.32rem;
+  line-height: 1.1;
+}
+
+.exactMapHeader p {
+  margin-top: 4px;
+  color: #62583f;
+  font-size: 0.94rem;
+  font-weight: 700;
+}
+
+.exactMapHeader span {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(217, 203, 165, 0.88);
+  color: #5c512c;
+  background: rgba(255, 255, 255, 0.86);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.exactMapLoading,
+.exactMap :global(.reservation-exact-map__fallback),
+.exactMap :global(.reservation-exact-map__canvas) {
+  width: 100%;
+  height: 320px;
+}
+
+.exactMapLoading,
+.exactMap :global(.reservation-exact-map__fallback) {
+  display: grid;
+  place-items: center;
+  color: #5c512c;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(247, 238, 219, 0.66)),
+    #fffdf7;
+  font-weight: 800;
+}
+
+.exactMap :global(.leaflet-container) {
+  z-index: 0;
+  font-family: inherit;
+}
+
+.exactMap :global(.leaflet-pane),
+.exactMap :global(.leaflet-top),
+.exactMap :global(.leaflet-bottom) {
+  z-index: 0;
+}
+
+.exactMap :global(.leaflet-control) {
+  z-index: 1;
+}
+
+.exactMap :global(.leaflet-tooltip) {
+  border: 1px solid rgba(217, 203, 165, 0.9);
+  border-radius: 999px;
+  color: #17120d;
+  box-shadow: 0 10px 20px rgba(83, 61, 22, 0.14);
+  font-weight: 800;
+}
+
 .metaList {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -436,6 +527,17 @@
 
   .actions {
     flex-direction: column;
+  }
+
+  .exactMapHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .exactMapLoading,
+  .exactMap :global(.reservation-exact-map__fallback),
+  .exactMap :global(.reservation-exact-map__canvas) {
+    height: 260px;
   }
 
   .backLink,

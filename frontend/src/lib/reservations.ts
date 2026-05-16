@@ -54,6 +54,8 @@ export type ReservationItem = {
   createdAt: string;
   mealDateTime: string;
   exactAddressLabel: string;
+  exactLocationLat: number | null;
+  exactLocationLng: number | null;
   addressReleaseLabel: string;
   cancellationPolicyLabel: string;
   houseRules: string[];
@@ -104,6 +106,8 @@ type ApiBookingResponse = {
   coverImageUrl: string | null;
   locationLabel: string;
   exactAddressLabel: string;
+  exactLocationLat?: number | null;
+  exactLocationLng?: number | null;
   addressReleaseLabel: string;
   cancellationPolicyLabel: string;
   houseRules: string[];
@@ -243,6 +247,8 @@ function mapApiBookingToReservationItem(booking: ApiBookingResponse): Reservatio
     createdAt: booking.createdAt,
     mealDateTime: booking.mealDateTime,
     exactAddressLabel: booking.exactAddressLabel,
+    exactLocationLat: booking.exactLocationLat ?? null,
+    exactLocationLng: booking.exactLocationLng ?? null,
     addressReleaseLabel: booking.addressReleaseLabel,
     cancellationPolicyLabel: booking.cancellationPolicyLabel,
     houseRules: booking.houseRules,
@@ -345,8 +351,10 @@ function buildReservationItem({
     exactAddressLabel: hostProfile.address
       ? `${hostProfile.address}, ${event.city}`
       : `${event.locationLabel}, ${event.city}`,
+    exactLocationLat: null,
+    exactLocationLng: null,
     addressReleaseLabel:
-      "Adresse exacte partagée dans le détail de la réservation 24h avant le repas",
+      "Adresse exacte partagée 24h avant le repas",
     cancellationPolicyLabel: "Annulation gratuite jusqu'a 48h avant, puis retenue partielle.",
     houseRules: buildHouseRules(event),
     dietaryTags: filters.dietaryTags,

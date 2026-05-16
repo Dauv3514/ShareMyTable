@@ -14,6 +14,7 @@ import {
   Users,
 } from "lucide-react";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -29,6 +30,17 @@ import {
   type ReservationItem,
 } from "@/lib/reservations";
 import styles from "./reservation-detail.module.scss";
+
+const ReservationExactMap = dynamic(() => import("./ReservationExactMap"), {
+  ssr: false,
+  loading: () => (
+    <div className={styles.exactMapLoading} aria-live="polite">
+      Chargement de la carte...
+    </div>
+  ),
+});
+
+const ADDRESS_RELEASE_DELAY_MS = 24 * 60 * 60 * 1000;
 
 function formatPrice(value: number) {
   return new Intl.NumberFormat("fr-FR", {
@@ -63,6 +75,38 @@ function getStatusIcon(status: ReturnType<typeof getReservationBadgeStatus>) {
   }
 
   return <CircleAlert />;
+}
+
+function isExactAddressVisible(reservation: ReservationItem) {
+  if (reservation.status !== "confirmed") {
+    return false;
+  }
+
+  const mealDateTime = new Date(reservation.mealDateTime).getTime();
+
+  if (!Number.isFinite(mealDateTime)) {
+    return false;
+  }
+
+  return Date.now() >= mealDateTime - ADDRESS_RELEASE_DELAY_MS;
+}
+
+function getExactMapCenter(reservation: ReservationItem): [number, number] | null {
+  if (
+    typeof reservation.exactLocationLat !== "number" ||
+    typeof reservation.exactLocationLng !== "number"
+  ) {
+    return null;
+  }
+
+  if (
+    !Number.isFinite(reservation.exactLocationLat) ||
+    !Number.isFinite(reservation.exactLocationLng)
+  ) {
+    return null;
+  }
+
+  return [reservation.exactLocationLat, reservation.exactLocationLng];
 }
 
 export default function ReservationDetailClient({
@@ -151,7 +195,8 @@ export default function ReservationDetailClient({
     );
   }
 
-  const addressVisible = reservation.status === "confirmed";
+  const addressVisible = isExactAddressVisible(reservation);
+  const exactMapCenter = addressVisible ? getExactMapCenter(reservation) : null;
   const badgeStatus = getReservationBadgeStatus(reservation);
   const cancellationQuote = getReservationCancellationQuote(reservation);
 
@@ -269,6 +314,21 @@ export default function ReservationDetailClient({
                 <span>{addressVisible ? "Adresse visible" : reservation.addressReleaseLabel}</span>
               </div>
             </div>
+
+            {addressVisible && (
+              <div className={styles.exactMap}>
+                <div className={styles.exactMapHeader}>
+                  <div>
+                    <h2>Adresse exacte</h2>
+                    <p>Le point indique l&apos;adresse du repas.</p>
+                  </div>
+                </div>
+                <ReservationExactMap
+                  center={exactMapCenter}
+                  addressLabel={reservation.exactAddressLabel}
+                />
+              </div>
+            )}
           </section>
 
           <section className={styles.detailGrid}>

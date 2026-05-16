@@ -49,6 +49,8 @@ type BookingResponse = {
   coverImageUrl: string | null;
   locationLabel: string;
   exactAddressLabel: string;
+  exactLocationLat: number | null;
+  exactLocationLng: number | null;
   addressReleaseLabel: string;
   cancellationPolicyLabel: string;
   houseRules: string[];
@@ -478,8 +480,10 @@ export class BookingsService {
       coverImageUrl: hostProfile?.homePhotoUrl ?? null,
       locationLabel,
       exactAddressLabel,
+      exactLocationLat: hostProfile?.lat ?? null,
+      exactLocationLng: hostProfile?.lng ?? null,
       addressReleaseLabel:
-        'Adresse exacte partagée dans le détail de la réservation 24h avant le repas',
+        'Adresse exacte partagée 24h avant le repas',
       cancellationPolicyLabel:
         "Annulation gratuite jusqu'a 48h avant, puis retenue partielle.",
       houseRules: this.buildHouseRules(booking.meal, hostProfile),
