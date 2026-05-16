@@ -215,15 +215,26 @@ export default function MealMessagesPage() {
   return (
     <section className={styles.page}>
       <div className={styles.shell}>
-        <label className={styles.searchBar} aria-label="Rechercher dans les discussions du repas">
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Rechercher un repas"
-          />
-          <Search className={styles.searchIcon} />
-        </label>
+        <Link href="/messages" className={styles.backToMessages}>
+          <ChevronRight size={18} aria-hidden="true" />
+          Retour aux messages
+        </Link>
+
+        <div className={styles.searchArea}>
+          <label className={styles.searchBar} aria-label="Filtrer les discussions du repas">
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Filtrer une discussion"
+            />
+            <Search className={styles.searchIcon} />
+          </label>
+
+          <Link href="/rechercher" className={styles.searchMealButton}>
+            Rechercher un repas
+          </Link>
+        </div>
 
         {isFetching ? (
           <div className={styles.stateCard}>
