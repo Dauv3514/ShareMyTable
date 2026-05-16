@@ -80,13 +80,13 @@ function InscriptionPageContent() {
   useEffect(() => {
     const reason = searchParams.get("reason");
     if (reason === "not_registered") {
-      toast.info("Compte introuvable. Cree un compte pour continuer.");
+      toast.info("Compte introuvable. Crée un compte pour continuer.");
       localStorage.removeItem("oauth_flow");
     }
 
     const verify = searchParams.get("verify");
     if (verify === "1") {
-      toast.info("Verifie ton email pour activer ton compte.");
+      toast.info("Vérifie ton email pour activer ton compte.");
       localStorage.removeItem("oauth_flow");
     }
   }, [searchParams]);
@@ -166,7 +166,7 @@ function InscriptionPageContent() {
     if (
       !["image/png", "image/jpeg", "image/webp"].includes(file.type)
     ) {
-      toast.error("La photo du logement doit etre en PNG, JPG, JPEG ou WebP.");
+      toast.error("La photo du logement doit être en PNG, JPG, JPEG ou WebP.");
       event.target.value = "";
       return;
     }
@@ -255,15 +255,15 @@ function InscriptionPageContent() {
       if (response.data.hostRequestCreated === false) {
         toast.warning(
           response.data.hostRequestError
-            ? `Compte cree. La demande hote n'a pas pu etre envoyee automatiquement : ${response.data.hostRequestError}`
-            : "Compte cree. La demande hote n'a pas pu etre envoyee automatiquement.",
+            ? `Compte créé. La demande hôte n'a pas pu être envoyée automatiquement : ${response.data.hostRequestError}`
+            : "Compte créé. La demande hôte n'a pas pu être envoyée automatiquement.",
         );
       } else if (formData.request_host) {
         toast.success(
-          "Compte cree. Verifie ton email pour l'activer, et ta demande hote a bien ete envoyee.",
+          "Compte créé. Vérifie ton email pour l'activer, et ta demande hôte a bien été envoyée.",
         );
       } else {
-        toast.success("Compte cree. Verifie ton email pour l'activer.");
+        toast.success("Compte créé. Vérifie ton email pour l'activer.");
       }
 
       resetForm();
@@ -340,7 +340,7 @@ function InscriptionPageContent() {
 
     if (formData.request_host && !isHostRequestReady) {
       toast.error(
-        "Renseigne le quartier et l'adresse pour envoyer la demande hote.",
+        "Renseigne le quartier et l'adresse pour envoyer la demande hôte.",
       );
       return;
     }
@@ -398,7 +398,7 @@ function InscriptionPageContent() {
       <div className={styles.shell}>
         <section className={styles.formCard}>
           <div className={styles.formHeader}>
-            <p className={styles.kicker}>Creation de compte</p>
+            <p className={styles.kicker}>Création de compte</p>
             <h2 className={styles.title}>Créez votre compte</h2>
             <p className={styles.subtitle}>
               Commence par les informations indispensables, puis ajoute ce qui
@@ -429,17 +429,17 @@ function InscriptionPageContent() {
                   <h3>Informations obligatoires</h3>
                   <span className={styles.sectionBadge}>Compte requis</span>
                 </div>
-                <p>Ces champs sont necessaires pour creer le compte utilisateur.</p>
+                <p>Ces champs sont nécessaires pour créer le compte utilisateur.</p>
               </div>
 
               <div className={styles.grid}>
                 <label className={styles.field}>
-                  <span>Prenom</span>
+                  <span>Prénom</span>
                   <input
                     className={styles.input}
                     type="text"
                     name="first_name"
-                    placeholder="Votre prenom"
+                    placeholder="Votre prénom"
                     value={formData.first_name}
                     onChange={handleChange}
                     required
@@ -534,13 +534,13 @@ function InscriptionPageContent() {
             <section className={styles.formSection}>
               <div className={styles.sectionHeader}>
                 <div className={styles.sectionTitleRow}>
-                  <h3>Informations complementaires</h3>
+                  <h3>Informations complémentaires</h3>
                   <span className={styles.sectionBadgeMuted}>Optionnel</span>
                 </div>
                 <p>
-                  Ces champs restent optionnels pour creer le compte. Certains
-                  deviennent toutefois necessaires si tu veux demander le statut
-                  hote des maintenant.
+                  Ces champs restent optionnels pour créer le compte. Certains
+                  deviennent toutefois nécessaires si tu veux demander le statut
+                  hôte dès maintenant.
                 </p>
               </div>
 
@@ -568,19 +568,19 @@ function InscriptionPageContent() {
                       >
                         {photoPreviewUrl
                           ? "Changer la photo"
-                          : "Telecharger une image"}
+                          : "Télécharger une image"}
                       </button>
 
                       <p className={styles.uploadHint}>
                         {photoPreviewUrl
-                          ? "Une photo est prete a etre envoyee avec l'inscription."
+                          ? "Une photo est prête à être envoyée avec l'inscription."
                           : "PNG, JPG ou WebP depuis votre ordinateur."}
                       </p>
                     </div>
 
                     {photoPreviewUrl ? (
                       <div className={styles.uploadPreview}>
-                        <span className={styles.uploadPreviewBadge}>Image ajoutee</span>
+                        <span className={styles.uploadPreviewBadge}>Image ajoutée</span>
                         <button
                           type="button"
                           className={styles.uploadRemove}
@@ -610,20 +610,20 @@ function InscriptionPageContent() {
             <section ref={hostRequestSectionRef} className={styles.formSection}>
               <div className={styles.sectionHeader}>
                 <div className={styles.sectionTitleRow}>
-                  <h3>Demande hote a l&apos;inscription</h3>
-                  <span className={styles.sectionBadgeAccent}>Candidature hote</span>
+                  <h3>Demande hôte à l&apos;inscription</h3>
+                  <span className={styles.sectionBadgeAccent}>Candidature hôte</span>
                 </div>
                 <p>
-                  Active cette option si tu veux envoyer ta candidature hote en
-                  meme temps que la creation du compte.
+                  Active cette option si tu veux envoyer ta candidature hôte en
+                  même temps que la création du compte.
                 </p>
               </div>
 
               <div className={styles.hostToggleCard}>
                 <div className={styles.hostToggleCopy}>
-                  <strong>Je souhaite devenir hote</strong>
+                  <strong>Je souhaite devenir hôte</strong>
                   <span>
-                    Pays et ville utilises ci-dessus. Quartier et adresse seront
+                    Pays et ville utilisés ci-dessus. Quartier et adresse seront
                     alors requis.
                   </span>
                 </div>
@@ -651,7 +651,7 @@ function InscriptionPageContent() {
                     <label className={styles.field}>
                       <span>
                         Quartier ou secteur
-                        <em className={styles.inlineRequirement}>Obligatoire si hote</em>
+                        <em className={styles.inlineRequirement}>Obligatoire si hôte</em>
                       </span>
                       <input
                         className={styles.input}
@@ -666,8 +666,8 @@ function InscriptionPageContent() {
 
                     <label className={styles.field}>
                       <span>
-                        Adresse complete
-                        <em className={styles.inlineRequirement}>Obligatoire si hote</em>
+                        Adresse complète
+                        <em className={styles.inlineRequirement}>Obligatoire si hôte</em>
                       </span>
                       <input
                         className={styles.input}
@@ -703,7 +703,7 @@ function InscriptionPageContent() {
 
                       {hostPhotoPreviewUrl ? (
                         <div className={styles.uploadPreview}>
-                          <span className={styles.uploadPreviewBadge}>Photo du logement ajoutee</span>
+                          <span className={styles.uploadPreviewBadge}>Photo du logement ajoutée</span>
                           <button
                             type="button"
                             className={styles.uploadRemove}
@@ -718,7 +718,7 @@ function InscriptionPageContent() {
 
                   <p className={styles.hostHelp}>
                     La photo du logement reste optionnelle. En revanche, le
-                    quartier et l&apos;adresse sont obligatoires si la demande hote est active.
+                    quartier et l&apos;adresse sont obligatoires si la demande hôte est active.
                   </p>
                 </div>
               ) : null}
@@ -731,11 +731,11 @@ function InscriptionPageContent() {
             >
               {formData.request_host
                 ? isSubmitting
-                  ? "Creation du compte et envoi de la demande..."
-                  : "Creer mon compte et envoyer ma demande hote"
+                  ? "Création du compte et envoi de la demande..."
+                  : "Créer mon compte et envoyer ma demande hôte"
                 : isSubmitting
-                  ? "Creation du compte..."
-                  : "Creer mon compte"}
+                  ? "Création du compte..."
+                  : "Créer mon compte"}
             </button>
           </form>
 
@@ -760,7 +760,7 @@ function InscriptionPageContent() {
           </div>
 
           <p className={styles.bottomText}>
-            Vous avez deja un compte ?{" "}
+            Vous avez déjà un compte ?{" "}
             <Link href="/connexion" className={styles.link}>
               Connectez-vous
             </Link>
@@ -788,7 +788,7 @@ function InscriptionPageContent() {
                       <li>Créer un profil vérifié avec des informations exactes et à jour</li>
                       <li>Respecter les règles de sécurité de la plateforme</li>
                       <li>{"Accepter la politique d'annulation de la plateforme"}</li>
-                      <li>{"Accepter la publication d'avis apres chaque repas"}</li>
+                      <li>{"Accepter la publication d'avis après chaque repas"}</li>
                       <li>Ne pas utiliser la plateforme à des fins commerciales ou frauduleuses</li>
                     </ul>
 
@@ -797,14 +797,14 @@ function InscriptionPageContent() {
                       <li>Ramène Ta Poire agit comme intermédiaire technique entre hôtes et invités</li>
                       <li>La plateforme ne garantit pas la qualité des repas proposés</li>
                       <li>La plateforme sécurise les paiements et les données personnelles</li>
-                      <li>{"La plateforme se reserve le droit de suspendre tout compte en cas d'abus"}</li>
+                      <li>{"La plateforme se réserve le droit de suspendre tout compte en cas d'abus"}</li>
                     </ul>
                   </section>
 
                   <section className={styles.termsSection}>
                     <h3>CGV</h3>
                     <ul>
-                      <li>{"Paiement securise exclusivement via l'application (Stripe, Apple Pay, PayPal, Samsung Pay)"}</li>
+                      <li>{"Paiement sécurisé exclusivement via l'application (Stripe, Apple Pay, PayPal, Samsung Pay)"}</li>
                       <li>{"Paiement bloqué jusqu'au repas - libéré 24-48h après l'événement"}</li>
                       <li>{"Remboursement selon la politique d'annulation (délai, conditions) - à préciser"}</li>
                       <li>{"Commission Ramène Ta Poire déduite automatiquement avant virement à l'hôte"}</li>
@@ -861,8 +861,8 @@ function InscriptionPageContent() {
               <h2 id="certification-modal-title">Certifiez votre compte</h2>
               <div className={styles.certificationCopy}>
                 <p>
-                  Si vous souhaitez organiser un evenement, et{" "}
-                  <strong>devenir hote</strong> sur la plateforme, vous devez
+                  Si vous souhaitez organiser un événement, et{" "}
+                  <strong>devenir hôte</strong> sur la plateforme, vous devez
                   d&apos;abord <strong>valider votre compte</strong>.
                 </p>
                 <p>
