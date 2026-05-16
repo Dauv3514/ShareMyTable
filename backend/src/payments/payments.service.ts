@@ -8,7 +8,11 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import Stripe from 'stripe';
 import { Repository } from 'typeorm';
-import { Booking, BookingPaymentState } from '../bookings/booking.entity';
+import {
+  Booking,
+  BookingPaymentState,
+  BookingStatus,
+} from '../bookings/booking.entity';
 import {
   Payment,
   PaymentProvider,
@@ -30,6 +34,18 @@ type CreatePaymentIntentResponse = {
 type HandleWebhookResponse = {
   received: true;
   type: string;
+};
+
+type CapturePaymentResponse = {
+  paymentId: number;
+  bookingId: number;
+  provider: PaymentProvider;
+  providerIntentId: string;
+  amountTotalCents: number;
+  platformFeeCents: number;
+  hostAmountCents: number;
+  status: PaymentStatus;
+  paidAt: Date | null;
 };
 
 export type CancelOrRefundPaymentResult = {
@@ -258,6 +274,71 @@ export class PaymentsService {
 
   async cancelPaymentForBooking(bookingId: number): Promise<void> {
     await this.cancelOrRefundPaymentForBooking(bookingId, Number.MAX_SAFE_INTEGER);
+  }
+
+  async capturePayment(
+    hostUserId: number,
+    paymentId: number,
+  ): Promise<CapturePaymentResponse> {
+    const payment = await this.paymentsRepository.findOne({
+      where: { id: paymentId },
+      relations: ['booking', 'booking.meal', 'booking.meal.host'],
+    });
+
+    if (!payment) {
+      throw new NotFoundException('Paiement introuvable');
+    }
+
+    const booking = payment.booking;
+
+    if (booking.meal.host.id !== hostUserId) {
+      throw new NotFoundException('Paiement introuvable pour cet hôte');
+    }
+
+    if (booking.meal.dateTime.getTime() > Date.now()) {
+      throw new BadRequestException(
+        'Le paiement ne peut etre capturé qu apres la date du repas',
+      );
+    }
+
+    if (booking.bookingStatus !== BookingStatus.CONFIRMED) {
+      throw new BadRequestException(
+        'Seule une reservation confirmee peut etre capturee',
+      );
+    }
+
+    if (payment.status === PaymentStatus.SUCCEEDED) {
+      return this.toCapturePaymentResponse(payment);
+    }
+
+    if (payment.status !== PaymentStatus.AUTHORIZED) {
+      throw new BadRequestException(
+        'Seul un paiement autorise peut etre capture',
+      );
+    }
+
+    const stripe = this.getStripeClient();
+    const capturedIntent = await stripe.paymentIntents.capture(
+      payment.providerIntentId,
+    );
+
+    payment.status = this.mapStripeIntentStatus(capturedIntent.status);
+
+    if (payment.status !== PaymentStatus.SUCCEEDED) {
+      throw new InternalServerErrorException(
+        'Stripe n a pas confirme la capture du paiement',
+      );
+    }
+
+    payment.paidAt = new Date();
+    booking.completedAt = new Date();
+    booking.bookingStatus = BookingStatus.COMPLETED;
+    booking.paymentState = BookingPaymentState.AUTHORIZED;
+
+    await this.bookingsRepository.save(booking);
+    const savedPayment = await this.paymentsRepository.save(payment);
+
+    return this.toCapturePaymentResponse(savedPayment);
   }
 
   async cancelOrRefundPaymentForBooking(
@@ -508,6 +589,20 @@ export class PaymentsService {
       platformFeeCents: payment.platformFeeCents,
       hostAmountCents: payment.hostAmountCents,
       status: payment.status,
+    };
+  }
+
+  private toCapturePaymentResponse(payment: Payment): CapturePaymentResponse {
+    return {
+      paymentId: payment.id,
+      bookingId: payment.booking.id,
+      provider: payment.provider,
+      providerIntentId: payment.providerIntentId,
+      amountTotalCents: payment.amountTotalCents,
+      platformFeeCents: payment.platformFeeCents,
+      hostAmountCents: payment.hostAmountCents,
+      status: payment.status,
+      paidAt: payment.paidAt,
     };
   }
 }

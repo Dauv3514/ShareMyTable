@@ -3,6 +3,8 @@ import {
   Controller,
   Headers,
   HttpCode,
+  Param,
+  ParseIntPipe,
   Post,
   Req,
   UseGuards,
@@ -37,5 +39,14 @@ export class PaymentsController {
       Number(req.user.sub),
       createPaymentIntentDto.bookingId,
     );
+  }
+
+  @UseGuards(AuthGuard)
+  @Post(':id/capture')
+  async capturePayment(
+    @Req() req: IAuthInfoRequest,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.paymentsService.capturePayment(Number(req.user.sub), id);
   }
 }
