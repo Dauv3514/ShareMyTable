@@ -26,6 +26,31 @@ export type ReservationPaymentIntent = {
   status: "pending" | "authorized" | "succeeded" | "failed" | "canceled" | "refunded";
 };
 
+export type ReservationReview = {
+  id: number;
+  bookingId: number;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+  tip?: Omit<ReservationTip, "bookingId" | "clientSecret"> | null;
+};
+
+export type ReservationTip = {
+  id: number;
+  bookingId: number;
+  amountCents: number;
+  paymentId: string | null;
+  status: "pending" | "succeeded" | "failed" | "canceled";
+  clientSecret: string | null;
+  paidAt: string | null;
+  createdAt: string;
+};
+
+export type CreateReservationReviewResponse = {
+  review: ReservationReview;
+  tip: ReservationTip | null;
+};
+
 export type ReservationDraft = {
   seats: number;
   paymentMethod: ReservationPaymentMethod;
@@ -62,6 +87,9 @@ export type ReservationItem = {
   dietaryTags: string[];
   ambianceTags: string[];
   reminderLabels: string[];
+  canReview: boolean;
+  hasReview: boolean;
+  review: ReservationReview | null;
 };
 
 type ApiBookingStatus =
@@ -112,9 +140,14 @@ type ApiBookingResponse = {
   cancellationPolicyLabel: string;
   houseRules: string[];
   reminderLabels: string[];
+  canReview: boolean;
+  hasReview: boolean;
+  review: ReservationReview | null;
 };
 
 type ApiPaymentIntentResponse = ReservationPaymentIntent;
+
+type ApiCreateReservationReviewResponse = CreateReservationReviewResponse;
 
 export type ReservationCancellationQuote = {
   canCancel: boolean;
@@ -255,6 +288,9 @@ function mapApiBookingToReservationItem(booking: ApiBookingResponse): Reservatio
     dietaryTags: [],
     ambianceTags: [],
     reminderLabels: booking.reminderLabels,
+    canReview: booking.canReview,
+    hasReview: booking.hasReview,
+    review: booking.review,
   };
 }
 
@@ -360,6 +396,9 @@ function buildReservationItem({
     dietaryTags: filters.dietaryTags,
     ambianceTags: filters.ambianceTags,
     reminderLabels: ["Rappel automatique J-3", "Rappel automatique J-1"],
+    canReview: false,
+    hasReview: false,
+    review: null,
   };
 }
 
@@ -579,6 +618,91 @@ async function cancelBackendGuestReservation(
   return mapApiBookingToReservationItem(response.data);
 }
 
+async function createBackendReservationReview({
+  reservationId,
+  rating,
+  comment,
+  tipAmountCents,
+}: {
+  reservationId: string | number;
+  rating: number;
+  comment: string;
+  tipAmountCents: number;
+}): Promise<CreateReservationReviewResponse> {
+  const apiContext = getReservationApiContext();
+
+  if (!apiContext) {
+    throw new Error("Contexte API indisponible");
+  }
+
+  const response = await axios.post<ApiCreateReservationReviewResponse>(
+    `${apiContext.apiUrl}/reviews/bookings/${Number(reservationId)}`,
+    {
+      rating,
+      comment,
+      tipAmountCents,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${apiContext.token}`,
+      },
+    },
+  );
+
+  return response.data;
+}
+
+async function confirmBackendReservationTip(tipId: string | number) {
+  const apiContext = getReservationApiContext();
+
+  if (!apiContext) {
+    throw new Error("Contexte API indisponible");
+  }
+
+  const response = await axios.post<ReservationTip>(
+    `${apiContext.apiUrl}/reviews/tips/${Number(tipId)}/confirm`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${apiContext.token}`,
+      },
+    },
+  );
+
+  return response.data;
+}
+
+async function updateBackendReservationReview({
+  reservationId,
+  rating,
+  comment,
+}: {
+  reservationId: string | number;
+  rating: number;
+  comment: string;
+}) {
+  const apiContext = getReservationApiContext();
+
+  if (!apiContext) {
+    throw new Error("Contexte API indisponible");
+  }
+
+  const response = await axios.patch<ReservationReview>(
+    `${apiContext.apiUrl}/reviews/bookings/${Number(reservationId)}`,
+    {
+      rating,
+      comment,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${apiContext.token}`,
+      },
+    },
+  );
+
+  return response.data;
+}
+
 function getDraftStorageKey(eventId: string) {
   return `${DRAFT_STORAGE_PREFIX}${eventId}`;
 }
@@ -783,6 +907,80 @@ export async function cancelGuestReservation(reservationId: string) {
 
   saveStorageReservations(updatedReservations);
   return getLocalGuestReservationById(reservationId);
+}
+
+export async function createReservationReview({
+  reservationId,
+  rating,
+  comment,
+  tipAmountCents,
+}: {
+  reservationId: string;
+  rating: number;
+  comment: string;
+  tipAmountCents: number;
+}) {
+  if (!isNumericIdentifier(reservationId)) {
+    throw new Error("Les avis sont disponibles sur les réservations backend.");
+  }
+
+  try {
+    return await createBackendReservationReview({
+      reservationId,
+      rating,
+      comment,
+      tipAmountCents,
+    });
+  } catch (error) {
+    throw new Error(
+      getReservationErrorMessage(
+        error,
+        "Impossible d'enregistrer ton avis pour le moment.",
+      ),
+    );
+  }
+}
+
+export async function confirmReservationTip(tipId: string | number) {
+  try {
+    return await confirmBackendReservationTip(tipId);
+  } catch (error) {
+    throw new Error(
+      getReservationErrorMessage(
+        error,
+        "Impossible de confirmer le pourboire pour le moment.",
+      ),
+    );
+  }
+}
+
+export async function updateReservationReview({
+  reservationId,
+  rating,
+  comment,
+}: {
+  reservationId: string;
+  rating: number;
+  comment: string;
+}) {
+  if (!isNumericIdentifier(reservationId)) {
+    throw new Error("Les avis sont disponibles sur les réservations backend.");
+  }
+
+  try {
+    return await updateBackendReservationReview({
+      reservationId,
+      rating,
+      comment,
+    });
+  } catch (error) {
+    throw new Error(
+      getReservationErrorMessage(
+        error,
+        "Impossible de modifier ton avis pour le moment.",
+      ),
+    );
+  }
 }
 
 export function getReservationStatusLabel(status: ReservationStatus) {
