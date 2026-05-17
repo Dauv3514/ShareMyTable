@@ -4,6 +4,7 @@ import { fr } from "date-fns/locale";
 import type { HostProfile, MealEvent } from "./data/types";
 import { MOCK_MEAL_EVENTS } from "./data/mocks/meal-events";
 import { MOCK_HOST_PROFILES } from "./data/mocks/host-profiles";
+import { getNextImageSrc } from "./image-src";
 import { getMealFilterById } from "./search-data";
 
 export type ReservationStatus = "confirmed" | "pending" | "refused" | "cancelled";
@@ -237,7 +238,7 @@ function mapApiBookingToReservationItem(booking: ApiBookingResponse): Reservatio
     detailDateLabel: labels.detailDateLabel,
     dateLabel: labels.dateLabel,
     timeLabel: labels.timeLabel,
-    coverImageUrl: booking.coverImageUrl ?? "/photoRepas.png",
+    coverImageUrl: getNextImageSrc(booking.coverImageUrl),
     seats: booking.seats,
     pricePerSeat: booking.unitPriceCents / 100,
     totalPrice: booking.totalPriceCents / 100,
@@ -334,7 +335,7 @@ function buildReservationItem({
     detailDateLabel: event.detailDateLabel,
     dateLabel: event.dateLabel,
     timeLabel: event.timeLabel,
-    coverImageUrl: hostProfile.homePhotos[0] ?? "/photoRepas.png",
+    coverImageUrl: getNextImageSrc(hostProfile.homePhotos[0]),
     seats,
     pricePerSeat: event.pricePerPerson,
     totalPrice: event.pricePerPerson * seats,
