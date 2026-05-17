@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HostProfile } from '../host-profiles/host-profile.entity';
 import { Meal, MealStatus } from '../meals/meal.entity';
+import { MessagingService } from '../messaging/messaging.service';
 import { PaymentsService } from '../payments/payments.service';
 import { Utilisateur } from '../users/users.entity';
 import {
@@ -112,6 +113,7 @@ export class BookingsService {
     private readonly mealsRepository: Repository<Meal>,
     @InjectRepository(Utilisateur)
     private readonly usersRepository: Repository<Utilisateur>,
+    private readonly messagingService: MessagingService,
     private readonly paymentsService: PaymentsService,
   ) {}
 
@@ -149,6 +151,7 @@ export class BookingsService {
       await this.findActiveBookingForMealAndGuest(meal.id, userId);
 
     if (existingActiveBooking) {
+      await this.messagingService.openReservationDirectConversation(meal.id, userId);
       return this.toBookingResponse(existingActiveBooking);
     }
 
@@ -176,6 +179,7 @@ export class BookingsService {
     });
 
     const savedBooking = await this.bookingsRepository.save(booking);
+    await this.messagingService.openReservationDirectConversation(meal.id, userId);
     const reloadedBooking = await this.findOwnedBookingEntity(userId, savedBooking.id);
     return this.toBookingResponse(reloadedBooking);
   }
@@ -226,6 +230,7 @@ export class BookingsService {
     booking.cancelledAt = new Date();
 
     const savedBooking = await this.bookingsRepository.save(booking);
+    await this.syncAcceptedMealConversations(savedBooking.meal.id);
     return this.toBookingResponse(savedBooking);
   }
 
@@ -300,6 +305,7 @@ export class BookingsService {
     booking.refusalReason = null;
 
     const savedBooking = await this.bookingsRepository.save(booking);
+    await this.syncAcceptedMealConversations(savedBooking.meal.id);
     return this.toHostBookingResponse(savedBooking);
   }
 
@@ -325,7 +331,31 @@ export class BookingsService {
     booking.refusalReason = this.normalizeNullableString(dto.reason);
 
     const savedBooking = await this.bookingsRepository.save(booking);
+    await this.syncAcceptedMealConversations(savedBooking.meal.id);
     return this.toHostBookingResponse(savedBooking);
+  }
+
+  private async syncAcceptedMealConversations(mealId: number): Promise<void> {
+    const participantUserIds = await this.findConfirmedParticipantUserIds(mealId);
+    await this.messagingService.syncAcceptedMealConversations(
+      mealId,
+      participantUserIds,
+    );
+  }
+
+  private async findConfirmedParticipantUserIds(mealId: number): Promise<number[]> {
+    const confirmedBookings = await this.bookingsRepository.find({
+      where: {
+        meal: { id: mealId },
+        bookingStatus: BookingStatus.CONFIRMED,
+      },
+      relations: ['guestUser'],
+      order: { createdAt: 'DESC' },
+    });
+
+    return this.dedupeBookingsByGuest(confirmedBookings).map(
+      (booking) => booking.guestUser.id,
+    );
   }
 
   private async findOwnedBookingEntity(

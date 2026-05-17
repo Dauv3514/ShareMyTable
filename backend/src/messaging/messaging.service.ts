@@ -232,7 +232,7 @@ export class MessagingService {
     const mealGroupConversation =
       acceptedUsers.length >= 2
         ? await this.syncMealGroupConversation(meal, acceptedUsers)
-        : null;
+        : await this.removeMealGroupConversation(meal.id);
 
     const pairConversationIds = await this.syncPairConversations(meal, acceptedUsers);
 
@@ -362,6 +362,24 @@ export class MessagingService {
     }
 
     return pairConversationIds;
+  }
+
+  private async removeMealGroupConversation(
+    mealId: number,
+  ): Promise<MessageConversation | null> {
+    const existingConversation = await this.conversationsRepository.findOne({
+      where: {
+        meal: { id: mealId },
+        type: MessageConversationType.MEAL_GROUP,
+      },
+    });
+
+    if (!existingConversation) {
+      return null;
+    }
+
+    await this.conversationsRepository.remove(existingConversation);
+    return null;
   }
 
   private async syncConversationMembers(
