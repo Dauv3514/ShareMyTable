@@ -57,7 +57,6 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
         .map((participantId) => getHostProfileById(participantId)),
     )
   ).filter(Boolean);
-  const hostFirstName = hostProfile.name.split(" ")[0] ?? hostProfile.name;
   const participationRatio = Math.min(
     100,
     Math.round((event.currentParticipants / event.maxParticipants) * 100),
@@ -132,9 +131,6 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
           <EventProfileFilters hostUserId={hostProfile.id} fallbackTags={ambianceFilters} />
 
           <div className={styles.detailActions}>
-            <Link href="/connexion" className={styles.contactButton}>
-              <span>Contacter {hostFirstName}</span>
-            </Link>
             <RegisterEventLink
               eventId={event.id}
               hostUserId={event.hostId}
