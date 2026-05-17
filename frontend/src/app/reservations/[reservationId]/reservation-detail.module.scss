@@ -2,6 +2,7 @@
   width: min(100%, 1140px);
   margin: 0 auto;
   padding: 18px 0 120px;
+  overflow-x: hidden;
 }
 
 .loadingState {
@@ -457,6 +458,307 @@
   gap: 10px;
 }
 
+.reviewPanel,
+.reviewDonePanel {
+  gap: 20px;
+}
+
+.reviewHeader,
+.reviewSummaryHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: start;
+}
+
+.reviewHeader p,
+.reviewSummaryHeader p,
+.reviewHelper,
+.reviewDonePanel p {
+  margin: 6px 0 0;
+  color: #5a503a;
+  line-height: 1.55;
+}
+
+.reviewSteps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.reviewStep {
+  min-height: 54px;
+  min-width: 168px;
+  padding: 12px 14px;
+  border: 1px solid transparent;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.5);
+  color: #6d654c;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.reviewStep:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: rgba(246, 242, 205, 0.58);
+  border-color: rgba(217, 200, 107, 0.68);
+}
+
+.reviewStep:disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
+}
+
+.reviewStep span {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(232, 224, 198, 0.95);
+  color: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.reviewStep span svg {
+  width: 16px;
+  height: 16px;
+}
+
+.reviewStep--active {
+  border-color: #d9c86b;
+  background: rgba(246, 242, 205, 0.78);
+  color: #1d1811;
+}
+
+.reviewStep--done {
+  color: #4b5b1a;
+}
+
+.reviewStep--active span,
+.reviewStep--done span {
+  background: #dce95f;
+}
+
+.reviewStage {
+  min-height: 230px;
+  padding: 20px;
+  border-radius: 22px;
+  border: 1px solid rgba(217, 203, 165, 0.72);
+  background: rgba(255, 253, 246, 0.9);
+  display: grid;
+  align-content: center;
+  gap: 16px;
+}
+
+.reviewStage label,
+.reviewLabel {
+  color: #17120d;
+  font-size: 1.25rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.reviewStage textarea {
+  width: min(100%, 560px);
+  min-height: 128px;
+  margin: 0 auto;
+  resize: vertical;
+  border: 1px solid rgba(217, 203, 165, 0.9);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.88);
+  padding: 14px 16px;
+  color: #17120d;
+  font: inherit;
+  line-height: 1.45;
+  outline: none;
+}
+
+.reviewHelper {
+  text-align: center;
+}
+
+.ratingButtons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.ratingButton {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.72);
+  color: #b7ab80;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.ratingButton svg {
+  width: 26px;
+  height: 26px;
+  fill: currentColor;
+}
+
+.ratingButton--active {
+  color: #7b6324;
+}
+
+.tipCounter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.tipCounter button {
+  width: 62px;
+  height: 62px;
+  border: 1px solid #d8c98f;
+  border-radius: 999px;
+  background: rgba(233, 225, 196, 0.72);
+  color: #665929;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.4rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tipCounter button svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 1.8;
+}
+
+.tipCounter strong {
+  min-width: 150px;
+  color: #2a1b12;
+  font-size: clamp(2.2rem, 5vw, 3.2rem);
+  line-height: 1;
+  text-align: center;
+}
+
+.reviewActions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tipStripeForm {
+  width: min(100%, 640px);
+  margin: 0 auto;
+  display: grid;
+  gap: 16px;
+}
+
+.reviewSummaryGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.45fr);
+  gap: 14px;
+}
+
+.reviewSummaryItem,
+.reviewCommentBox {
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(217, 203, 165, 0.72);
+  background: rgba(255, 255, 255, 0.86);
+  display: grid;
+  gap: 10px;
+}
+
+.reviewSummaryItem span,
+.reviewCommentBox span {
+  color: #6a5f45;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.reviewSummaryItem strong {
+  color: #17120d;
+  font-size: 1.9rem;
+  line-height: 1;
+}
+
+.reviewSummaryItem small {
+  color: #5a503a;
+  font-weight: 800;
+}
+
+.summaryRating {
+  display: flex;
+  gap: 6px;
+}
+
+.summaryStar,
+.summaryStarActive {
+  width: 28px;
+  height: 28px;
+}
+
+.summaryStar {
+  color: #c7bc94;
+}
+
+.summaryStarActive {
+  color: #7b6324;
+  fill: currentColor;
+}
+
+.reviewCommentBox p {
+  margin: 0;
+  color: #17120d;
+  line-height: 1.6;
+  font-weight: 700;
+}
+
+.reviewEditForm {
+  padding: 20px;
+  border-radius: 22px;
+  border: 1px solid rgba(217, 203, 165, 0.72);
+  background: rgba(255, 255, 255, 0.84);
+  display: grid;
+  gap: 16px;
+}
+
+.reviewEditForm textarea {
+  width: 100%;
+  min-height: 130px;
+  resize: vertical;
+  border: 1px solid rgba(217, 203, 165, 0.9);
+  border-radius: 18px;
+  background: #fffdf7;
+  padding: 14px 16px;
+  color: #17120d;
+  font: inherit;
+  line-height: 1.45;
+  outline: none;
+}
+
+.errorText {
+  color: #b14646;
+  font-weight: 800;
+  text-align: center;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;
@@ -490,12 +792,19 @@
 @media (max-width: 900px) {
   .headline,
   .infoGrid,
-  .detailGrid {
+  .detailGrid,
+  .reviewHeader,
+  .reviewSummaryHeader,
+  .reviewSummaryGrid {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .priceBlock {
     text-align: left;
+  }
+
+  .reviewSteps {
+    justify-content: flex-start;
   }
 }
 
@@ -516,6 +825,33 @@
     padding: 18px;
   }
 
+  .reviewSteps {
+    flex-direction: column;
+  }
+
+  .reviewStep {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .reviewStage {
+    padding: 20px 14px;
+  }
+
+  .tipCounter {
+    gap: 12px;
+  }
+
+  .tipCounter button {
+    width: 54px;
+    height: 54px;
+  }
+
+  .tipCounter strong {
+    min-width: 0;
+    font-size: clamp(2.5rem, 14vw, 3.2rem);
+  }
+
   .metaList {
     grid-template-columns: 1fr;
   }
@@ -526,6 +862,10 @@
   }
 
   .actions {
+    flex-direction: column;
+  }
+
+  .reviewActions {
     flex-direction: column;
   }
 

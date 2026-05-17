@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { Meal } from '../meals/meal.entity';
 import { Payment } from '../payments/payment.entity';
+import { Review } from '../reviews/review.entity';
 import { Utilisateur } from '../users/users.entity';
 
 export enum BookingStatus {
@@ -98,6 +99,11 @@ export class Booking {
     nullable: true,
   })
   payment!: Payment | null;
+
+  @OneToOne(() => Review, (review) => review.booking, {
+    nullable: true,
+  })
+  review!: Review | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
