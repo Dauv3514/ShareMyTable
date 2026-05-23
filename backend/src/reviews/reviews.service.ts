@@ -22,6 +22,22 @@ type ReviewResponse = {
   createdAt: Date;
 };
 
+type PublicHostReviewResponse = {
+  id: number;
+  rating: number;
+  comment: string | null;
+  createdAt: Date;
+  mealId: number;
+  mealTitle: string | null;
+  author: {
+    userId: number;
+    pseudo: string | null;
+    firstName: string;
+    lastName: string;
+    profilePhotoUrl: string | null;
+  };
+};
+
 type TipResponse = {
   id: number;
   bookingId: number;
@@ -63,6 +79,50 @@ export class ReviewsService {
     };
   }
 
+  async findPublicReviewsForHost(
+    hostUserId: number,
+    limit = 12,
+  ): Promise<PublicHostReviewResponse[]> {
+    const normalizedLimit = Math.min(30, Math.max(1, limit));
+    const reviews = await this.reviewsRepository.find({
+      where: {
+        booking: {
+          meal: {
+            host: {
+              id: hostUserId,
+            },
+          },
+        },
+      },
+      relations: [
+        'booking',
+        'booking.guestUser',
+        'booking.meal',
+        'booking.meal.host',
+      ],
+      order: {
+        createdAt: 'DESC',
+      },
+      take: normalizedLimit,
+    });
+
+    return reviews.map((review) => ({
+      id: review.id,
+      rating: review.rating,
+      comment: review.comment,
+      createdAt: review.createdAt,
+      mealId: review.booking.meal.id,
+      mealTitle: review.booking.meal.title,
+      author: {
+        userId: review.booking.guestUser.id,
+        pseudo: review.booking.guestUser.pseudo,
+        firstName: review.booking.guestUser.firstName,
+        lastName: review.booking.guestUser.lastName,
+        profilePhotoUrl: review.booking.guestUser.profilePhotoUrl,
+      },
+    }));
+  }
+
   async createForBooking(
     userId: number,
     bookingId: number,
@@ -81,7 +141,9 @@ export class ReviewsService {
     });
 
     if (existingReview) {
-      throw new BadRequestException('Un avis existe deja pour cette reservation.');
+      throw new BadRequestException(
+        'Un avis existe deja pour cette reservation.',
+      );
     }
 
     const review = await this.reviewsRepository.save(

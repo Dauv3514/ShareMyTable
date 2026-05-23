@@ -39,7 +39,13 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
     notFound();
   }
 
-  const { event, hostProfile } = payload;
+  const { event, hostProfile, hostReviews } = payload;
+  const displayedReviews = hostReviews.slice(0, 6);
+  const hostReviewCount = hostReviews.length > 0 ? hostReviews.length : hostProfile.reviewCount;
+  const hostAverageRating =
+    hostReviews.length > 0
+      ? hostReviews.reduce((total, review) => total + review.rating, 0) / hostReviews.length
+      : hostProfile.rating;
 
   const selectedFilterDefinitions = event.filters
     .map((filterId) => getMealFilterById(filterId))
@@ -184,13 +190,21 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
 
               <h2>{hostProfile.name}</h2>
 
-              <div className={styles.hostRating} aria-label={`Note ${hostProfile.rating} sur 5`}>
+              <div className={styles.hostRating} aria-label={`Note ${hostAverageRating.toFixed(1)} sur 5`}>
                 {Array.from({ length: 5 }).map((_, index) => (
-                  <Star key={index} fill="currentColor" />
+                  <Star
+                    key={index}
+                    className={
+                      index < Math.round(hostAverageRating)
+                        ? styles.starFilled
+                        : styles.starEmpty
+                    }
+                    fill={index < Math.round(hostAverageRating) ? "currentColor" : "none"}
+                  />
                 ))}
               </div>
 
-              <p>{hostProfile.reviewCount} avis</p>
+              <p>{hostReviewCount} avis</p>
             </article>
 
             <div className={styles.hostContent}>
@@ -201,13 +215,16 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                 <blockquote className={styles.hostQuote}>
                   {hostProfile.quote}
                 </blockquote>
+                <span className={styles.hostQuoteMarkEnd} aria-hidden="true">
+                  &rdquo;
+                </span>
               </div>
 
               <Link
                 href={buildHostProfileHref(hostProfile.id)}
                 className={styles.hostProfileLink}
               >
-                <span>Voir le profil</span>
+                <span>Voir le profil de l&apos;hôte</span>
                 <span className={styles.detailChevron} aria-hidden="true" />
               </Link>
             </div>
@@ -238,6 +255,62 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                 </section>
               ))}
             </div>
+          </section>
+
+          <section className={styles.reviewsSection} aria-label="Avis">
+            <div className={styles.reviewsHead}>
+              <h2>Avis</h2>
+              <Link
+                href={`${buildHostProfileHref(hostProfile.id)}#avis`}
+                className={styles.reviewsAllLink}
+              >
+                <span>Voir tous</span>
+                <span className={styles.detailChevron} aria-hidden="true" />
+              </Link>
+            </div>
+
+            {displayedReviews.length > 0 ? (
+              <div className={styles.reviewsScroller}>
+                {displayedReviews.map((review) => (
+                  <article key={review.id} className={styles.reviewCard}>
+                    <div className={styles.reviewAuthor}>
+                      <span className={styles.reviewAvatarFrame}>
+                        <UserAvatar
+                          src={review.authorPhotoUrl}
+                          alt={review.author}
+                          size={58}
+                        />
+                      </span>
+                      <div>
+                        <strong>{review.author}</strong>
+                        <span>{review.eventTitle}</span>
+                      </div>
+                    </div>
+
+                    <div className={styles.reviewMeta}>
+                      <div className={styles.reviewStars} aria-label={`Note ${review.rating} sur 5`}>
+                        {Array.from({ length: 5 }).map((_, index) => (
+                          <Star
+                            key={index}
+                            className={
+                              index < review.rating ? styles.starFilled : styles.starEmpty
+                            }
+                            fill={index < review.rating ? "currentColor" : "none"}
+                          />
+                        ))}
+                      </div>
+                      <time>{review.dateLabel}</time>
+                    </div>
+
+                    <p>{review.comment}</p>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p className={styles.reviewsEmpty}>
+                Les avis laissés après les repas de cet hôte apparaîtront ici.
+              </p>
+            )}
           </section>
 
           <EventDietaryPreferenceSection

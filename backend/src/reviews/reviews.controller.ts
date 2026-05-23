@@ -19,6 +19,11 @@ import { ReviewsService } from './reviews.service';
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
+  @Get('hosts/:hostId')
+  async getPublicHostReviews(@Param('hostId', ParseIntPipe) hostId: number) {
+    return this.reviewsService.findPublicReviewsForHost(hostId);
+  }
+
   @UseGuards(AuthGuard)
   @Get('bookings/:bookingId')
   async getReviewState(

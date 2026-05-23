@@ -72,6 +72,7 @@ type PublicHostProfileResponse = HostProfileResponse & {
   stats: {
     publishedMealsCount: number;
     completedMealsCount: number;
+    organizedMealsCount: number;
   };
 };
 
@@ -388,7 +389,8 @@ export class HostProfilesService {
       throw new NotFoundException('Profil hote public introuvable');
     }
 
-    const [publishedMealsCount, completedMealsCount] = await Promise.all([
+    const [publishedMealsCount, completedMealsCount, organizedMealsCount] =
+      await Promise.all([
       this.mealsRepository.count({
         where: {
           host: { id: userId },
@@ -399,6 +401,11 @@ export class HostProfilesService {
         where: {
           host: { id: userId },
           status: MealStatus.DONE,
+        },
+      }),
+      this.mealsRepository.count({
+        where: {
+          host: { id: userId },
         },
       }),
     ]);
@@ -417,6 +424,7 @@ export class HostProfilesService {
       stats: {
         publishedMealsCount,
         completedMealsCount,
+        organizedMealsCount,
       },
     };
   }
