@@ -65,7 +65,8 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
                 </span>
                 <span>
                   <Star fill="currentColor" />
-                  {host.rating.toFixed(1)} · {host.reviewCount} avis
+                  {host.reviewCount > 0 ? host.rating.toFixed(1) : "Nouveau"} ·{" "}
+                  {host.reviewCount} avis
                 </span>
               </div>
             </div>
@@ -103,7 +104,7 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
         </div>
       </section>
 
-      <section className={styles.reviews}>
+      <section className={styles.reviews} id="avis">
         <div className={styles.sectionHead}>
           <div>
             <p className={styles.eyebrow}>Avis</p>
@@ -112,25 +113,37 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
         </div>
 
         <div className={styles.reviewGrid}>
-          {host.reviews.map((review) => (
-            <article key={review.id} className={styles.reviewCard}>
-              <div className={styles.reviewHead}>
-                <div>
-                  <strong>{review.author}</strong>
-                  <span>{review.dateLabel}</span>
+          {host.reviews.length > 0 ? (
+            host.reviews.map((review) => (
+              <article key={review.id} className={styles.reviewCard}>
+                <div className={styles.reviewHead}>
+                  <div>
+                    <strong>{review.author}</strong>
+                    <span>{review.dateLabel}</span>
+                  </div>
+
+                  <div className={styles.reviewStars} aria-label={`Note ${review.rating} sur 5`}>
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <Star
+                        key={index}
+                        className={
+                          index < review.rating ? styles.starFilled : styles.starEmpty
+                        }
+                        fill={index < review.rating ? "currentColor" : "none"}
+                      />
+                    ))}
+                  </div>
                 </div>
 
-                <div className={styles.reviewStars} aria-label={`Note ${review.rating} sur 5`}>
-                  {Array.from({ length: 5 }).map((_, index) => (
-                    <Star key={index} fill="currentColor" />
-                  ))}
-                </div>
-              </div>
-
-              <p>{review.comment}</p>
-              <span className={styles.reviewEvent}>Repas : {review.eventTitle}</span>
-            </article>
-          ))}
+                <p>{review.comment}</p>
+                <span className={styles.reviewEvent}>Repas : {review.eventTitle}</span>
+              </article>
+            ))
+          ) : (
+            <p className={styles.emptyReviews}>
+              Les avis laissés après les repas de cet hôte apparaîtront ici.
+            </p>
+          )}
         </div>
       </section>
 

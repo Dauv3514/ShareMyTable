@@ -56,6 +56,23 @@ type BookingResponse = {
   cancellationPolicyLabel: string;
   houseRules: string[];
   reminderLabels: string[];
+  canReview: boolean;
+  hasReview: boolean;
+  review: {
+    id: number;
+    bookingId: number;
+    rating: number;
+    comment: string | null;
+    createdAt: Date;
+    tip: {
+      id: number;
+      amountCents: number;
+      paymentId: string | null;
+      status: string;
+      paidAt: Date | null;
+      createdAt: Date;
+    } | null;
+  } | null;
 };
 
 type HostBookingGuestResponse = {
@@ -187,7 +204,14 @@ export class BookingsService {
   async findMine(userId: number): Promise<BookingResponse[]> {
     const bookings = await this.bookingsRepository.find({
       where: { guestUser: { id: userId } },
-      relations: ['guestUser', 'meal', 'meal.host', 'meal.host.hostProfile'],
+      relations: [
+        'guestUser',
+        'meal',
+        'meal.host',
+        'meal.host.hostProfile',
+        'review',
+        'review.tip',
+      ],
       order: { createdAt: 'DESC' },
     });
 
@@ -364,7 +388,14 @@ export class BookingsService {
   ): Promise<Booking> {
     const booking = await this.bookingsRepository.findOne({
       where: { id: bookingId, guestUser: { id: userId } },
-      relations: ['guestUser', 'meal', 'meal.host', 'meal.host.hostProfile'],
+      relations: [
+        'guestUser',
+        'meal',
+        'meal.host',
+        'meal.host.hostProfile',
+        'review',
+        'review.tip',
+      ],
     });
 
     if (!booking) {
@@ -428,7 +459,14 @@ export class BookingsService {
           bookingStatus: BookingStatus.COMPLETED,
         },
       ],
-      relations: ['guestUser', 'meal', 'meal.host', 'meal.host.hostProfile'],
+      relations: [
+        'guestUser',
+        'meal',
+        'meal.host',
+        'meal.host.hostProfile',
+        'review',
+        'review.tip',
+      ],
       order: { createdAt: 'DESC' },
     });
   }
@@ -518,7 +556,48 @@ export class BookingsService {
         "Annulation gratuite jusqu'a 48h avant, puis retenue partielle.",
       houseRules: this.buildHouseRules(booking.meal, hostProfile),
       reminderLabels: ['Rappel automatique J-3', 'Rappel automatique J-1'],
+      canReview: this.canReviewBooking(booking) && !booking.review,
+      hasReview: Boolean(booking.review),
+      review: this.toReviewResponse(booking),
     };
+  }
+
+  private toReviewResponse(booking: Booking): BookingResponse['review'] {
+    const review = booking.review ?? null;
+
+    if (!review) {
+      return null;
+    }
+
+    const tip = review.tip ?? null;
+
+    return {
+      id: review.id,
+      bookingId: booking.id,
+      rating: review.rating,
+      comment: review.comment,
+      createdAt: review.createdAt,
+      tip: tip
+        ? {
+            id: tip.id,
+            amountCents: tip.amountCents,
+            paymentId: tip.paymentId,
+            status: tip.status,
+            paidAt: tip.paidAt,
+            createdAt: tip.createdAt,
+          }
+        : null,
+    };
+  }
+
+  private canReviewBooking(booking: Booking): boolean {
+    const mealIsPast = booking.meal.dateTime.getTime() <= Date.now();
+    const isConfirmedOrCompleted = [
+      BookingStatus.CONFIRMED,
+      BookingStatus.COMPLETED,
+    ].includes(booking.bookingStatus);
+
+    return mealIsPast && isConfirmedOrCompleted;
   }
 
   private toHostMealBookingSummaryResponse(

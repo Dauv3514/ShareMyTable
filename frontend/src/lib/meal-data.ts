@@ -70,6 +70,23 @@ type ApiPublicHostProfile = {
   stats: {
     publishedMealsCount: number;
     completedMealsCount: number;
+    organizedMealsCount?: number;
+  };
+};
+
+type ApiPublicHostReview = {
+  id: number;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+  mealId: number;
+  mealTitle: string | null;
+  author: {
+    userId: number;
+    pseudo: string | null;
+    firstName: string;
+    lastName: string;
+    profilePhotoUrl: string | null;
   };
 };
 
@@ -81,6 +98,7 @@ type MealQueryParams = {
 type EventDetailPayload = {
   event: MealEvent;
   hostProfile: HostProfile;
+  hostReviews: HostReview[];
 };
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -362,11 +380,50 @@ function mapApiHostToProfile(apiHost: ApiPublicHostProfile): HostProfile {
     reviewCount: fallbackHost.reviewCount,
     rating: fallbackHost.rating,
     completedEvents:
+      apiHost.stats.organizedMealsCount ||
       apiHost.stats.completedMealsCount ||
       apiHost.stats.publishedMealsCount ||
       fallbackHost.completedEvents,
     responseRate: fallbackHost.responseRate,
     reviews: fallbackHost.reviews as HostReview[],
+  };
+}
+
+function mapApiReviewToHostReview(review: ApiPublicHostReview): HostReview {
+  return {
+    id: String(review.id),
+    author: buildHostName({
+      firstName: review.author.firstName,
+      lastName: review.author.lastName,
+      pseudo: review.author.pseudo,
+      fallback: "Invité",
+    }),
+    authorPhotoUrl: review.author.profilePhotoUrl,
+    rating: review.rating,
+    dateLabel: format(new Date(review.createdAt), "dd/MM", { locale: fr }),
+    comment: review.comment?.trim() || "Avis sans commentaire.",
+    eventTitle: review.mealTitle?.trim() || "Repas",
+  };
+}
+
+function applyReviewsToHostProfile(profile: HostProfile, reviews: HostReview[]) {
+  if (reviews.length === 0) {
+    return {
+      ...profile,
+      reviewCount: 0,
+      rating: 0,
+      reviews: [],
+    };
+  }
+
+  const averageRating =
+    reviews.reduce((total, review) => total + review.rating, 0) / reviews.length;
+
+  return {
+    ...profile,
+    reviewCount: reviews.length,
+    rating: averageRating,
+    reviews,
   };
 }
 
@@ -385,6 +442,11 @@ async function fetchMealById(eventId: string | number) {
 
 async function fetchPublicHostProfile(hostId: string | number) {
   return fetchJson<ApiPublicHostProfile>(`/host-profiles/public/user/${hostId}`);
+}
+
+async function fetchPublicHostReviews(hostId: string | number) {
+  const reviews = await fetchJson<ApiPublicHostReview[]>(`/reviews/hosts/${hostId}`);
+  return reviews?.map(mapApiReviewToHostReview) ?? [];
 }
 
 export type { HostProfile, HostReview, MealEvent };
@@ -431,7 +493,9 @@ export async function getHostProfileById(hostId: string) {
   const apiHost = await fetchPublicHostProfile(hostId);
 
   if (apiHost) {
-    return mapApiHostToProfile(apiHost);
+    const profile = mapApiHostToProfile(apiHost);
+    const reviews = await fetchPublicHostReviews(hostId);
+    return applyReviewsToHostProfile(profile, reviews);
   }
 
   const numericId = Number.parseInt(hostId, 10);
@@ -451,6 +515,7 @@ export async function getEventDetailPayload(eventId: string): Promise<EventDetai
     return {
       event: fallbackEvent,
       hostProfile: await getHostProfileById(fallbackEvent.hostId),
+      hostReviews: pickFallbackHost(fallbackEvent.hostId).reviews,
     };
   }
 
@@ -459,6 +524,7 @@ export async function getEventDetailPayload(eventId: string): Promise<EventDetai
   return {
     event: mapMealToEvent(meal, { hostProfile }),
     hostProfile,
+    hostReviews: hostProfile.reviews,
   };
 }
 

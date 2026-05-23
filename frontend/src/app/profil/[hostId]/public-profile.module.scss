@@ -203,6 +203,7 @@
 
 .reviews {
   margin-top: 22px;
+  scroll-margin-top: 120px;
   display: grid;
   gap: 14px;
 }
@@ -280,8 +281,15 @@
 .reviewStars svg {
   width: 16px;
   height: 16px;
-  fill: currentColor;
   stroke-width: 1.5;
+}
+
+.starFilled {
+  fill: currentColor;
+}
+
+.starEmpty {
+  fill: none;
 }
 
 .reviewCard p {
@@ -296,6 +304,18 @@
   color: #8b7c47;
   font-size: 12px;
   line-height: 1.2;
+  font-weight: 700;
+}
+
+.emptyReviews {
+  margin: 0;
+  padding: 20px;
+  border: 1px solid #e3d8b9;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #fffdf7 0%, #fbf7ed 100%);
+  color: #332a17;
+  font-size: 15px;
+  line-height: 1.45;
   font-weight: 700;
 }
 

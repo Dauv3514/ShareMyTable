@@ -48,6 +48,7 @@ export type MealDietaryPreferenceGroup = {
 export type HostReview = {
   id: string;
   author: string;
+  authorPhotoUrl?: string | null;
   rating: number;
   dateLabel: string;
   comment: string;
