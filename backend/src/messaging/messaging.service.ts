@@ -87,14 +87,18 @@ export class MessagingService {
       ],
     });
 
-    const conversations = memberships
+    const conversations = await this.mergeDuplicateVisibleDirectConversations(
+      memberships
       .map((membership) => membership.conversation)
       .filter(
         (conversation, index, allConversations) =>
           allConversations.findIndex(
             (currentConversation) => currentConversation.id === conversation.id,
           ) === index,
-      )
+      ),
+    );
+
+    conversations
       .sort(
         (firstConversation, secondConversation) =>
           secondConversation.updatedAt.getTime() -
@@ -177,23 +181,19 @@ export class MessagingService {
       );
     }
 
-    const existingConversation = await this.findPairConversation(
-      meal.id,
-      MessageConversationType.BOOKING_DIRECT,
-      [meal.host.id, guest.id],
-    );
-
-    const conversation =
-      existingConversation ??
-      (await this.createConversationWithMembers({
-        type: MessageConversationType.BOOKING_DIRECT,
-        meal,
-        title: meal.title ? `Reservation - ${meal.title}` : 'Reservation',
-        members: [
-          { user: meal.host, role: MessageConversationMemberRole.HOST },
-          { user: guest, role: MessageConversationMemberRole.GUEST },
-        ],
-      }));
+    const conversation = await this.ensurePairConversation({
+      meal,
+      targetType: MessageConversationType.BOOKING_DIRECT,
+      reusableTypes: [
+        MessageConversationType.MEAL_DIRECT,
+        MessageConversationType.BOOKING_DIRECT,
+      ],
+      title: meal.title ? `Reservation - ${meal.title}` : 'Reservation',
+      members: [
+        { user: meal.host, role: MessageConversationMemberRole.HOST },
+        { user: guest, role: MessageConversationMemberRole.GUEST },
+      ],
+    });
 
     return this.toConversationSummary(conversation, null);
   }
@@ -232,7 +232,7 @@ export class MessagingService {
     const mealGroupConversation =
       acceptedUsers.length >= 2
         ? await this.syncMealGroupConversation(meal, acceptedUsers)
-        : null;
+        : await this.removeMealGroupConversation(meal.id);
 
     const pairConversationIds = await this.syncPairConversations(meal, acceptedUsers);
 
@@ -302,20 +302,13 @@ export class MessagingService {
         const pairUserIds = [firstUser.id, secondUser.id].sort((a, b) => a - b);
         requiredPairKeys.add(pairUserIds.join(':'));
 
-        const existingConversation = await this.findPairConversation(
-          meal.id,
-          MessageConversationType.MEAL_DIRECT,
-          pairUserIds,
-        );
-
-        if (existingConversation) {
-          pairConversationIds.push(existingConversation.id);
-          continue;
-        }
-
-        const createdConversation = await this.createConversationWithMembers({
-          type: MessageConversationType.MEAL_DIRECT,
+        const conversation = await this.ensurePairConversation({
           meal,
+          targetType: MessageConversationType.MEAL_DIRECT,
+          reusableTypes: [
+            MessageConversationType.MEAL_DIRECT,
+            MessageConversationType.BOOKING_DIRECT,
+          ],
           title: meal.title ? `Participants - ${meal.title}` : 'Conversation participants',
           members: pairUserIds.map((userId) => {
             const user = acceptedUsers.find(
@@ -336,7 +329,7 @@ export class MessagingService {
           }),
         });
 
-        pairConversationIds.push(createdConversation.id);
+        pairConversationIds.push(conversation.id);
       }
     }
 
@@ -362,6 +355,198 @@ export class MessagingService {
     }
 
     return pairConversationIds;
+  }
+
+  private async ensurePairConversation(params: {
+    meal: Meal;
+    targetType: MessageConversationType.BOOKING_DIRECT | MessageConversationType.MEAL_DIRECT;
+    reusableTypes: Array<
+      MessageConversationType.BOOKING_DIRECT | MessageConversationType.MEAL_DIRECT
+    >;
+    title: string | null;
+    members: Array<{
+      user: Utilisateur;
+      role: MessageConversationMemberRole;
+    }>;
+  }): Promise<MessageConversation> {
+    const pairUserIds = params.members
+      .map((member) => member.user.id)
+      .sort((firstUserId, secondUserId) => firstUserId - secondUserId);
+    const existingConversations = await this.findPairConversations(
+      params.meal.id,
+      params.reusableTypes,
+      pairUserIds,
+    );
+
+    if (existingConversations.length === 0) {
+      return this.createConversationWithMembers({
+        type: params.targetType,
+        meal: params.meal,
+        title: params.title,
+        members: params.members,
+      });
+    }
+
+    const canonicalConversation = this.pickCanonicalPairConversation(
+      existingConversations,
+      params.targetType,
+    );
+    const nextType =
+      canonicalConversation.type === MessageConversationType.MEAL_DIRECT
+        ? canonicalConversation.type
+        : params.targetType;
+    const nextTitle =
+      nextType === params.targetType ? params.title : canonicalConversation.title;
+
+    if (
+      canonicalConversation.type !== nextType ||
+      canonicalConversation.title !== nextTitle
+    ) {
+      canonicalConversation.type = nextType;
+      canonicalConversation.title = nextTitle;
+      await this.conversationsRepository.save(canonicalConversation);
+    }
+
+    await this.syncConversationMembers(canonicalConversation, params.members);
+    await this.mergeDuplicatePairConversations(
+      canonicalConversation,
+      existingConversations.filter(
+        (conversation) => conversation.id !== canonicalConversation.id,
+      ),
+    );
+
+    return this.conversationsRepository.findOneOrFail({
+      where: { id: canonicalConversation.id },
+      relations: ['meal', 'meal.host', 'members', 'members.user'],
+    });
+  }
+
+  private async mergeDuplicateVisibleDirectConversations(
+    conversations: MessageConversation[],
+  ): Promise<MessageConversation[]> {
+    const conversationIdsToRemove = new Set<number>();
+    const directConversationsByPair = new Map<string, MessageConversation[]>();
+
+    for (const conversation of conversations) {
+      if (
+        !conversation.meal ||
+        conversation.type === MessageConversationType.MEAL_GROUP ||
+        conversation.members.length !== 2
+      ) {
+        continue;
+      }
+
+      const pairKey = this.buildPairKey(conversation);
+      const pairConversations = directConversationsByPair.get(pairKey) ?? [];
+      pairConversations.push(conversation);
+      directConversationsByPair.set(pairKey, pairConversations);
+    }
+
+    for (const pairConversations of directConversationsByPair.values()) {
+      if (pairConversations.length <= 1) {
+        continue;
+      }
+
+      const canonicalConversation = this.pickCanonicalPairConversation(
+        pairConversations,
+        MessageConversationType.MEAL_DIRECT,
+      );
+      const duplicateConversations = pairConversations.filter(
+        (conversation) => conversation.id !== canonicalConversation.id,
+      );
+
+      await this.mergeDuplicatePairConversations(
+        canonicalConversation,
+        duplicateConversations,
+      );
+
+      for (const duplicateConversation of duplicateConversations) {
+        conversationIdsToRemove.add(duplicateConversation.id);
+      }
+    }
+
+    return conversations.filter(
+      (conversation) => !conversationIdsToRemove.has(conversation.id),
+    );
+  }
+
+  private pickCanonicalPairConversation(
+    conversations: MessageConversation[],
+    preferredType: MessageConversationType,
+  ): MessageConversation {
+    return [...conversations].sort((firstConversation, secondConversation) => {
+      const firstTypeScore = firstConversation.type === preferredType ? 1 : 0;
+      const secondTypeScore = secondConversation.type === preferredType ? 1 : 0;
+
+      if (firstTypeScore !== secondTypeScore) {
+        return secondTypeScore - firstTypeScore;
+      }
+
+      return (
+        secondConversation.updatedAt.getTime() -
+        firstConversation.updatedAt.getTime()
+      );
+    })[0];
+  }
+
+  private async mergeDuplicatePairConversations(
+    canonicalConversation: MessageConversation,
+    duplicateConversations: MessageConversation[],
+  ): Promise<void> {
+    let shouldUpdateCanonicalConversation = false;
+
+    for (const duplicateConversation of duplicateConversations) {
+      if (
+        duplicateConversation.updatedAt.getTime() >
+        canonicalConversation.updatedAt.getTime()
+      ) {
+        canonicalConversation.updatedAt = duplicateConversation.updatedAt;
+        shouldUpdateCanonicalConversation = true;
+      }
+
+      await this.messagesRepository
+        .createQueryBuilder()
+        .update(MessageEntry)
+        .set({ conversation: canonicalConversation })
+        .where('conversation_id = :conversationId', {
+          conversationId: duplicateConversation.id,
+        })
+        .execute();
+
+      await this.conversationsRepository.remove(duplicateConversation);
+    }
+
+    if (shouldUpdateCanonicalConversation) {
+      await this.conversationsRepository.save(canonicalConversation);
+    }
+  }
+
+  private buildPairKey(conversation: MessageConversation): string {
+    const mealId = conversation.meal?.id ?? 'no-meal';
+    const userIds = conversation.members
+      .map((member) => member.user.id)
+      .sort((firstUserId, secondUserId) => firstUserId - secondUserId)
+      .join(':');
+
+    return `${mealId}:${userIds}`;
+  }
+
+  private async removeMealGroupConversation(
+    mealId: number,
+  ): Promise<MessageConversation | null> {
+    const existingConversation = await this.conversationsRepository.findOne({
+      where: {
+        meal: { id: mealId },
+        type: MessageConversationType.MEAL_GROUP,
+      },
+    });
+
+    if (!existingConversation) {
+      return null;
+    }
+
+    await this.conversationsRepository.remove(existingConversation);
+    return null;
   }
 
   private async syncConversationMembers(
@@ -438,21 +623,20 @@ export class MessagingService {
     });
   }
 
-  private async findPairConversation(
+  private async findPairConversations(
     mealId: number,
-    type: MessageConversationType,
+    types: MessageConversationType[],
     userIds: number[],
-  ): Promise<MessageConversation | null> {
+  ): Promise<MessageConversation[]> {
     const candidateConversations = await this.conversationsRepository.find({
       where: {
         meal: { id: mealId },
-        type,
+        type: In(types),
       },
       relations: ['meal', 'meal.host', 'members', 'members.user'],
     });
 
-    return (
-      candidateConversations.find((conversation) => {
+    return candidateConversations.filter((conversation) => {
         const conversationUserIds = conversation.members
           .map((member) => member.user.id)
           .sort((firstUserId, secondUserId) => firstUserId - secondUserId);
@@ -463,8 +647,7 @@ export class MessagingService {
             (conversationUserId, index) => conversationUserId === userIds[index],
           )
         );
-      }) ?? null
-    );
+      });
   }
 
   private async findLatestMessagesByConversationIds(

@@ -3,6 +3,7 @@ import { fr } from "date-fns/locale";
 import { MOCK_HOST_PROFILES } from "./data/mocks/host-profiles";
 import { MOCK_MEAL_EVENTS } from "./data/mocks/meal-events";
 import type { HostProfile, HostReview, MealEvent, MealMenuSection } from "./data/types";
+import { getNextImageSrc, sanitizeNextImageSrc } from "./image-src";
 
 type ApiMealHostSummary = {
   userId: number;
@@ -297,11 +298,11 @@ function buildPreferenceGroups(filters: string[], fallback: MealEvent["dietaryPr
 }
 
 function mergeHomePhotos(homePhotoUrl: string | null | undefined, fallbackPhotos: string[]) {
-  if (!homePhotoUrl) {
-    return fallbackPhotos;
-  }
+  const photos = [homePhotoUrl, ...fallbackPhotos]
+    .map((photoUrl) => sanitizeNextImageSrc(photoUrl))
+    .filter((photoUrl): photoUrl is string => Boolean(photoUrl));
 
-  return [homePhotoUrl, ...fallbackPhotos].slice(0, 4);
+  return photos.length > 0 ? photos.slice(0, 4) : [getNextImageSrc(null)];
 }
 
 function mapMealToEvent(

@@ -10,12 +10,16 @@ import "./navbar.scss";
 const navItems = [
   { label: "Rechercher", href: "/rechercher" },
   { label: "Mes repas", href: "/mes-repas" },
-  { label: "Créer un événement", href: "/mes-repas/creer" },
   { label: "Messagerie", href: "/messages" },
 ];
 
 export default function Navbar() {
   const { isLoggedIn, loading, user } = useAuth();
+  const userRole = user?.role?.toUpperCase();
+  const createEventHref =
+    userRole === "HOST" || userRole === "ADMIN"
+      ? "/mes-repas/creer"
+      : "/profil/devenir-hote";
 
   return (
     <header className="navbar">
@@ -38,6 +42,9 @@ export default function Navbar() {
               {item.label}
             </Link>
           ))}
+          <Link href={createEventHref} className="navbar__link">
+            Créer un événement
+          </Link>
         </nav>
 
         {loading && <div className="navbar__auth-placeholder" aria-hidden="true" />}
