@@ -9,7 +9,7 @@ import "./navbar.scss";
 
 const navItems = [
   { label: "Rechercher", href: "/rechercher" },
-  { label: "Mes repas", href: "/mes-repas" },
+  { label: "Mes événements", href: "/mes-evenements" },
   { label: "Messagerie", href: "/messages" },
 ];
 
@@ -18,7 +18,7 @@ export default function Navbar() {
   const userRole = user?.role?.toUpperCase();
   const createEventHref =
     userRole === "HOST" || userRole === "ADMIN"
-      ? "/mes-repas/creer"
+      ? "/mes-evenements/creer"
       : "/profil/devenir-hote";
 
   return (

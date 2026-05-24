@@ -312,7 +312,7 @@ export default function ReservationDetailClient({
               ? reservationError
               : "Cette réservation n'existe pas ou n'est plus disponible."}
           </p>
-          <Link href="/mes-repas" className={styles.primaryButton}>
+          <Link href="/mes-evenements" className={styles.primaryButton}>
             Retour à mes réservations
           </Link>
         </div>
@@ -479,7 +479,7 @@ export default function ReservationDetailClient({
 
         <section className={styles.content}>
           <div className={styles.topBar}>
-            <Link href="/mes-repas" className={styles.backLink}>
+            <Link href="/mes-evenements" className={styles.backLink}>
               <ChevronLeft />
               Retour à mes réservations
             </Link>

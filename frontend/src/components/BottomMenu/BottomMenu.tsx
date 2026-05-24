@@ -10,7 +10,7 @@ import UserAvatar from "../UserAvatar";
 const items = [
   { key: "home", href: "/", icon: "/home.svg", size: 26 },
   { key: "search", href: "/rechercher", icon: "/rechercher.svg", size: 26 },
-  { key: "meals", href: "/mes-repas", icon: "/ramenetapoire.svg", size: 32 },
+  { key: "meals", href: "/mes-evenements", icon: "/ramenetapoire.svg", size: 32 },
   { key: "messages", href: "/messages", icon: "/messages.svg", size: 32 },
 ];
 

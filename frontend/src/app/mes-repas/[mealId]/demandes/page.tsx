@@ -1,15 +1,15 @@
-import HostMealRequestsClient from "./HostMealRequestsClient";
+import { redirect } from "next/navigation";
 
-type HostMealRequestsPageProps = {
+type OldHostMealRequestsPageProps = {
   params: Promise<{
     mealId: string;
   }>;
 };
 
-export default async function HostMealRequestsPage({
+export default async function OldHostMealRequestsPage({
   params,
-}: HostMealRequestsPageProps) {
+}: OldHostMealRequestsPageProps) {
   const { mealId } = await params;
 
-  return <HostMealRequestsClient mealId={mealId} />;
+  redirect(`/mes-evenements/${mealId}/demandes`);
 }

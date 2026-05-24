@@ -1125,7 +1125,7 @@ const ProfilPage = () => {
       description:
         "Ton profil hôte est approuvé. Tu peux maintenant organiser des repas.",
       actionLabel: "Créer un repas",
-      actionHref: "/mes-repas/creer",
+      actionHref: "/mes-evenements/creer",
     };
   }, [hostProfile]);
 

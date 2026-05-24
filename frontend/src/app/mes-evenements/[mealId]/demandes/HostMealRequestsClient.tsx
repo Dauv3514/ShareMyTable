@@ -498,9 +498,9 @@ export default function HostMealRequestsClient({
   if (error || !mealBookings) {
     return (
       <section className={styles.page}>
-        <Link href="/mes-repas" className={styles.backLink}>
+        <Link href="/mes-evenements" className={styles.backLink}>
           <ArrowLeft />
-          Retour à mes repas
+          Retour à mes événements
         </Link>
         <div className={styles.errorCard}>
           <CircleAlert />
@@ -520,9 +520,9 @@ export default function HostMealRequestsClient({
 
   return (
     <section className={styles.page}>
-      <Link href="/mes-repas" className={styles.backLink}>
+      <Link href="/mes-evenements" className={styles.backLink}>
         <ArrowLeft />
-        Retour à mes repas
+        Retour à mes événements
       </Link>
 
       <header className={styles.hero}>

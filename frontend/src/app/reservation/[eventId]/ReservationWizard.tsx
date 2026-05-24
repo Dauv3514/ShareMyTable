@@ -585,7 +585,7 @@ export default function ReservationWizard({
           <Link href="/" className={styles.footerGhostButton}>
             Retour a l&apos;accueil
           </Link>
-          <Link href="/mes-repas" className={styles.footerPrimaryButton}>
+          <Link href="/mes-evenements" className={styles.footerPrimaryButton}>
             Voir mes réservations
           </Link>
         </>
@@ -604,7 +604,7 @@ export default function ReservationWizard({
         >
           Recommencer
         </button>
-        <Link href="/mes-repas" className={styles.footerPrimaryButton}>
+        <Link href="/mes-evenements" className={styles.footerPrimaryButton}>
           Mes réservations
         </Link>
       </>
@@ -820,7 +820,7 @@ export default function ReservationWizard({
                         <li>Paiement bloqué jusqu&apos;à la tenue du repas.</li>
                         <li>Adresse exacte partagée 24h avant.</li>
                         <li>Annulation gratuite jusqu&apos;à 48h avant, puis retenue partielle.</li>
-                        <li>Tu pourras suivre le statut de tes réservations dans Mes repas</li>
+                        <li>Tu pourras suivre le statut de tes réservations dans Mes événements</li>
                       </ul>
                     </div>
                   </div>
