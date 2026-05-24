@@ -34,6 +34,15 @@ import {
   fetchMyUserPreferences,
   updateMyUserPreferences,
 } from "@/lib/user-preferences";
+import {
+  listHostMealBookingSummaries,
+  type HostMealBookingSummary,
+} from "@/lib/host-bookings";
+import {
+  isPastReservation,
+  listGuestReservations,
+  type ReservationItem,
+} from "@/lib/reservations";
 import { useAuth } from "../providers/AuthProvider";
 import styles from "./profil.module.scss";
 
@@ -95,6 +104,21 @@ type HostProfileSummary = {
   rejectionReason: string | null;
 };
 
+type PublicHostReview = {
+  id: number;
+  rating: number;
+};
+
+type ProfileActivityStats = {
+  organizedMeals: number;
+  participatedMeals: number;
+  averageRating: number | null;
+  upcomingReservations: number;
+  guestMealHistory: number;
+  hostedParticipants: number;
+  hostedMealHistory: number;
+};
+
 type PreferenceCategory = "dietary" | "ambiance";
 
 type ExpandablePanel = "profile" | "password" | null;
@@ -134,6 +158,33 @@ const toPreferenceKey = (value: string) =>
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
+
+const EMPTY_ACTIVITY_STATS: ProfileActivityStats = {
+  organizedMeals: 0,
+  participatedMeals: 0,
+  averageRating: null,
+  upcomingReservations: 0,
+  guestMealHistory: 0,
+  hostedParticipants: 0,
+  hostedMealHistory: 0,
+};
+
+const isActiveGuestReservation = (reservation: ReservationItem) =>
+  reservation.status === "pending" || reservation.status === "confirmed";
+
+const isConfirmedGuestReservation = (reservation: ReservationItem) =>
+  reservation.status === "confirmed";
+
+const isPastHostMeal = (meal: HostMealBookingSummary) =>
+  meal.mealStatus === "done" || new Date(meal.mealDateTime).getTime() < Date.now();
+
+const formatAverageRating = (rating: number | null) => {
+  if (rating === null) {
+    return "-";
+  }
+
+  return rating.toFixed(1);
+};
 
 const StatCard = ({
   label,
@@ -859,6 +910,9 @@ const ProfilPage = () => {
   const [preferenceDraft, setPreferenceDraft] = useState("");
   const [activePreferenceModal, setActivePreferenceModal] =
     useState<PreferenceCategory | null>(null);
+  const [activityStats, setActivityStats] =
+    useState<ProfileActivityStats>(EMPTY_ACTIVITY_STATS);
+  const [activityStatsLoading, setActivityStatsLoading] = useState(true);
   const overviewSectionRef = useRef<HTMLElement | null>(null);
   const preferencesSectionRef = useRef<HTMLElement | null>(null);
   const activitySectionRef = useRef<HTMLElement | null>(null);
@@ -977,6 +1031,84 @@ const ProfilPage = () => {
     };
 
     void fetchHostProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn, user, user?.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadActivityStats = async () => {
+      if (!isLoggedIn || !user) {
+        if (!cancelled) {
+          setActivityStats(EMPTY_ACTIVITY_STATS);
+          setActivityStatsLoading(false);
+        }
+        return;
+      }
+
+      setActivityStatsLoading(true);
+
+      const [reservationsResult, hostedMealsResult, hostReviewsResult] =
+        await Promise.allSettled([
+          listGuestReservations(),
+          listHostMealBookingSummaries(),
+          (async () => {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+            if (!apiUrl) {
+              return [] as PublicHostReview[];
+            }
+
+            const response = await axios.get<PublicHostReview[]>(
+              `${apiUrl}/reviews/hosts/${user.id}`,
+            );
+
+            return response.data;
+          })(),
+        ]);
+
+      if (cancelled) {
+        return;
+      }
+
+      const reservations =
+        reservationsResult.status === "fulfilled" ? reservationsResult.value : [];
+      const hostedMeals =
+        hostedMealsResult.status === "fulfilled" ? hostedMealsResult.value : [];
+      const hostReviews =
+        hostReviewsResult.status === "fulfilled" ? hostReviewsResult.value : [];
+
+      const activeGuestReservations = reservations.filter(isActiveGuestReservation);
+      const confirmedGuestReservations = reservations.filter(isConfirmedGuestReservation);
+      const upcomingReservations = activeGuestReservations.filter(
+        (reservation) => !isPastReservation(reservation),
+      ).length;
+      const guestMealHistory = confirmedGuestReservations.filter(isPastReservation).length;
+      const averageRating =
+        hostReviews.length > 0
+          ? hostReviews.reduce((total, review) => total + review.rating, 0) /
+            hostReviews.length
+          : null;
+
+      setActivityStats({
+        organizedMeals: hostedMeals.length,
+        participatedMeals: confirmedGuestReservations.length,
+        averageRating,
+        upcomingReservations,
+        guestMealHistory,
+        hostedParticipants: hostedMeals.reduce(
+          (total, meal) => total + meal.confirmedSeatsCount,
+          0,
+        ),
+        hostedMealHistory: hostedMeals.filter(isPastHostMeal).length,
+      });
+      setActivityStatsLoading(false);
+    };
+
+    void loadActivityStats();
 
     return () => {
       cancelled = true;
@@ -1324,6 +1456,12 @@ const ProfilPage = () => {
     return null;
   }
 
+  const activityValue = (value: number) =>
+    activityStatsLoading ? "..." : String(value);
+  const noteValue = activityStatsLoading
+    ? "..."
+    : formatAverageRating(activityStats.averageRating);
+
   return (
     <section className={styles.page}>
       <div className={styles.layout}>
@@ -1363,9 +1501,15 @@ const ProfilPage = () => {
             </div>
 
             <div className={styles.statsGrid}>
-              <StatCard label="Repas organisés" value="0" />
-              <StatCard label="Repas participés" value="0" />
-              <StatCard label="Note" value="-" />
+              <StatCard
+                label="Repas organisés"
+                value={activityValue(activityStats.organizedMeals)}
+              />
+              <StatCard
+                label="Repas participés"
+                value={activityValue(activityStats.participatedMeals)}
+              />
+              <StatCard label="Note" value={noteValue} />
               <StatCard
                 label="Profil vérifié"
                 value={
@@ -1485,13 +1629,14 @@ const ProfilPage = () => {
                 <ActionRow
                   icon={CalendarDays}
                   label="Réservations à venir"
-                  value="0"
+                  value={activityValue(activityStats.upcomingReservations)}
                   interactive={false}
                 />
                 <ActionRow
                   icon={History}
                   label="Historique de repas"
-                  onClick={() => handlePlaceholderClick("Historique de repas invité")}
+                  value={activityValue(activityStats.guestMealHistory)}
+                  interactive={false}
                 />
               </div>
             </div>
@@ -1502,19 +1647,20 @@ const ProfilPage = () => {
                 <ActionRow
                   icon={UtensilsCrossed}
                   label="Repas organisés"
-                  value="0"
+                  value={activityValue(activityStats.organizedMeals)}
                   interactive={false}
                 />
                 <ActionRow
                   icon={Users}
                   label="Nombre de participants"
-                  value="0"
+                  value={activityValue(activityStats.hostedParticipants)}
                   interactive={false}
                 />
                 <ActionRow
                   icon={History}
                   label="Historique de repas"
-                  onClick={() => handlePlaceholderClick("Historique de repas hôte")}
+                  value={activityValue(activityStats.hostedMealHistory)}
+                  interactive={false}
                 />
               </div>
             </div>
