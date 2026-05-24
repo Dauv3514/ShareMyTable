@@ -966,8 +966,14 @@ export default function ReservationWizard({
                           <h3>Ce qui se passe ensuite</h3>
                           <ul className={styles.noticeList}>
                             <li>{getReservationPaymentLabel(createdReservation.paymentState)}</li>
-                            <li>{createdReservation.addressReleaseLabel}</li>
-                            <li>Tu pourras annuler depuis le détail de réservation.</li>
+                            <li>
+                              Un espace de discussion s&apos;ouvre dans la messagerie pour
+                              échanger directement avec l&apos;hôte.
+                            </li>
+                            <li>
+                              {createdReservation.addressReleaseLabel} depuis le détail de la
+                              réservation.
+                            </li>
                           </ul>
                         </div>
                       </div>

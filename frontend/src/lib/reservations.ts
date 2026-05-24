@@ -1041,7 +1041,7 @@ export function getReservationPaymentLabel(paymentState: ReservationPaymentState
   }
 
   if (paymentState === "awaiting_host") {
-    return "Paiement autorisé, en attente de validation hôte";
+    return "Paiement autorisé, en attente de validation par l'hôte";
   }
 
   return "Paiement remboursé ou autorisation annulée";

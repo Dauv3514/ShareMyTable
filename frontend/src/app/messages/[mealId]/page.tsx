@@ -250,8 +250,8 @@ export default function MealMessagesPage() {
           <div className={styles.stateCard}>
             <h2>Aucune conversation pour ce repas</h2>
             <p>
-              La messagerie de ce repas s&apos;ouvrira quand une reservation
-              donnera acces aux discussions.
+              Apres une reservation, tu pourras echanger ici avec l&apos;hote et
+              les participants de cet evenement.
             </p>
           </div>
         ) : (
