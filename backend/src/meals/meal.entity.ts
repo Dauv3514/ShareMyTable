@@ -4,10 +4,13 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Utilisateur } from '../users/users.entity';
+import { MealMenuItem } from './meal-menu-item.entity';
+import { MealTagAssignment } from './meal-tag-assignment.entity';
 
 export enum MealStatus {
   DRAFT = 'draft',
@@ -20,32 +23,38 @@ export enum MealStatus {
 @Entity('meals')
 export class Meal {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @ManyToOne(() => Utilisateur, { nullable: false, onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'host_id', referencedColumnName: 'id' })
-  host: Utilisateur;
+  host!: Utilisateur;
 
   @Column({ type: 'varchar', length: 120, nullable: true })
-  title: string | null;
+  title!: string | null;
 
   @Column({ name: 'meal_type', type: 'varchar', length: 20, nullable: true })
-  mealType: string | null;
+  mealType!: string | null;
 
   @Column({ name: 'menu_description', type: 'text', nullable: true })
-  menuDescription: string | null;
+  menuDescription!: string | null;
+
+  @OneToMany(() => MealMenuItem, (menuItem) => menuItem.meal)
+  menuItems!: MealMenuItem[];
 
   @Column({ name: 'date_time', type: 'timestamp' })
-  dateTime: Date;
+  dateTime!: Date;
 
   @Column({ name: 'seats_total', type: 'int' })
-  seatsTotal: number;
+  seatsTotal!: number;
 
   @Column({ name: 'price_per_seat_cents', type: 'int' })
-  pricePerSeatCents: number;
+  pricePerSeatCents!: number;
 
   @Column({ name: 'house_rules', type: 'text', nullable: true })
-  houseRules: string | null;
+  houseRules!: string | null;
+
+  @OneToMany(() => MealTagAssignment, (assignment) => assignment.meal)
+  tagAssignments!: MealTagAssignment[];
 
   @Column({
     type: 'enum',
@@ -53,11 +62,11 @@ export class Meal {
     enumName: 'meal_status_enum',
     default: MealStatus.DRAFT,
   })
-  status: MealStatus;
+  status!: MealStatus;
 
   @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
+  updatedAt!: Date;
 }

@@ -1,56 +1,13 @@
-"use client";
-
-import { useEffect, useMemo, useState } from "react";
-import { fetchPublicUserPreferences } from "@/lib/user-preferences";
 import styles from "./event-detail.module.scss";
 
 const uniqueTags = (tags: string[]) => Array.from(new Set(tags.filter(Boolean)));
 
-function usePublicPreferenceTags(
-  hostUserId: string,
-  fallbackTags: string[],
-  type: "dietary" | "ambiance",
-) {
-  const [preferenceTags, setPreferenceTags] = useState<string[] | null>(null);
+export function EventProfileFilters({ tags }: { tags: string[] }) {
+  const displayTags = uniqueTags(tags);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadPreferences = async () => {
-      const preferences = await fetchPublicUserPreferences(hostUserId);
-
-      if (cancelled) {
-        return;
-      }
-
-      setPreferenceTags(
-        type === "ambiance"
-          ? preferences?.ambianceTags ?? null
-          : preferences?.dietaryTags ?? null,
-      );
-    };
-
-    void loadPreferences();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [hostUserId, type]);
-
-  return preferenceTags && preferenceTags.length > 0
-    ? uniqueTags(preferenceTags)
-    : uniqueTags(fallbackTags);
-}
-
-export function EventProfileFilters({
-  hostUserId,
-  fallbackTags,
-}: {
-  hostUserId: string;
-  fallbackTags: string[];
-}) {
-  const publicAmbianceTags = usePublicPreferenceTags(hostUserId, fallbackTags, "ambiance");
-  const displayTags = useMemo(() => publicAmbianceTags, [publicAmbianceTags]);
+  if (displayTags.length === 0) {
+    return null;
+  }
 
   return (
     <div className={styles.filters}>
@@ -63,14 +20,8 @@ export function EventProfileFilters({
   );
 }
 
-export function EventDietaryPreferenceSection({
-  hostUserId,
-  fallbackTags,
-}: {
-  hostUserId: string;
-  fallbackTags: string[];
-}) {
-  const visibleDietaryTags = usePublicPreferenceTags(hostUserId, fallbackTags, "dietary");
+export function EventDietaryPreferenceSection({ tags }: { tags: string[] }) {
+  const visibleDietaryTags = uniqueTags(tags);
 
   if (visibleDietaryTags.length === 0) {
     return null;

@@ -57,6 +57,8 @@ type MealItem = {
   seatsTotal: number;
   pricePerSeatCents: number;
   houseRules: string | null;
+  selectedTagCodes?: string[];
+  selectedFilterIds?: string[];
   status: MealStatus;
   createdAt: string;
   updatedAt: string;
@@ -78,6 +80,17 @@ const ATTENDING_FILTER_OPTIONS: Array<{ key: AttendingFilter; label: string }> =
   { key: "refused", label: "Refusées" },
   { key: "past", label: "Passées" },
 ];
+
+const HOUSE_RULE_TAG_LABELS: Record<string, string> = {
+  arriver_a_l_heure: "Merci d'arriver à l'heure",
+  prevenir_allergie: "Préviens-moi en cas d'allergie",
+  non_fumeur: "Non-fumeur",
+  pas_d_alcool: "Pas d'alcool",
+  pas_d_animaux: "Pas d'animaux",
+  retirer_ses_chaussures: "Retirer ses chaussures",
+  ambiance_calme: "Ambiance calme",
+  accessible_pmr: "Accessible PMR",
+};
 
 function getStatusLabel(status: MealStatus) {
   if (status === "published") return "Publié";
@@ -153,6 +166,14 @@ function getReservationStatusIcon(status: ReturnType<typeof getReservationBadgeS
   return <CircleAlert />;
 }
 
+function getHouseRuleLabels(meal: MealItem) {
+  const selectedTagCodes = meal.selectedTagCodes ?? [];
+
+  return selectedTagCodes
+    .map((tagCode) => HOUSE_RULE_TAG_LABELS[tagCode])
+    .filter((label): label is string => Boolean(label));
+}
+
 type MealCardProps = {
   meal: MealItem;
   footer?: React.ReactNode;
@@ -161,6 +182,8 @@ type MealCardProps = {
 };
 
 function MealCard({ meal, footer, hostLabel, bookingSummary }: MealCardProps) {
+  const houseRuleLabels = getHouseRuleLabels(meal);
+
   return (
     <article className={styles.mealCard}>
       <div className={styles.mealCardMedia}>
@@ -231,10 +254,10 @@ function MealCard({ meal, footer, hostLabel, bookingSummary }: MealCardProps) {
           </div>
         </dl>
 
-        {meal.houseRules ? (
+        {houseRuleLabels.length > 0 ? (
           <div className={styles.rulesBlock}>
             <span>Règles de la maison</span>
-            <p>{meal.houseRules}</p>
+            <p>{houseRuleLabels.join(", ")}</p>
           </div>
         ) : null}
 

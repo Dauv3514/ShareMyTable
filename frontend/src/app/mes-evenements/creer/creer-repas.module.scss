@@ -475,6 +475,8 @@
 
 .field input,
 .field textarea,
+.menuCategoryField select,
+.menuLabelField input,
 .priceField {
   width: 100%;
   border: 1px solid #dfd2af;
@@ -485,6 +487,8 @@
 }
 
 .field input,
+.menuCategoryField select,
+.menuLabelField input,
 .priceField {
   min-height: 56px;
   padding: 0 16px;
@@ -497,6 +501,8 @@
 
 .field input:focus,
 .field textarea:focus,
+.menuCategoryField select:focus,
+.menuLabelField input:focus,
 .priceField:focus-within {
   outline: none;
   border-color: #cab35a;
@@ -535,6 +541,90 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.menuBuilder {
+  display: grid;
+  gap: 12px;
+}
+
+.menuBuilderHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.menuBuilderHead > span,
+.menuCategoryField span,
+.menuLabelField span {
+  color: #5f553d;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.menuItemList {
+  display: grid;
+  gap: 10px;
+}
+
+.menuItemRow {
+  display: grid;
+  grid-template-columns: minmax(132px, 180px) minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.menuCategoryField,
+.menuLabelField {
+  display: grid;
+  gap: 8px;
+}
+
+.menuCategoryField select {
+  appearance: none;
+  cursor: pointer;
+}
+
+.inlineActionButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.inlineActionButton svg {
+  width: 17px;
+  height: 17px;
+}
+
+.iconActionButton {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  border: 1px solid #ded1ad;
+  background: #fffdf6;
+  color: #645938;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.iconActionButton:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.iconActionButton svg {
+  width: 18px;
+  height: 18px;
+}
+
+.menuItemActions {
+  display: flex;
+  gap: 8px;
 }
 
 .filterChip,
@@ -758,6 +848,23 @@
   .formGrid,
   .locationGrid {
     grid-template-columns: 1fr;
+  }
+
+  .menuBuilderHead {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .menuItemRow {
+    grid-template-columns: 1fr;
+  }
+
+  .menuCategoryField {
+    grid-column: auto;
+  }
+
+  .menuItemActions {
+    justify-content: flex-end;
   }
 
   .filterChip,

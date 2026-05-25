@@ -2,6 +2,8 @@
 
 import axios from "axios";
 import {
+  ArrowDown,
+  ArrowUp,
   CalendarDays,
   Check,
   ChevronLeft,
@@ -10,6 +12,8 @@ import {
   CookingPot,
   MapPin,
   NotebookText,
+  Plus,
+  Trash2,
   Users,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
@@ -19,6 +23,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import DatePickerField from "@/components/DatePicker";
 import TimePickerField from "@/components/TimePicker";
+import { MOCK_MEAL_FILTER_GROUPS } from "@/lib/data/mocks/meal-filters";
 import { useAuth } from "../../providers/AuthProvider";
 import styles from "./creer-repas.module.scss";
 
@@ -39,11 +44,39 @@ type MealDetails = {
   title: string | null;
   mealType: string | null;
   menuDescription: string | null;
+  menuItems?: MealMenuItem[];
   dateTime: string;
   seatsTotal: number;
   pricePerSeatCents: number;
   houseRules: string | null;
+  selectedTagCodes?: string[];
+  selectedFilterIds?: string[];
   status: MealStatus;
+};
+
+type MealMenuItemCategory =
+  | "starter"
+  | "main"
+  | "dessert"
+  | "savory"
+  | "sweet"
+  | "drinks"
+  | "snacks"
+  | "sharing"
+  | "breads"
+  | "fruits";
+
+type MealMenuItem = {
+  id?: number;
+  category: MealMenuItemCategory;
+  label: string;
+  position: number;
+};
+
+type MealMenuDraftItem = {
+  localId: string;
+  category: MealMenuItemCategory;
+  label: string;
 };
 
 type MealDraftForm = {
@@ -52,7 +85,7 @@ type MealDraftForm = {
   time: string;
   title: string;
   mealType: string;
-  menuDescription: string;
+  menuItems: MealMenuDraftItem[];
   pricePerSeat: string;
   houseRules: string;
 };
@@ -74,12 +107,62 @@ const MEAL_TYPE_PRESETS = [
   "Petit-dejeuner",
 ] as const;
 
-const HOUSE_RULE_PRESETS = [
-  "Merci d'arriver à l'heure.",
-  "Préviens-moi en cas d'allergie.",
-  "Repas convivial, ambiance détendue.",
-  "Apporte ta bonne humeur.",
+type MealTypePreset = (typeof MEAL_TYPE_PRESETS)[number];
+
+const MENU_CATEGORY_LABELS: Record<MealMenuItemCategory, string> = {
+  starter: "Entrée",
+  main: "Plat",
+  dessert: "Dessert",
+  savory: "Salé",
+  sweet: "Sucré",
+  drinks: "Boissons",
+  snacks: "À grignoter",
+  sharing: "À partager",
+  breads: "Viennoiseries & pains",
+  fruits: "Fruits & accompagnements",
+};
+
+const DEFAULT_MENU_CATEGORY: MealMenuItemCategory = "main";
+
+const MENU_CATEGORIES_BY_MEAL_TYPE: Record<MealTypePreset, MealMenuItemCategory[]> = {
+  Brunch: ["savory", "sweet", "drinks"],
+  Dejeuner: ["starter", "main", "dessert"],
+  Diner: ["starter", "main", "dessert"],
+  Apero: ["snacks", "sharing", "drinks"],
+  Gouter: ["sweet", "fruits", "drinks"],
+  "Petit-dejeuner": ["drinks", "breads", "fruits"],
+};
+
+const ALL_MENU_CATEGORIES = Object.keys(
+  MENU_CATEGORY_LABELS,
+) as MealMenuItemCategory[];
+
+const HOUSE_RULE_TAGS = [
+  { code: "arriver_a_l_heure", label: "Merci d'arriver à l'heure" },
+  { code: "prevenir_allergie", label: "Préviens-moi en cas d'allergie" },
+  { code: "non_fumeur", label: "Non-fumeur" },
+  { code: "pas_d_alcool", label: "Pas d'alcool" },
+  { code: "pas_d_animaux", label: "Pas d'animaux" },
+  { code: "retirer_ses_chaussures", label: "Retirer ses chaussures" },
+  { code: "ambiance_calme", label: "Ambiance calme" },
+  { code: "accessible_pmr", label: "Accessible PMR" },
 ] as const;
+
+type HouseRuleTagCode = (typeof HOUSE_RULE_TAGS)[number]["code"];
+
+const DIETARY_FILTER_GROUP = MOCK_MEAL_FILTER_GROUPS.find(
+  (group) => group.id === "dietary-preferences",
+);
+const AMBIANCE_FILTER_GROUP = MOCK_MEAL_FILTER_GROUPS.find(
+  (group) => group.id === "meal-ambiance",
+);
+const DIETARY_FILTER_IDS = DIETARY_FILTER_GROUP?.filters.map((filter) => filter.id) ?? [];
+const AMBIANCE_FILTER_IDS = AMBIANCE_FILTER_GROUP?.filters.map((filter) => filter.id) ?? [];
+const HOUSE_RULE_TAG_CODES = HOUSE_RULE_TAGS.map((tag) => tag.code);
+const DIETARY_FILTER_HELP_TEXT =
+  "Choisis les régimes et les contraintes de ton repas";
+const AMBIANCE_FILTER_HELP_TEXT =
+  "Choisis les tags qui décrivent l'ambiance que tu proposes autour de la table.";
 
 function formatSelectedDate(value: string) {
   if (!value) {
@@ -107,18 +190,126 @@ function parseSeatsTotal(value: string) {
   return parsedValue;
 }
 
-function appendPreset(existingValue: string, preset: string) {
-  const trimmedExistingValue = existingValue.trim();
+function splitHouseRules(value: string) {
+  const selectedHouseRuleCodes = HOUSE_RULE_TAGS.filter((tag) =>
+    value.includes(tag.label),
+  ).map((tag) => tag.code);
+  const customHouseRules = HOUSE_RULE_TAGS
+    .reduce((remainingValue, tag) => remainingValue.replace(tag.label, ""), value)
+    .replace(/\s+/g, " ")
+    .trim();
 
-  if (!trimmedExistingValue) {
-    return preset;
+  return {
+    selectedHouseRuleCodes,
+    customHouseRules,
+  };
+}
+
+function getMenuCategoriesForMealType(mealType: string) {
+  const matchedMealType = MEAL_TYPE_PRESETS.find((preset) => preset === mealType);
+
+  return matchedMealType
+    ? MENU_CATEGORIES_BY_MEAL_TYPE[matchedMealType]
+    : MENU_CATEGORIES_BY_MEAL_TYPE.Diner;
+}
+
+function getDefaultMenuCategoryForMealType(mealType: string) {
+  return getMenuCategoriesForMealType(mealType)[0] ?? DEFAULT_MENU_CATEGORY;
+}
+
+function normalizeMenuCategoryForMealType(
+  category: MealMenuItemCategory,
+  mealType: string,
+) {
+  const availableCategories = getMenuCategoriesForMealType(mealType);
+
+  return availableCategories.includes(category)
+    ? category
+    : getDefaultMenuCategoryForMealType(mealType);
+}
+
+function isMealMenuItemCategory(value: string): value is MealMenuItemCategory {
+  return ALL_MENU_CATEGORIES.includes(value as MealMenuItemCategory);
+}
+
+function createEmptyMenuItem(
+  category: MealMenuItemCategory = DEFAULT_MENU_CATEGORY,
+): MealMenuDraftItem {
+  const randomId =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random()}`;
+
+  return {
+    localId: randomId,
+    category,
+    label: "",
+  };
+}
+
+function buildDraftMenuItems(
+  menuItems: MealMenuItem[] | undefined,
+  menuDescription: string | null,
+  mealType: string,
+) {
+  if (Array.isArray(menuItems) && menuItems.length > 0) {
+    return [...menuItems]
+      .sort((firstItem, secondItem) => firstItem.position - secondItem.position)
+      .map((item) => ({
+        localId: item.id ? `remote-${item.id}` : createEmptyMenuItem().localId,
+        category: normalizeMenuCategoryForMealType(item.category, mealType),
+        label: item.label,
+      }));
   }
 
-  if (trimmedExistingValue.includes(preset)) {
-    return trimmedExistingValue;
+  const legacyItems = menuDescription
+    ?.split(/[\n.,;:]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  if (legacyItems && legacyItems.length > 0) {
+    return legacyItems.map((label, index) => ({
+      localId: `legacy-${index}-${label}`,
+      category: getDefaultMenuCategoryForMealType(mealType),
+      label,
+    }));
   }
 
-  return `${trimmedExistingValue} ${preset}`;
+  return [createEmptyMenuItem(getDefaultMenuCategoryForMealType(mealType))];
+}
+
+function getFilledMenuItems(menuItems: MealMenuDraftItem[]) {
+  return menuItems
+    .map((item, index) => ({
+      category: item.category,
+      label: item.label.trim(),
+      position: index,
+    }))
+    .filter((item) => item.label.length > 0);
+}
+
+function moveMenuItem(
+  items: MealMenuDraftItem[],
+  itemId: string,
+  direction: -1 | 1,
+) {
+  const currentIndex = items.findIndex((item) => item.localId === itemId);
+  const nextIndex = currentIndex + direction;
+
+  if (currentIndex < 0 || nextIndex < 0 || nextIndex >= items.length) {
+    return items;
+  }
+
+  const nextItems = [...items];
+  const [movedItem] = nextItems.splice(currentIndex, 1);
+  nextItems.splice(nextIndex, 0, movedItem);
+  return nextItems;
+}
+
+function toggleSelectedValue(values: string[], value: string) {
+  return values.includes(value)
+    ? values.filter((selectedValue) => selectedValue !== value)
+    : [...values, value];
 }
 
 function formatStepQueryValue(value: string | null) {
@@ -164,13 +355,16 @@ export default function CreerRepasPage() {
   const [hostProfile, setHostProfile] = useState<HostProfileSummary | null>(null);
   const [hostProfileLoading, setHostProfileLoading] = useState(true);
   const [hostProfileError, setHostProfileError] = useState<string | null>(null);
+  const [selectedHouseRuleCodes, setSelectedHouseRuleCodes] = useState<HouseRuleTagCode[]>([]);
+  const [selectedDietaryFilterIds, setSelectedDietaryFilterIds] = useState<string[]>([]);
+  const [selectedAmbianceFilterIds, setSelectedAmbianceFilterIds] = useState<string[]>([]);
   const [form, setForm] = useState<MealDraftForm>({
     seatsTotal: "1",
     date: "",
     time: "19:30",
     title: "",
     mealType: "Diner",
-    menuDescription: "",
+    menuItems: [createEmptyMenuItem(getDefaultMenuCategoryForMealType("Diner"))],
     pricePerSeat: "18",
     houseRules: "",
   });
@@ -280,16 +474,40 @@ export default function CreerRepasPage() {
 
         const meal = response.data;
         const dateObject = new Date(meal.dateTime);
+        const { selectedHouseRuleCodes: legacyHouseRuleCodes, customHouseRules } =
+          splitHouseRules(meal.houseRules ?? "");
+        const selectedTagCodes = meal.selectedTagCodes ?? meal.selectedFilterIds ?? [];
+        const loadedHouseRuleCodes = selectedTagCodes.filter(
+          (tagCode): tagCode is HouseRuleTagCode =>
+            HOUSE_RULE_TAG_CODES.includes(tagCode as HouseRuleTagCode),
+        );
 
+        setSelectedHouseRuleCodes(
+          Array.from(new Set([...loadedHouseRuleCodes, ...legacyHouseRuleCodes])),
+        );
+        setSelectedDietaryFilterIds(
+          selectedTagCodes.filter((filterId) =>
+            DIETARY_FILTER_IDS.includes(filterId),
+          ),
+        );
+        setSelectedAmbianceFilterIds(
+          selectedTagCodes.filter((filterId) =>
+            AMBIANCE_FILTER_IDS.includes(filterId),
+          ),
+        );
         setForm({
           seatsTotal: String(meal.seatsTotal),
           date: meal.dateTime.split("T")[0] ?? "",
           time: format(dateObject, "HH:mm"),
           title: meal.title ?? "",
           mealType: meal.mealType ?? "Diner",
-          menuDescription: meal.menuDescription ?? "",
+          menuItems: buildDraftMenuItems(
+            meal.menuItems,
+            meal.menuDescription,
+            meal.mealType ?? "Diner",
+          ),
           pricePerSeat: String(meal.pricePerSeatCents / 100),
-          houseRules: meal.houseRules ?? "",
+          houseRules: customHouseRules,
         });
       } catch (error: unknown) {
         const message = axios.isAxiosError(error)
@@ -323,6 +541,14 @@ export default function CreerRepasPage() {
     () => parseSeatsTotal(form.seatsTotal),
     [form.seatsTotal],
   );
+  const menuCategoryOptions = useMemo(
+    () =>
+      getMenuCategoriesForMealType(form.mealType).map((category) => ({
+        value: category,
+        label: MENU_CATEGORY_LABELS[category],
+      })),
+    [form.mealType],
+  );
 
   const locationReady = Boolean(
     hostProfile?.address &&
@@ -344,12 +570,12 @@ export default function CreerRepasPage() {
       seatsTotalValue > 0 &&
       form.title.trim().length > 0 &&
       form.mealType.trim().length > 0 &&
-      form.menuDescription.trim().length > 0 &&
-      form.houseRules.trim().length > 0 &&
+      getFilledMenuItems(form.menuItems).length > 0 &&
+      (selectedHouseRuleCodes.length > 0 || form.houseRules.trim().length > 0) &&
       Number(form.pricePerSeat.replace(",", ".")) >= 0 &&
       Boolean(composedDateTime)
     );
-  }, [composedDateTime, form, locationReady, seatsTotalValue, step]);
+  }, [composedDateTime, form, locationReady, seatsTotalValue, selectedHouseRuleCodes, step]);
 
   const selectedDateLabel = formatSelectedDate(form.date);
 
@@ -414,13 +640,21 @@ export default function CreerRepasPage() {
       const payload = {
         title: form.title.trim(),
         mealType: form.mealType.trim(),
-        menuDescription: form.menuDescription.trim(),
+        menuDescription: getFilledMenuItems(form.menuItems)
+          .map((item) => item.label)
+          .join("\n"),
+        menuItems: getFilledMenuItems(form.menuItems),
         dateTime: composedDateTime.toISOString(),
         seatsTotal: seatsTotalValue,
         pricePerSeatCents: Math.round(
           Number(form.pricePerSeat.replace(",", ".")) * 100,
         ),
         houseRules: form.houseRules.trim(),
+        selectedTagCodes: [
+          ...selectedHouseRuleCodes,
+          ...selectedDietaryFilterIds,
+          ...selectedAmbianceFilterIds,
+        ],
       };
 
       if (editingMealId) {
@@ -824,7 +1058,7 @@ export default function CreerRepasPage() {
                     <CookingPot />
                     <div>
                       <h3>Au menu</h3>
-                      <p>Choisis le type de moment que tu proposes, puis décris le menu.</p>
+                      <p>Choisis le type de moment, puis ajoute les éléments du menu par catégorie.</p>
                     </div>
                   </div>
 
@@ -840,6 +1074,13 @@ export default function CreerRepasPage() {
                           setForm((previousForm) => ({
                             ...previousForm,
                             mealType: preset,
+                            menuItems: previousForm.menuItems.map((item) => ({
+                              ...item,
+                              category: normalizeMenuCategoryForMealType(
+                                item.category,
+                                preset,
+                              ),
+                            })),
                           }))
                         }
                       >
@@ -848,35 +1089,157 @@ export default function CreerRepasPage() {
                     ))}
                   </div>
 
-                  <label className={styles.field}>
-                    <span>Type de repas</span>
-                    <input
-                      type="text"
-                      value={form.mealType}
-                      onChange={(event) =>
-                        setForm((previousForm) => ({
-                          ...previousForm,
-                          mealType: event.target.value,
-                        }))
-                      }
-                      placeholder="Dejeuner, diner, brunch..."
-                    />
-                  </label>
+                  <div className={styles.menuBuilder}>
+                    <div className={styles.menuBuilderHead}>
+                      <span>Éléments du menu</span>
+                      <button
+                        type="button"
+                        className={styles.inlineActionButton}
+                        onClick={() =>
+                          setForm((previousForm) => ({
+                            ...previousForm,
+                            menuItems: [
+                              ...previousForm.menuItems,
+                              createEmptyMenuItem(
+                                previousForm.menuItems[previousForm.menuItems.length - 1]
+                                  ?.category ?? getDefaultMenuCategoryForMealType(
+                                    previousForm.mealType,
+                                  ),
+                              ),
+                            ],
+                          }))
+                        }
+                      >
+                        <Plus aria-hidden="true" />
+                        Ajouter
+                      </button>
+                    </div>
 
-                  <label className={styles.field}>
-                    <span>Description du menu</span>
-                    <textarea
-                      rows={5}
-                      value={form.menuDescription}
-                      onChange={(event) =>
-                        setForm((previousForm) => ({
-                          ...previousForm,
-                          menuDescription: event.target.value,
-                        }))
-                      }
-                      placeholder="Décris les plats, l'ambiance et ce que les invités peuvent attendre."
-                    />
-                  </label>
+                    <div className={styles.menuItemList}>
+                      {form.menuItems.map((menuItem, index) => (
+                        <div key={menuItem.localId} className={styles.menuItemRow}>
+                          <label className={styles.menuCategoryField}>
+                            <span>Catégorie</span>
+                            <select
+                              value={menuItem.category}
+                              onChange={(event) =>
+                                setForm((previousForm) => ({
+                                  ...previousForm,
+                                  menuItems: previousForm.menuItems.map((item) =>
+                                    item.localId === menuItem.localId
+                                      ? {
+                                          ...item,
+                                          category: isMealMenuItemCategory(event.target.value)
+                                            ? event.target.value
+                                            : getDefaultMenuCategoryForMealType(
+                                                previousForm.mealType,
+                                              ),
+                                        }
+                                      : item,
+                                  ),
+                                }))
+                              }
+                            >
+                              {menuCategoryOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+
+                          <label className={styles.menuLabelField}>
+                            <span>Plat ou élément</span>
+                            <input
+                              type="text"
+                              value={menuItem.label}
+                              onChange={(event) =>
+                                setForm((previousForm) => ({
+                                  ...previousForm,
+                                  menuItems: previousForm.menuItems.map((item) =>
+                                    item.localId === menuItem.localId
+                                      ? { ...item, label: event.target.value }
+                                      : item,
+                                  ),
+                                }))
+                              }
+                              placeholder={
+                                index === 0
+                                  ? "Ex. Brochettes"
+                                  : "Ex. Légumes grillés"
+                              }
+                            />
+                          </label>
+
+                          <div className={styles.menuItemActions}>
+                            <button
+                              type="button"
+                              className={styles.iconActionButton}
+                              onClick={() =>
+                                setForm((previousForm) => ({
+                                  ...previousForm,
+                                  menuItems: moveMenuItem(
+                                    previousForm.menuItems,
+                                    menuItem.localId,
+                                    -1,
+                                  ),
+                                }))
+                              }
+                              disabled={index === 0}
+                              aria-label="Monter cet élément du menu"
+                              title="Monter"
+                            >
+                              <ArrowUp aria-hidden="true" />
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.iconActionButton}
+                              onClick={() =>
+                                setForm((previousForm) => ({
+                                  ...previousForm,
+                                  menuItems: moveMenuItem(
+                                    previousForm.menuItems,
+                                    menuItem.localId,
+                                    1,
+                                  ),
+                                }))
+                              }
+                              disabled={index === form.menuItems.length - 1}
+                              aria-label="Descendre cet élément du menu"
+                              title="Descendre"
+                            >
+                              <ArrowDown aria-hidden="true" />
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.iconActionButton}
+                              onClick={() =>
+                                setForm((previousForm) => {
+                                  if (previousForm.menuItems.length === 1) {
+                                    return {
+                                      ...previousForm,
+                                      menuItems: [createEmptyMenuItem(menuItem.category)],
+                                    };
+                                  }
+
+                                  return {
+                                    ...previousForm,
+                                    menuItems: previousForm.menuItems.filter(
+                                      (item) => item.localId !== menuItem.localId,
+                                    ),
+                                  };
+                                })
+                              }
+                              aria-label="Supprimer cet élément du menu"
+                              title="Supprimer"
+                            >
+                              <Trash2 aria-hidden="true" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
                 <div className={styles.formSection}>
@@ -892,19 +1255,26 @@ export default function CreerRepasPage() {
                   </div>
 
                   <div className={styles.chipRow}>
-                    {HOUSE_RULE_PRESETS.map((preset) => (
+                    {HOUSE_RULE_TAGS.map((tag) => (
                       <button
-                        key={preset}
+                        key={tag.code}
                         type="button"
-                        className={styles.filterChip}
+                        className={`${styles.filterChip} ${
+                          selectedHouseRuleCodes.includes(tag.code)
+                            ? styles["filterChip--selected"]
+                            : ""
+                        }`}
+                        aria-pressed={selectedHouseRuleCodes.includes(tag.code)}
                         onClick={() =>
-                          setForm((previousForm) => ({
-                            ...previousForm,
-                            houseRules: appendPreset(previousForm.houseRules, preset),
-                          }))
+                          setSelectedHouseRuleCodes((previousHouseRuleCodes) =>
+                            toggleSelectedValue(
+                              previousHouseRuleCodes,
+                              tag.code,
+                            ) as HouseRuleTagCode[],
+                          )
                         }
                       >
-                        {preset}
+                        {tag.label}
                       </button>
                     ))}
                   </div>
@@ -920,9 +1290,73 @@ export default function CreerRepasPage() {
                           houseRules: event.target.value,
                         }))
                       }
-                      placeholder="Ex. Merci d'arriver a l'heure, prevenir en cas d'allergie, ambiance conviviale."
+                      placeholder="Décris plus précisement les règles ici, si tu le souhaites."
                     />
                   </label>
+                </div>
+
+                <div className={styles.formSection}>
+                  <div className={styles.formSectionHead}>
+                    <NotebookText />
+                    <div>
+                      <h3>{DIETARY_FILTER_GROUP?.title}</h3>
+                      <p>{DIETARY_FILTER_HELP_TEXT}</p>
+                    </div>
+                  </div>
+
+                  <div className={styles.chipRow}>
+                    {DIETARY_FILTER_GROUP?.filters.map((filter) => (
+                      <button
+                        key={filter.id}
+                        type="button"
+                        className={`${styles.filterChip} ${
+                          selectedDietaryFilterIds.includes(filter.id)
+                            ? styles["filterChip--selected"]
+                            : ""
+                        }`}
+                        aria-pressed={selectedDietaryFilterIds.includes(filter.id)}
+                        onClick={() =>
+                          setSelectedDietaryFilterIds((previousFilterIds) =>
+                            toggleSelectedValue(previousFilterIds, filter.id),
+                          )
+                        }
+                      >
+                        {filter.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className={styles.formSection}>
+                  <div className={styles.formSectionHead}>
+                    <Users />
+                    <div>
+                      <h3>{AMBIANCE_FILTER_GROUP?.title}</h3>
+                      <p>{AMBIANCE_FILTER_HELP_TEXT}</p>
+                    </div>
+                  </div>
+
+                  <div className={styles.chipRow}>
+                    {AMBIANCE_FILTER_GROUP?.filters.map((filter) => (
+                      <button
+                        key={filter.id}
+                        type="button"
+                        className={`${styles.filterChip} ${
+                          selectedAmbianceFilterIds.includes(filter.id)
+                            ? styles["filterChip--selected"]
+                            : ""
+                        }`}
+                        aria-pressed={selectedAmbianceFilterIds.includes(filter.id)}
+                        onClick={() =>
+                          setSelectedAmbianceFilterIds((previousFilterIds) =>
+                            toggleSelectedValue(previousFilterIds, filter.id),
+                          )
+                        }
+                      >
+                        {filter.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             ) : null}

@@ -27,6 +27,8 @@ export type MealEvent = {
   host: string;
   variant: "default" | "veggie" | "nearby";
   filters: string[];
+  houseRuleTags?: string[];
+  houseRules?: string | null;
   pricePerPerson: number;
   currentParticipants: number;
   maxParticipants: number;

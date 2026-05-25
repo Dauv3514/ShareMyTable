@@ -29,6 +29,13 @@ const menuIcons = {
   "Entrée": Salad,
   "Plat": UtensilsCrossed,
   "Dessert": Dessert,
+  "Salé": UtensilsCrossed,
+  "Sucré": Dessert,
+  "Boissons": Soup,
+  "À grignoter": UtensilsCrossed,
+  "À partager": UtensilsCrossed,
+  "Viennoiseries & pains": Dessert,
+  "Fruits & accompagnements": Salad,
 } as const;
 
 export default async function EventDetailPage({ params }: EventDetailPageProps) {
@@ -56,6 +63,8 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
   const ambianceFilters = selectedFilterDefinitions
     .filter((filter) => filter.category === "meal-ambiance")
     .map((filter) => filter.label);
+  const houseRuleTags = event.houseRuleTags ?? [];
+  const houseRulesDescription = event.houseRules?.trim() ?? "";
   const participantProfiles = (
     await Promise.all(
       (event.participantProfileIds ?? [])
@@ -134,7 +143,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
             </div>
           </div>
 
-          <EventProfileFilters hostUserId={hostProfile.id} fallbackTags={ambianceFilters} />
+          <EventProfileFilters tags={ambianceFilters} />
 
           <div className={styles.detailActions}>
             <RegisterEventLink
@@ -309,21 +318,32 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
             )}
           </section>
 
-          <EventDietaryPreferenceSection
-            hostUserId={hostProfile.id}
-            fallbackTags={dietaryFilters}
-          />
+          <EventDietaryPreferenceSection tags={dietaryFilters} />
 
-          <section className={styles.rulesSection} aria-label="Règles et conditions">
+          <section className={styles.rulesSection} aria-label="Règles de maisons et conditions">
             <div className={styles.rulesHead}>
-              <h2>Règles et conditions</h2>
+              <h2>Règles de maisons et conditions</h2>
             </div>
 
             <div className={styles.rulesList}>
-              <Link href="#" className={styles.ruleLink}>
-                <span>Règles de la maison</span>
-                <span className={styles.detailChevron} aria-hidden="true" />
-              </Link>
+              {houseRuleTags.length > 0 || houseRulesDescription ? (
+                <section className={styles.hostRulesPanel} aria-label="Informations de l'hôte">
+                  {houseRuleTags.length > 0 ? (
+                    <div className={styles.hostRulesChips}>
+                      {houseRuleTags.map((tag) => (
+                        <span key={tag} className={styles.hostRuleChip}>
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {houseRulesDescription ? (
+                    <p>{houseRulesDescription}</p>
+                  ) : null}
+                </section>
+              ) : null}
+
               <Link href="#" className={styles.ruleLink}>
                 <span>Règlement de l&apos;application</span>
                 <span className={styles.detailChevron} aria-hidden="true" />
