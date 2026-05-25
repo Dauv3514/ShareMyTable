@@ -1,12 +1,30 @@
 import { Type } from 'class-transformer';
 import {
+  IsArray,
   IsDateString,
+  IsEnum,
   IsInt,
   IsOptional,
   IsString,
   MaxLength,
   Min,
+  ValidateNested,
 } from 'class-validator';
+import { MealMenuItemCategory } from '../meal-menu-item.entity';
+
+export class UpdateMealMenuItemDto {
+  @IsEnum(MealMenuItemCategory)
+  category!: MealMenuItemCategory;
+
+  @IsString()
+  @MaxLength(120)
+  label!: string;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  position!: number;
+}
 
 export class UpdateMealDto {
   @IsOptional()
@@ -22,6 +40,12 @@ export class UpdateMealDto {
   @IsOptional()
   @IsString()
   menuDescription?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => UpdateMealMenuItemDto)
+  menuItems?: UpdateMealMenuItemDto[];
 
   @IsOptional()
   @IsDateString()
@@ -42,4 +66,9 @@ export class UpdateMealDto {
   @IsOptional()
   @IsString()
   houseRules?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  selectedTagCodes?: string[];
 }

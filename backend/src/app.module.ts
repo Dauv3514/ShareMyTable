@@ -12,6 +12,7 @@ import { HostProfilesModule } from './host-profiles/host-profiles.module';
 import { MealsModule } from './meals/meals.module';
 import { PaymentsModule } from './payments/payments.module';
 import { MessagingModule } from './messaging/messaging.module';
+import { NewsletterSubscriptionsModule } from './newsletter-subscriptions/newsletter-subscriptions.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { UsersModule } from './users/users.module';
 
@@ -35,6 +36,7 @@ dotenv.config();
     BookingsModule,
     PaymentsModule,
     MessagingModule,
+    NewsletterSubscriptionsModule,
     ReviewsModule,
   ],
   controllers: [AppController],

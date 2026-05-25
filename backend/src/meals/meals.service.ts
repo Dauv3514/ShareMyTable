@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
@@ -15,6 +16,13 @@ import { RoleName } from '../users/role.entity';
 import { Utilisateur } from '../users/users.entity';
 import { CreateMealDto } from './dto/create-meal.dto';
 import { UpdateMealDto } from './dto/update-meal.dto';
+import {
+  MealMenuItem,
+  MealMenuItemCategory,
+} from './meal-menu-item.entity';
+import { MealTagAssignment } from './meal-tag-assignment.entity';
+import { MealTag, MealTagCategory } from './meal-tag.entity';
+import { MEAL_TAG_SEEDS } from './meal-tags.seed';
 import { Meal, MealStatus } from './meal.entity';
 
 type MealHostSummary = {
@@ -29,11 +37,19 @@ type MealResponse = {
   title: string | null;
   mealType: string | null;
   menuDescription: string | null;
+  menuItems: Array<{
+    id: number;
+    category: MealMenuItemCategory;
+    label: string;
+    position: number;
+  }>;
   dateTime: Date;
   seatsTotal: number;
   currentParticipants: number;
   pricePerSeatCents: number;
   houseRules: string | null;
+  selectedTagCodes: string[];
+  selectedFilterIds: string[];
   status: MealStatus;
   createdAt: Date;
   updatedAt: Date;
@@ -62,10 +78,16 @@ type PaginatedMealsResponse = {
 // Service metier de gestion des repas.
 // Il verifie qu'un user est bien host actif et approuve avant toute action privee.
 @Injectable()
-export class MealsService {
+export class MealsService implements OnModuleInit {
   constructor(
     @InjectRepository(Meal)
     private readonly mealsRepository: Repository<Meal>,
+    @InjectRepository(MealMenuItem)
+    private readonly mealMenuItemsRepository: Repository<MealMenuItem>,
+    @InjectRepository(MealTag)
+    private readonly mealTagsRepository: Repository<MealTag>,
+    @InjectRepository(MealTagAssignment)
+    private readonly mealTagAssignmentsRepository: Repository<MealTagAssignment>,
     @InjectRepository(Utilisateur)
     private readonly usersRepository: Repository<Utilisateur>,
     @InjectRepository(HostProfile)
@@ -74,6 +96,12 @@ export class MealsService {
     private readonly bookingsRepository: Repository<Booking>,
   ) {}
 
+  async onModuleInit(): Promise<void> {
+    await this.seedMealTags();
+    await this.backfillExistingMealMenuItems();
+    await this.backfillExistingMealTags();
+  }
+
   async create(userId: number, dto: CreateMealDto): Promise<MealResponse> {
     const user = await this.ensureApprovedActiveHost(userId);
 
@@ -81,7 +109,7 @@ export class MealsService {
       host: user,
       title: dto.title.trim(),
       mealType: this.normalizeNullableString(dto.mealType),
-      menuDescription: this.normalizeNullableString(dto.menuDescription),
+      menuDescription: this.normalizeMenuDescription(dto),
       dateTime: new Date(dto.dateTime),
       seatsTotal: dto.seatsTotal,
       pricePerSeatCents: dto.pricePerSeatCents,
@@ -90,6 +118,8 @@ export class MealsService {
     });
 
     const savedMeal = await this.mealsRepository.save(meal);
+    await this.syncMealMenuItems(savedMeal.id, dto.menuItems);
+    await this.syncMealTags(savedMeal.id, dto.selectedTagCodes);
     const reloadedMeal = await this.findOwnedMealEntity(userId, savedMeal.id);
     return this.toMealResponse(reloadedMeal);
   }
@@ -103,6 +133,9 @@ export class MealsService {
     const queryBuilder = this.mealsRepository
       .createQueryBuilder('meal')
       .leftJoinAndSelect('meal.host', 'host')
+      .leftJoinAndSelect('meal.menuItems', 'menuItems')
+      .leftJoinAndSelect('meal.tagAssignments', 'tagAssignments')
+      .leftJoinAndSelect('tagAssignments.tag', 'tag')
       .where('meal.status = :status', { status: MealStatus.PUBLISHED });
 
     if (query.mealType?.trim()) {
@@ -164,7 +197,7 @@ export class MealsService {
   async findOnePublished(id: number): Promise<MealResponse> {
     const meal = await this.mealsRepository.findOne({
       where: { id, status: MealStatus.PUBLISHED },
-      relations: ['host'],
+      relations: ['host', 'menuItems', 'tagAssignments', 'tagAssignments.tag'],
     });
 
     if (!meal) {
@@ -181,7 +214,7 @@ export class MealsService {
 
     const meals = await this.mealsRepository.find({
       where: { host: { id: userId } },
-      relations: ['host'],
+      relations: ['host', 'menuItems', 'tagAssignments', 'tagAssignments.tag'],
       order: { createdAt: 'DESC' },
     });
 
@@ -228,6 +261,11 @@ export class MealsService {
       meal.menuDescription = this.normalizeNullableString(dto.menuDescription);
     }
 
+    if (dto.menuItems !== undefined) {
+      meal.menuDescription = this.normalizeMenuDescription(dto);
+      await this.syncMealMenuItems(meal.id, dto.menuItems);
+    }
+
     if (dto.dateTime !== undefined) {
       meal.dateTime = new Date(dto.dateTime);
     }
@@ -244,8 +282,13 @@ export class MealsService {
       meal.houseRules = this.normalizeNullableString(dto.houseRules);
     }
 
-    const updatedMeal = await this.mealsRepository.save(meal);
-    return this.toMealResponse(updatedMeal);
+    if (dto.selectedTagCodes !== undefined) {
+      await this.syncMealTags(meal.id, dto.selectedTagCodes);
+    }
+
+    await this.mealsRepository.save(meal);
+    const reloadedMeal = await this.findOwnedMealEntity(userId, meal.id);
+    return this.toMealResponse(reloadedMeal);
   }
 
   async publishMine(userId: number, mealId: number): Promise<MealResponse> {
@@ -362,7 +405,7 @@ export class MealsService {
   ): Promise<Meal> {
     const meal = await this.mealsRepository.findOne({
       where: { id: mealId, host: { id: userId } },
-      relations: ['host'],
+      relations: ['host', 'menuItems', 'tagAssignments', 'tagAssignments.tag'],
     });
 
     if (!meal) {
@@ -385,9 +428,9 @@ export class MealsService {
       );
     }
 
-    if (!meal.menuDescription || meal.menuDescription.trim().length === 0) {
+    if (!this.hasMenuContent(meal)) {
       throw new BadRequestException(
-        'La description du menu est obligatoire pour publier un repas',
+        'Le menu est obligatoire pour publier un repas',
       );
     }
 
@@ -415,7 +458,14 @@ export class MealsService {
       );
     }
 
-    if (!meal.houseRules || meal.houseRules.trim().length === 0) {
+    const hasHouseRuleTag = this.getAssignedTags(meal).some(
+      (tag) => tag.category === MealTagCategory.HOUSE_RULE,
+    );
+
+    if (
+      (!meal.houseRules || meal.houseRules.trim().length === 0) &&
+      !hasHouseRuleTag
+    ) {
       throw new BadRequestException(
         'Les regles de la maison sont obligatoires pour publier un repas',
       );
@@ -471,16 +521,30 @@ export class MealsService {
   }
 
   private toMealResponse(meal: Meal, currentParticipants = 0): MealResponse {
+    const assignedTags = this.getAssignedTags(meal);
+    const selectedTagCodes = assignedTags.map((tag) => tag.code);
+    const selectedFilterIds = assignedTags
+      .filter((tag) => tag.category !== MealTagCategory.HOUSE_RULE)
+      .map((tag) => tag.code);
+
     return {
       id: meal.id,
       title: meal.title,
       mealType: meal.mealType,
       menuDescription: meal.menuDescription,
+      menuItems: this.getMenuItems(meal).map((item) => ({
+        id: item.id,
+        category: item.category,
+        label: item.label,
+        position: item.position,
+      })),
       dateTime: meal.dateTime,
       seatsTotal: meal.seatsTotal,
       currentParticipants,
       pricePerSeatCents: meal.pricePerSeatCents,
       houseRules: meal.houseRules,
+      selectedTagCodes,
+      selectedFilterIds,
       status: meal.status,
       createdAt: meal.createdAt,
       updatedAt: meal.updatedAt,
@@ -500,6 +564,396 @@ export class MealsService {
 
     const normalizedValue = value.trim();
     return normalizedValue.length > 0 ? normalizedValue : null;
+  }
+
+  private normalizeMenuDescription(dto: {
+    menuDescription?: string;
+    menuItems?: Array<{
+      category: MealMenuItemCategory;
+      label: string;
+      position?: number;
+    }>;
+  }): string | null {
+    const normalizedMenuDescription = this.normalizeNullableString(
+      dto.menuDescription,
+    );
+
+    if (normalizedMenuDescription) {
+      return normalizedMenuDescription;
+    }
+
+    const itemLabels = this.normalizeMenuItems(dto.menuItems).map(
+      (item) => item.label,
+    );
+
+    return itemLabels.length > 0 ? itemLabels.join('\n') : null;
+  }
+
+  private normalizeMenuItems(
+    items?: Array<{
+      category: MealMenuItemCategory;
+      label: string;
+      position?: number;
+    }> | null,
+  ): Array<{
+    category: MealMenuItemCategory;
+    label: string;
+    position: number;
+  }> {
+    if (!Array.isArray(items)) {
+      return [];
+    }
+
+    return items
+      .map((item, index) => ({
+        category: item.category,
+        label: item.label.trim(),
+        position:
+          typeof item.position === 'number' && Number.isInteger(item.position)
+            ? item.position
+            : index,
+      }))
+      .filter(
+        (item) =>
+          item.label.length > 0 &&
+          Object.values(MealMenuItemCategory).includes(item.category),
+      )
+      .sort((firstItem, secondItem) => firstItem.position - secondItem.position)
+      .map((item, index) => ({
+        ...item,
+        position: index,
+      }));
+  }
+
+  private async syncMealMenuItems(
+    mealId: number,
+    items?: Array<{
+      category: MealMenuItemCategory;
+      label: string;
+      position?: number;
+    }> | null,
+  ): Promise<void> {
+    const normalizedItems = this.normalizeMenuItems(items);
+
+    await this.mealMenuItemsRepository
+      .createQueryBuilder()
+      .delete()
+      .where('meal_id = :mealId', { mealId })
+      .execute();
+
+    if (normalizedItems.length === 0) {
+      return;
+    }
+
+    await this.mealMenuItemsRepository.save(
+      normalizedItems.map((item) =>
+        this.mealMenuItemsRepository.create({
+          meal: { id: mealId },
+          category: item.category,
+          label: item.label,
+          position: item.position,
+        }),
+      ),
+    );
+  }
+
+  private getMenuItems(meal: Meal): MealMenuItem[] {
+    return [...(meal.menuItems ?? [])].sort(
+      (firstItem, secondItem) => firstItem.position - secondItem.position,
+    );
+  }
+
+  private hasMenuContent(meal: Meal): boolean {
+    return (
+      this.getMenuItems(meal).length > 0 ||
+      Boolean(meal.menuDescription && meal.menuDescription.trim().length > 0)
+    );
+  }
+
+  private normalizeStringList(values?: string[] | null): string[] {
+    if (!Array.isArray(values)) {
+      return [];
+    }
+
+    return Array.from(
+      new Set(
+        values
+          .map((value) => value.trim())
+          .filter((value) => value.length > 0),
+      ),
+    );
+  }
+
+  private getAssignedTags(meal: Meal): MealTag[] {
+    return (meal.tagAssignments ?? [])
+      .map((assignment) => assignment.tag)
+      .filter((tag): tag is MealTag => Boolean(tag))
+      .sort((firstTag, secondTag) => {
+        if (firstTag.category !== secondTag.category) {
+          return firstTag.category.localeCompare(secondTag.category);
+        }
+
+        return firstTag.sortOrder - secondTag.sortOrder;
+      });
+  }
+
+  private async seedMealTags(): Promise<void> {
+    for (const tagSeed of MEAL_TAG_SEEDS) {
+      const existingTag = await this.mealTagsRepository.findOne({
+        where: { code: tagSeed.code },
+      });
+
+      if (existingTag) {
+        existingTag.label = tagSeed.label;
+        existingTag.category = tagSeed.category;
+        existingTag.sortOrder = tagSeed.sortOrder;
+        existingTag.isActive = true;
+        await this.mealTagsRepository.save(existingTag);
+      } else {
+        await this.mealTagsRepository.save(
+          this.mealTagsRepository.create({
+            code: tagSeed.code,
+            label: tagSeed.label,
+            category: tagSeed.category,
+            sortOrder: tagSeed.sortOrder,
+            isActive: true,
+          }),
+        );
+      }
+    }
+  }
+
+  private async backfillExistingMealTags(): Promise<void> {
+    const meals = await this.mealsRepository.find({
+      relations: ['tagAssignments', 'tagAssignments.tag'],
+    });
+
+    for (const meal of meals) {
+      if ((meal.tagAssignments ?? []).length > 0) {
+        continue;
+      }
+
+      const inferredTagCodes = this.inferTagCodesForExistingMeal(meal);
+
+      if (inferredTagCodes.length > 0) {
+        await this.syncMealTags(meal.id, inferredTagCodes);
+      }
+    }
+  }
+
+  private async backfillExistingMealMenuItems(): Promise<void> {
+    const meals = await this.mealsRepository.find({
+      relations: ['menuItems'],
+    });
+
+    for (const meal of meals) {
+      if ((meal.menuItems ?? []).length > 0 || !meal.menuDescription?.trim()) {
+        continue;
+      }
+
+      const legacyItems = meal.menuDescription
+        .split(/[\n.,;:]/)
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .map((label, index) => ({
+          category: MealMenuItemCategory.MAIN,
+          label,
+          position: index,
+        }));
+
+      if (legacyItems.length > 0) {
+        await this.syncMealMenuItems(meal.id, legacyItems);
+      }
+    }
+  }
+
+  private inferTagCodesForExistingMeal(meal: Meal): string[] {
+    const haystack = this.normalizeSearchText(
+      [
+        meal.title,
+        meal.mealType,
+        meal.menuDescription,
+        meal.houseRules,
+      ]
+        .filter(Boolean)
+        .join(' '),
+    );
+    const tagCodes = new Set<string>();
+
+    if (
+      this.containsAny(haystack, [
+        'heure',
+        'ponctuel',
+        'ponctualite',
+        'retard',
+        '12h30',
+        '12h45',
+      ])
+    ) {
+      tagCodes.add('arriver_a_l_heure');
+    }
+
+    if (this.containsAny(haystack, ['allergie', 'allergies', 'contrainte'])) {
+      tagCodes.add('prevenir_allergie');
+    }
+
+    if (this.containsAny(haystack, ['chaussure', 'chaussures'])) {
+      tagCodes.add('retirer_ses_chaussures');
+    }
+
+    if (this.containsAny(haystack, ['calme', 'douce', 'pause dej', 'rapide'])) {
+      tagCodes.add('ambiance_calme');
+      tagCodes.add('repas-calme');
+    }
+
+    if (
+      this.containsAny(haystack, [
+        'detendue',
+        'detendu',
+        'convivial',
+        'partage',
+        'partager',
+        'groupes',
+        'table test',
+        'parcours avis',
+      ])
+    ) {
+      tagCodes.add('ambiance-decontractee');
+    }
+
+    if (this.containsAny(haystack, ['apero', 'boisson', 'festif'])) {
+      tagCodes.add('convivial-et-festif');
+    }
+
+    if (this.containsAny(haystack, ['jeux'])) {
+      tagCodes.add('soiree-jeux');
+    }
+
+    if (
+      this.containsAny(haystack, [
+        'couscous',
+        'marocain',
+        'marocaine',
+        'libanais',
+        'asiatique',
+        'dumplings',
+        'bo bun',
+        'curry',
+        'italienne',
+        'pasta',
+        'tapas',
+        'mediterraneen',
+      ])
+    ) {
+      tagCodes.add('cuisine-du-monde');
+      tagCodes.add('decouverte-culinaire');
+    }
+
+    if (this.containsAny(haystack, ['balcon', 'barbecue', 'terrasse', 'ete'])) {
+      tagCodes.add('repas-en-plein-air');
+    }
+
+    if (
+      this.containsAny(haystack, [
+        'vegetarien',
+        'vegetariens',
+        'veggie',
+        'legumes',
+        'legume',
+      ])
+    ) {
+      tagCodes.add('vegetarien');
+    }
+
+    if (
+      this.containsAny(haystack, [
+        'noisette',
+        'noisettes',
+        'amande',
+        'amandes',
+        'noix',
+      ])
+    ) {
+      tagCodes.add('allergie-aux-noix');
+    }
+
+    if (this.containsAny(haystack, ['poulet', 'boeuf', 'chawarma'])) {
+      tagCodes.add('halal');
+    }
+
+    if (this.containsAny(haystack, ['pancakes', 'granola', 'brunch'])) {
+      tagCodes.add('flexitarien');
+    }
+
+    if (!this.hasTagCategory(tagCodes, MealTagCategory.HOUSE_RULE)) {
+      tagCodes.add('arriver_a_l_heure');
+    }
+
+    if (!this.hasTagCategory(tagCodes, MealTagCategory.MEAL_AMBIANCE)) {
+      tagCodes.add('ambiance-decontractee');
+    }
+
+    if (!this.hasTagCategory(tagCodes, MealTagCategory.DIETARY_PREFERENCE)) {
+      tagCodes.add('flexitarien');
+    }
+
+    return Array.from(tagCodes);
+  }
+
+  private hasTagCategory(tagCodes: Set<string>, category: MealTagCategory): boolean {
+    return MEAL_TAG_SEEDS.some(
+      (tagSeed) => tagSeed.category === category && tagCodes.has(tagSeed.code),
+    );
+  }
+
+  private containsAny(haystack: string, needles: string[]): boolean {
+    return needles.some((needle) => haystack.includes(this.normalizeSearchText(needle)));
+  }
+
+  private normalizeSearchText(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+  }
+
+  private async syncMealTags(
+    mealId: number,
+    selectedTagCodes?: string[] | null,
+  ): Promise<void> {
+    const normalizedCodes = this.normalizeStringList(selectedTagCodes);
+
+    if (normalizedCodes.length === 0) {
+      await this.mealTagAssignmentsRepository.delete({ mealId });
+      return;
+    }
+
+    const tags = await this.mealTagsRepository.find({
+      where: {
+        code: In(normalizedCodes),
+        isActive: true,
+      },
+    });
+
+    const foundCodes = new Set(tags.map((tag) => tag.code));
+    const unknownCodes = normalizedCodes.filter((code) => !foundCodes.has(code));
+
+    if (unknownCodes.length > 0) {
+      throw new BadRequestException(
+        `Tags de repas inconnus: ${unknownCodes.join(', ')}`,
+      );
+    }
+
+    await this.mealTagAssignmentsRepository.delete({ mealId });
+
+    await this.mealTagAssignmentsRepository.save(
+      tags.map((tag) =>
+        this.mealTagAssignmentsRepository.create({
+          mealId,
+          tagId: tag.id,
+        }),
+      ),
+    );
   }
 
   private normalizePositiveInteger(

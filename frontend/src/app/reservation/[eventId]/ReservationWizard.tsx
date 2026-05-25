@@ -585,7 +585,7 @@ export default function ReservationWizard({
           <Link href="/" className={styles.footerGhostButton}>
             Retour a l&apos;accueil
           </Link>
-          <Link href="/mes-repas" className={styles.footerPrimaryButton}>
+          <Link href="/mes-evenements" className={styles.footerPrimaryButton}>
             Voir mes réservations
           </Link>
         </>
@@ -604,7 +604,7 @@ export default function ReservationWizard({
         >
           Recommencer
         </button>
-        <Link href="/mes-repas" className={styles.footerPrimaryButton}>
+        <Link href="/mes-evenements" className={styles.footerPrimaryButton}>
           Mes réservations
         </Link>
       </>
@@ -820,7 +820,7 @@ export default function ReservationWizard({
                         <li>Paiement bloqué jusqu&apos;à la tenue du repas.</li>
                         <li>Adresse exacte partagée 24h avant.</li>
                         <li>Annulation gratuite jusqu&apos;à 48h avant, puis retenue partielle.</li>
-                        <li>Tu pourras suivre le statut de tes réservations dans Mes repas</li>
+                        <li>Tu pourras suivre le statut de tes réservations dans Mes événements</li>
                       </ul>
                     </div>
                   </div>
@@ -966,8 +966,14 @@ export default function ReservationWizard({
                           <h3>Ce qui se passe ensuite</h3>
                           <ul className={styles.noticeList}>
                             <li>{getReservationPaymentLabel(createdReservation.paymentState)}</li>
-                            <li>{createdReservation.addressReleaseLabel}</li>
-                            <li>Tu pourras annuler depuis le détail de réservation.</li>
+                            <li>
+                              Un espace de discussion s&apos;ouvre dans la messagerie pour
+                              échanger directement avec l&apos;hôte.
+                            </li>
+                            <li>
+                              {createdReservation.addressReleaseLabel} depuis le détail de la
+                              réservation.
+                            </li>
                           </ul>
                         </div>
                       </div>

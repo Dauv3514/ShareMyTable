@@ -12,16 +12,36 @@ type ApiMealHostSummary = {
   country: string;
 };
 
+type ApiMealMenuItem = {
+  id: number;
+  category:
+    | "starter"
+    | "main"
+    | "dessert"
+    | "savory"
+    | "sweet"
+    | "drinks"
+    | "snacks"
+    | "sharing"
+    | "breads"
+    | "fruits";
+  label: string;
+  position: number;
+};
+
 type ApiMealItem = {
   id: number;
   title: string | null;
   mealType: string | null;
   menuDescription: string | null;
+  menuItems?: ApiMealMenuItem[];
   dateTime: string;
   seatsTotal: number;
   currentParticipants?: number;
   pricePerSeatCents: number;
   houseRules: string | null;
+  selectedTagCodes?: string[];
+  selectedFilterIds?: string[];
   status: "draft" | "published" | "cancelled" | "done";
   createdAt: string;
   updatedAt: string;
@@ -127,6 +147,43 @@ const filterKeywordMap: Array<{ id: string; keywords: string[] }> = [
     id: "discussions-enrichissantes",
     keywords: ["discussion", "echanges", "conversation"],
   },
+];
+
+const houseRuleTagLabels: Record<string, string> = {
+  arriver_a_l_heure: "Merci d'arriver à l'heure",
+  prevenir_allergie: "Préviens-moi en cas d'allergie",
+  non_fumeur: "Non-fumeur",
+  pas_d_alcool: "Pas d'alcool",
+  pas_d_animaux: "Pas d'animaux",
+  retirer_ses_chaussures: "Retirer ses chaussures",
+  ambiance_calme: "Ambiance calme",
+  accessible_pmr: "Accessible PMR",
+};
+
+const menuCategoryLabels: Record<ApiMealMenuItem["category"], string> = {
+  starter: "Entrée",
+  main: "Plat",
+  dessert: "Dessert",
+  savory: "Salé",
+  sweet: "Sucré",
+  drinks: "Boissons",
+  snacks: "À grignoter",
+  sharing: "À partager",
+  breads: "Viennoiseries & pains",
+  fruits: "Fruits & accompagnements",
+};
+
+const menuCategoryOrder: ApiMealMenuItem["category"][] = [
+  "starter",
+  "main",
+  "dessert",
+  "savory",
+  "sweet",
+  "drinks",
+  "snacks",
+  "sharing",
+  "breads",
+  "fruits",
 ];
 
 function buildUrl(path: string, query?: Record<string, string | number | undefined>) {
@@ -245,6 +302,10 @@ function inferVariant(meal: ApiMealItem, fallback: MealEvent["variant"]): MealEv
 }
 
 function inferFilters(meal: ApiMealItem, fallbackFilters: string[]) {
+  if (Array.isArray(meal.selectedFilterIds) && meal.selectedFilterIds.length > 0) {
+    return Array.from(new Set(meal.selectedFilterIds));
+  }
+
   const haystack = normalizeText(
     [meal.title, meal.mealType, meal.menuDescription, meal.houseRules].filter(Boolean).join(" "),
   );
@@ -256,18 +317,55 @@ function inferFilters(meal: ApiMealItem, fallbackFilters: string[]) {
   return inferred.length > 0 ? inferred : fallbackFilters;
 }
 
+function buildHouseRuleTags(meal: ApiMealItem) {
+  return Array.from(
+    new Set(
+      (meal.selectedTagCodes ?? [])
+        .map((tagCode) => houseRuleTagLabels[tagCode])
+        .filter((label): label is string => Boolean(label)),
+    ),
+  );
+}
+
 function splitDescriptionItems(value: string | null | undefined) {
   if (!value) {
     return [];
   }
 
   return value
-    .split(/[.,;:]/)
+    .split(/[\n.,;:]/)
     .map((item) => item.trim())
     .filter(Boolean);
 }
 
 function buildMenuSections(meal: ApiMealItem, fallbackSections: MealMenuSection[]) {
+  if (Array.isArray(meal.menuItems) && meal.menuItems.length > 0) {
+    const labelsByCategory = new Map<ApiMealMenuItem["category"], string[]>(
+      menuCategoryOrder.map((category) => [category, []]),
+    );
+
+    [...meal.menuItems]
+      .sort((firstItem, secondItem) => firstItem.position - secondItem.position)
+      .forEach((item) => {
+        const label = item.label.trim();
+
+        if (label) {
+          labelsByCategory.get(item.category)?.push(label);
+        }
+      });
+
+    const sections = Array.from(labelsByCategory.entries())
+      .filter(([, items]) => items.length > 0)
+      .map(([category, items]) => ({
+        title: menuCategoryLabels[category],
+        items,
+      }));
+
+    if (sections.length > 0) {
+      return sections;
+    }
+  }
+
   const items = splitDescriptionItems(meal.menuDescription);
 
   if (items.length === 0) {
@@ -338,6 +436,8 @@ function mapMealToEvent(
     host: hostName,
     variant: inferVariant(meal, fallbackEvent.variant),
     filters: derivedFilters,
+    houseRuleTags: buildHouseRuleTags(meal),
+    houseRules: meal.houseRules,
     pricePerPerson: Math.round(meal.pricePerSeatCents / 100),
     currentParticipants:
       typeof meal.currentParticipants === "number"

@@ -339,7 +339,7 @@ export default function DevenirHotePage() {
             <button
               type="button"
               className={styles.primaryButton}
-              onClick={() => router.push("/mes-repas/creer")}
+              onClick={() => router.push("/mes-evenements/creer")}
             >
               {pageMeta.submitLabel}
             </button>

@@ -1,5 +1,6 @@
 "use client";
 
+import axios from "axios";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "./providers/AuthProvider";
@@ -13,9 +14,82 @@ import {
 } from "../lib/event-sections";
 import styles from "./page.module.scss";
 
+function NewsletterModal({
+  email,
+  error,
+  isSubmitting,
+  onClose,
+  onConfirm,
+  onEmailChange,
+}: {
+  email: string;
+  error: string | null;
+  isSubmitting: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  onEmailChange: (value: string) => void;
+}) {
+  return (
+    <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="newsletter-title">
+      <button
+        type="button"
+        className={styles.modalBackdrop}
+        onClick={onClose}
+        aria-label="Fermer la confirmation newsletter"
+      />
+
+      <section className={styles.modalSheet}>
+        <p className={styles.modalEyebrow}>Newsletter</p>
+        <h2 id="newsletter-title">S&apos;inscrire à notre newsletter ?</h2>
+        <p>
+          Recevez les nouveaux repas, les idées de tables et les événements près de
+          chez vous.
+        </p>
+
+        <label className={styles.modalField}>
+          <span>Email</span>
+          <input
+            type="email"
+            value={email}
+            onChange={(event) => onEmailChange(event.target.value)}
+            placeholder="ton.email@example.com"
+            autoComplete="email"
+          />
+        </label>
+
+        {error ? <p className={styles.modalError}>{error}</p> : null}
+
+        <div className={styles.modalActions}>
+          <button
+            type="button"
+            className={styles.modalSecondaryButton}
+            onClick={onClose}
+            disabled={isSubmitting}
+          >
+            Non
+          </button>
+          <button
+            type="button"
+            className={styles.modalPrimaryButton}
+            onClick={onConfirm}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Inscription..." : "Oui, m'inscrire"}
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export default function Home() {
-  const { isLoggedIn, loading } = useAuth();
+  const { isLoggedIn, loading, user } = useAuth();
   const [mealEvents, setMealEvents] = useState<MealEvent[]>([]);
+  const [newsletterModalOpen, setNewsletterModalOpen] = useState(false);
+  const [newsletterConfirmed, setNewsletterConfirmed] = useState(false);
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterError, setNewsletterError] = useState<string | null>(null);
+  const [newsletterSubmitting, setNewsletterSubmitting] = useState(false);
   const sectionRowRefs = useRef<Partial<Record<EventSectionSlug, HTMLDivElement | null>>>({});
 
   useEffect(() => {
@@ -37,6 +111,13 @@ export default function Home() {
 
   const homeSections = useMemo(() => getHomeSections(mealEvents), [mealEvents]);
 
+  useEffect(() => {
+    if (newsletterModalOpen) {
+      setNewsletterEmail((previousEmail) => previousEmail || user?.email || "");
+      setNewsletterError(null);
+    }
+  }, [newsletterModalOpen, user?.email]);
+
   const scrollSection = (slug: EventSectionSlug, direction: "left" | "right") => {
     const row = sectionRowRefs.current[slug];
 
@@ -53,6 +134,37 @@ export default function Home() {
       left: direction === "left" ? -offset : offset,
       behavior: "smooth",
     });
+  };
+
+  const handleConfirmNewsletter = async () => {
+    const normalizedEmail = newsletterEmail.trim().toLowerCase();
+
+    if (!normalizedEmail || !normalizedEmail.includes("@")) {
+      setNewsletterError("Entre une adresse email valide.");
+      return;
+    }
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "/api";
+
+    try {
+      setNewsletterSubmitting(true);
+      setNewsletterError(null);
+
+      await axios.post(`${apiUrl}/newsletter-subscriptions`, {
+        email: normalizedEmail,
+      });
+
+      setNewsletterEmail(normalizedEmail);
+      setNewsletterConfirmed(true);
+      setNewsletterModalOpen(false);
+    } catch (error: unknown) {
+      const message = axios.isAxiosError(error)
+        ? error.response?.data?.message ?? "Impossible de t'inscrire à la newsletter."
+        : "Impossible de t'inscrire à la newsletter.";
+      setNewsletterError(Array.isArray(message) ? message.join(", ") : message);
+    } finally {
+      setNewsletterSubmitting(false);
+    }
   };
 
   return (
@@ -129,9 +241,35 @@ export default function Home() {
                 <span aria-hidden="true">›</span>
               </button>
             </div>
+
+            {section.slug === "autour-de-moi" ? (
+              <div className={styles.newsletterBlock}>
+                <button
+                  type="button"
+                  className={styles.newsletterButton}
+                  onClick={() => setNewsletterModalOpen(true)}
+                >
+                  S&apos;inscrire à notre newsletter
+                </button>
+                {newsletterConfirmed ? (
+                  <p>Votre demande d&apos;inscription a bien été prise en compte.</p>
+                ) : null}
+              </div>
+            ) : null}
           </section>
         ))}
       </div>
+
+      {newsletterModalOpen ? (
+        <NewsletterModal
+          email={newsletterEmail}
+          error={newsletterError}
+          isSubmitting={newsletterSubmitting}
+          onClose={() => setNewsletterModalOpen(false)}
+          onConfirm={handleConfirmNewsletter}
+          onEmailChange={setNewsletterEmail}
+        />
+      ) : null}
     </div>
   );
 }

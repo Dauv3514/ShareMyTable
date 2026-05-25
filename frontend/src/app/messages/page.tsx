@@ -301,10 +301,9 @@ export default function MessagesPage() {
           </div>
         ) : filteredMeals.length === 0 ? (
           <div className={styles.stateCard}>
-            <h2>Aucune discussion trouvee</h2>
+            <h2>Aucune discussion trouvée</h2>
             <p>
-              Tes discussions apparaitront ici des qu&apos;une reservation ouvrira un
-              espace de conversation.
+              Après une réservation, tu peux échanger avec un hôte ou des invités ici.
             </p>
           </div>
         ) : (

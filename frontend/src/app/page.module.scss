@@ -210,6 +210,175 @@
   }
 }
 
+.newsletterBlock {
+  margin: 42px auto 0;
+  width: 100%;
+  max-width: 520px;
+  display: grid;
+  gap: 8px;
+}
+
+.newsletterButton {
+  width: 100%;
+  min-height: 44px;
+  border: 2px solid #c7bc43;
+  border-radius: 16px;
+  background: #e1ec79;
+  color: #17120c;
+  padding: 0 18px;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: none;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+
+  &:hover,
+  &:focus-visible {
+    transform: translateY(-1px);
+    background: #e8f26f;
+    outline: none;
+  }
+}
+
+.newsletterBlock p {
+  margin: 0;
+  color: #52590d;
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: center;
+  font-weight: 600;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.modalBackdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(30, 25, 14, 0.38);
+  cursor: pointer;
+}
+
+.modalSheet {
+  position: relative;
+  width: min(100%, 460px);
+  padding: 26px;
+  border: 1px solid rgba(217, 204, 170, 0.95);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top right, rgba(225, 236, 121, 0.22), transparent 34%),
+    #fffdf7;
+  box-shadow: 0 26px 60px rgba(36, 27, 9, 0.22);
+  display: grid;
+  gap: 12px;
+  color: #25210e;
+}
+
+.modalEyebrow {
+  margin: 0;
+  color: #8f8448;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.modalSheet h2 {
+  margin: 0;
+  color: #17120c;
+  font-size: 24px;
+  line-height: 1.05;
+  font-weight: 900;
+}
+
+.modalSheet > p:not(.modalEyebrow) {
+  margin: 0;
+  color: #605846;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.modalField {
+  display: grid;
+  gap: 8px;
+}
+
+.modalField span {
+  color: #5f553d;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.modalField input {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid #dfd2af;
+  border-radius: 16px;
+  background: #fffdf8;
+  color: #2f281b;
+  padding: 0 14px;
+  font-size: 14px;
+  box-shadow: 0 8px 18px rgba(59, 45, 18, 0.05);
+}
+
+.modalField input:focus {
+  outline: none;
+  border-color: #cab35a;
+  box-shadow: 0 0 0 4px rgba(225, 236, 121, 0.22);
+}
+
+.modalError {
+  margin: 0;
+  color: #9b2f2f;
+  font-size: 13px;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.modalActions {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modalPrimaryButton,
+.modalSecondaryButton {
+  min-height: 44px;
+  border-radius: 999px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.modalPrimaryButton {
+  border: 1px solid #b8a547;
+  background: #e1ec79;
+  color: #25210e;
+}
+
+.modalSecondaryButton {
+  border: 1px solid #ded1ad;
+  background: #fffdf6;
+  color: #645938;
+}
+
+.modalPrimaryButton:disabled,
+.modalSecondaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
 @media (min-width: 720px) {
   .page {
     max-width: 600px;
@@ -266,6 +435,42 @@
     width: calc((100% - 16px) / 2);
     min-width: calc((100% - 16px) / 2);
     flex-basis: calc((100% - 16px) / 2);
+  }
+}
+
+@media (max-width: 560px) {
+  .newsletterBlock {
+    margin-top: 30px;
+    max-width: 100%;
+  }
+
+  .newsletterButton {
+    min-height: 42px;
+    border-radius: 14px;
+    font-size: 13px;
+  }
+
+  .modal {
+    align-items: end;
+    padding: 16px;
+  }
+
+  .modalSheet {
+    padding: 22px;
+    border-radius: 24px;
+  }
+
+  .modalSheet h2 {
+    font-size: 21px;
+  }
+
+  .modalActions {
+    flex-direction: column-reverse;
+  }
+
+  .modalPrimaryButton,
+  .modalSecondaryButton {
+    width: 100%;
   }
 }
 
