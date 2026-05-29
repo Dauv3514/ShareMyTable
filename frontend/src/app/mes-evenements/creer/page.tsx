@@ -91,6 +91,7 @@ type MealDraftForm = {
 };
 
 const STANDARD_COMMISSION_RATE = 0.15;
+const FINAL_COMMISSION_FIXED_FEE = 1;
 
 const STEP_LABELS = [
   "Bienvenue",
@@ -569,6 +570,15 @@ export default function CreerRepasPage() {
     [pricePerSeatValue],
   );
   const hostRevenuePerSeatLabel = formatEuroInputValue(hostRevenuePerSeat);
+  const hostTotalRevenueIfFull = useMemo(() => {
+    const totalAfterReservationCommission = hostRevenuePerSeat * seatsTotalValue;
+    const totalAfterFinalCommission =
+      totalAfterReservationCommission * (1 - STANDARD_COMMISSION_RATE) -
+      FINAL_COMMISSION_FIXED_FEE;
+
+    return Math.max(0, totalAfterFinalCommission);
+  }, [hostRevenuePerSeat, seatsTotalValue]);
+  const hostTotalRevenueIfFullLabel = formatEuroInputValue(hostTotalRevenueIfFull);
   const menuCategoryOptions = useMemo(
     () =>
       getMenuCategoriesForMealType(form.mealType).map((category) => ({
@@ -1089,7 +1099,7 @@ export default function CreerRepasPage() {
                     </label>
 
                     <div className={styles.commissionPreview}>
-                      <span>Prix sans commission</span>
+                      <span>Prix sans commission (par personne)</span>
                       <div className={styles.commissionField}>
                         <small>Commission 15%</small>
                         <div className={`${styles.priceField} ${styles.readonlyPriceField}`}>
@@ -1103,6 +1113,14 @@ export default function CreerRepasPage() {
                         </div>
                       </div>
                     </div>
+
+                    <p className={styles.totalCommissionSummary}>
+                        Une commission de 15% est appliquée sur chaque
+                        réservation. Une fois la date limite de réservation
+                        dépassée, une commission finale de 15% + 1€ est
+                        appliquée sur le total restant.
+                    </p>
+
                   </div>
 
                   <div className={styles.formSectionHead}>
@@ -1291,6 +1309,7 @@ export default function CreerRepasPage() {
                       ))}
                     </div>
                   </div>
+
                 </div>
 
                 <div className={styles.formSection}>
@@ -1408,6 +1427,21 @@ export default function CreerRepasPage() {
                       </button>
                     ))}
                   </div>
+                </div>
+
+                <div className={`${styles.formSection} ${styles.totalCommissionSection}`}>
+                  <label className={`${styles.field} ${styles.totalCommissionField}`}>
+                    <span>Total reçu si toutes les places sont réservées</span>
+                    <div className={`${styles.priceField} ${styles.readonlyPriceField}`}>
+                      <input
+                        type="text"
+                        value={hostTotalRevenueIfFullLabel}
+                        readOnly
+                        aria-label="Total reçu par l'hôte si toutes les places sont réservées"
+                      />
+                      <span>EUR</span>
+                    </div>
+                  </label>
                 </div>
               </div>
             ) : null}
