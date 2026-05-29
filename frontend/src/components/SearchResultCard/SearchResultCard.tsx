@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { CalendarDays, MapPin, UserRound } from "lucide-react";
 import { getMealFilterById } from "@/lib/search-data";
 import { buildMealEventHref } from "@/lib/meal-data";
 import type { MealEvent } from "@/lib/data/types";
@@ -23,46 +22,36 @@ export default function SearchResultCard({ event }: SearchResultCardProps) {
       href={buildMealEventHref(event.id)}
       className={`search-result-card search-result-card--${event.variant}`}
     >
-      <div className="search-result-card__media" aria-hidden="true">
-        <div className="search-result-card__plate">
-          <Image
-            src="/ramenetapoire.svg"
-            alt=""
-            width={78}
-            height={78}
-            className="search-result-card__logo"
-          />
-        </div>
+      <div className="search-result-card__media">
+        <Image
+          src="/photoRepas.png"
+          alt={event.title}
+          fill
+          sizes="(max-width: 720px) 360px, 440px"
+          className="search-result-card__image"
+        />
       </div>
 
       <div className="search-result-card__content">
-        <div className="search-result-card__topline">
-          <span>
-            <MapPin aria-hidden="true" />
-            {event.city}
-          </span>
-          <span>
-            <CalendarDays aria-hidden="true" />
-            {event.dateLabel}
-          </span>
+        <div className="search-result-card__host">
+          <span>{event.host}</span>
         </div>
 
-        <div className="search-result-card__main">
-          <h2>{event.title}</h2>
-          <p>
-            <UserRound aria-hidden="true" />
-            {event.host}
-          </p>
+        <div className="search-result-card__meta">
+          <span>{event.city}</span>
+          <span>{event.dateLabel}</span>
         </div>
-
-        {visibleFilters.length > 0 && (
-          <div className="search-result-card__tags" aria-label="Filtres compatibles">
-            {visibleFilters.map((filter) => (
-              <span key={filter}>{filter}</span>
-            ))}
-          </div>
-        )}
       </div>
+
+      <h2>{event.title}</h2>
+
+      {visibleFilters.length > 0 && (
+        <div className="search-result-card__tags" aria-label="Filtres compatibles">
+          {visibleFilters.map((filter) => (
+            <span key={filter}>{filter}</span>
+          ))}
+        </div>
+      )}
     </Link>
   );
 }
