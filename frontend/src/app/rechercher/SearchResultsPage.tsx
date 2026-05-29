@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { X } from "lucide-react";
+import { ChevronDown, ChevronUp, X } from "lucide-react";
 import EventCard from "@/components/EventCard";
 import SearchResultCard from "@/components/SearchResultCard";
 import SearchBar from "@/components/SearchBar";
@@ -56,6 +56,7 @@ export default function SearchResultsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [mealEvents, setMealEvents] = useState<MealEvent[]>([]);
+  const [panelOpen, setPanelOpen] = useState(false);
   const location = searchParams.get("lieu") ?? "";
   const date = searchParams.get("date") ?? "";
   const filters = useMemo(
@@ -84,7 +85,6 @@ export default function SearchResultsPage() {
     () => filterMealEvents({ events: mealEvents, location, date, filters }),
     [date, filters, location, mealEvents],
   );
-  const shouldShowMap = location.trim().length > 0;
   const recommendedEvents = useMemo(() => {
     const resultIds = new Set(events.map((event) => event.id));
     const recommendations = mealEvents.filter((event) => !resultIds.has(event.id));
@@ -98,6 +98,7 @@ export default function SearchResultsPage() {
     })
     .filter((filter): filter is { id: string; label: string } => Boolean(filter));
   const hasCriteria = Boolean(location || date || filters.length > 0);
+  const mapLocation = location.trim() || "Rennes";
 
   const updateSearch = (nextCriteria: {
     location?: string;
@@ -115,88 +116,119 @@ export default function SearchResultsPage() {
 
   return (
     <div className={styles.page}>
-      <SearchBar
-        initialLocation={location}
-        initialDate={date}
-        initialFilters={filters}
-      />
+      <section
+        className={`${styles.searchExperience} ${
+          panelOpen ? styles.searchExperienceOpen : ""
+        }`}
+      >
+        <div className={styles.mapStage}>
+          <div className={styles.searchOverlay}>
+            <SearchBar
+              initialLocation={location}
+              initialDate={date}
+              initialFilters={filters}
+            />
 
-      {shouldShowMap && (
-        <SearchMap key={location} location={location} eventCount={events.length} />
-      )}
-
-      <section className={styles.filters} aria-label="Filtres actifs">
-        {location && (
-          <button
-            type="button"
-            className={styles.filterChip}
-            onClick={() => updateSearch({ location: "" })}
-            aria-label={`Retirer le filtre lieu ${location}`}
-          >
-            <span>Lieu: {location}</span>
-            <X aria-hidden="true" />
-          </button>
-        )}
-        {date && (
-          <button
-            type="button"
-            className={styles.filterChip}
-            onClick={() => updateSearch({ date: "" })}
-            aria-label={`Retirer le filtre date ${date}`}
-          >
-            <span>Date: {date}</span>
-            <X aria-hidden="true" />
-          </button>
-        )}
-        {activeFilters.map((filter) => (
-          <button
-            key={filter.id}
-            type="button"
-            className={styles.filterChip}
-            onClick={() =>
-              updateSearch({
-                filters: filters.filter((filterId) => filterId !== filter.id),
-              })
-            }
-            aria-label={`Retirer le filtre ${filter.label}`}
-          >
-            <span>{filter.label}</span>
-            <X aria-hidden="true" />
-          </button>
-        ))}
-        {!hasCriteria && <span className={styles.filterHint}>Tous les événements</span>}
-      </section>
-
-      <section className={styles.results} aria-label="Événements">
-        <div className={styles.resultsHead}>
-          <div>
-            <h1>Recherche</h1>
-            <p>
-              {events.length} {events.length > 1 ? "événements trouvés" : "événement trouvé"}
-            </p>
+            <section className={styles.filters} aria-label="Filtres actifs">
+              {location && (
+                <button
+                  type="button"
+                  className={styles.filterChip}
+                  onClick={() => updateSearch({ location: "" })}
+                  aria-label={`Retirer le filtre lieu ${location}`}
+                >
+                  <span>{location}</span>
+                  <X aria-hidden="true" />
+                </button>
+              )}
+              {date && (
+                <button
+                  type="button"
+                  className={styles.filterChip}
+                  onClick={() => updateSearch({ date: "" })}
+                  aria-label={`Retirer le filtre date ${date}`}
+                >
+                  <span>{date}</span>
+                  <X aria-hidden="true" />
+                </button>
+              )}
+              {activeFilters.map((filter) => (
+                <button
+                  key={filter.id}
+                  type="button"
+                  className={styles.filterChip}
+                  onClick={() =>
+                    updateSearch({
+                      filters: filters.filter((filterId) => filterId !== filter.id),
+                    })
+                  }
+                  aria-label={`Retirer le filtre ${filter.label}`}
+                >
+                  <span>{filter.label}</span>
+                  <X aria-hidden="true" />
+                </button>
+              ))}
+              {!hasCriteria && <span className={styles.filterHint}>Tous les repas</span>}
+            </section>
           </div>
+
+          <SearchMap
+            key={mapLocation}
+            location={mapLocation}
+            eventCount={events.length}
+            variant="hero"
+          />
+
+          <button
+            type="button"
+            className={styles.panelToggle}
+            onClick={() => setPanelOpen((isOpen) => !isOpen)}
+            aria-label={panelOpen ? "Refermer la liste des repas" : "Voir la liste des repas"}
+          >
+            {panelOpen ? <ChevronDown aria-hidden="true" /> : <ChevronUp aria-hidden="true" />}
+          </button>
         </div>
 
-        {events.length > 0 ? (
-          <div className={styles.cards}>
-            {events.map((event) => (
-              <SearchResultCard key={event.id} event={event} />
-            ))}
+        <section className={styles.resultsPanel} aria-label="Événements">
+          <div className={styles.panelHandle} aria-hidden="true" />
+          <div className={styles.resultsHead}>
+            <div>
+              <h1>Recherche</h1>
+              <p>
+                {events.length} {events.length > 1 ? "repas trouvés" : "repas trouvé"}
+              </p>
+            </div>
           </div>
-        ) : (
-          <div className={styles.empty}>
-            <h2>Aucun repas ne correspond</h2>
-            <p>Essayez une autre ville, une autre date ou moins de filtres.</p>
-          </div>
-        )}
+
+          {events.length > 0 ? (
+            <div className={styles.cards}>
+              {events.map((event) => (
+                <SearchResultCard key={event.id} event={event} />
+              ))}
+            </div>
+          ) : (
+            <div className={styles.empty}>
+              <h2>Aucun repas ne correspond</h2>
+              <p>Essayez une autre ville, une autre date ou moins de filtres.</p>
+            </div>
+          )}
+        </section>
       </section>
 
       <section className={styles.suggestions} aria-label="Vous aimeriez aussi">
         <div className={styles.suggestionsHead}>
           <div>
-            <h2>Vous aimeriez aussi</h2>
-            <p>Les autres événements près de chez vous</p>
+            <h2>Ça va te plaire</h2>
+            <p>Les tables bien notées du quartier</p>
           </div>
+          <button
+            type="button"
+            className={styles.seeMoreButton}
+            onClick={() => setPanelOpen(true)}
+          >
+            Voir plus
+            <ChevronUp aria-hidden="true" />
+          </button>
         </div>
 
         <div className={styles.suggestionCards}>

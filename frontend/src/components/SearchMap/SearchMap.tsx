@@ -18,17 +18,16 @@ const getRadiusFromPopulation = (population?: number) => {
     return 2000;
   } else if (population < 500_000) {
     return 3000;
-  } else {
-    return 5000;
   }
 
-}
+  return 5000;
+};
 
 const formatRadius = (radiusMeters: number) => {
   return radiusMeters >= 1000
     ? `${radiusMeters / 1000} km`
     : `${radiusMeters} m`;
-}
+};
 
 const MapClient = dynamic(() => import("./SearchMapClient"), {
   ssr: false,
@@ -54,20 +53,25 @@ type CommuneResponse = {
 type SearchMapProps = {
   location: string;
   eventCount: number;
+  variant?: "default" | "hero";
 };
 
 type MapState =
   | { status: "loading" }
   | {
-    status: "ready";
-    cityName: string;
-    center: [number, number];
-    radiusMeters: number;
-  }
+      status: "ready";
+      cityName: string;
+      center: [number, number];
+      radiusMeters: number;
+    }
   | { status: "empty" }
   | { status: "error" };
 
-export default function SearchMap({ location, eventCount }: SearchMapProps) {
+export default function SearchMap({
+  location,
+  eventCount,
+  variant = "default",
+}: SearchMapProps) {
   const [mapState, setMapState] = useState<MapState>({ status: "loading" });
 
   useEffect(() => {
@@ -121,24 +125,29 @@ export default function SearchMap({ location, eventCount }: SearchMapProps) {
   }
 
   return (
-    <section className="search-map" aria-label="Zone approximative des repas">
-      <div className="search-map__header">
-        <div>
-          <h2>Zone approximative</h2>
-          <p>
+    <section
+      className={`search-map search-map--${variant}`}
+      aria-label="Zone approximative des repas"
+    >
+      {variant === "default" && (
+        <div className="search-map__header">
+          <div>
+            <h2>Zone approximative</h2>
+            <p>
+              {mapState.status === "ready"
+                ? `${eventCount} ${
+                    eventCount === 1 ? "événement" : "événements"
+                  } autour de ${mapState.cityName}`
+                : "Localisation de la commune en cours"}
+            </p>
+          </div>
+          <span>
             {mapState.status === "ready"
-              ? `${eventCount} ${
-                  eventCount === 1 ? "événement" : "événements"
-                } autour de ${mapState.cityName}`
-              : "Localisation de la commune en cours"}
-          </p>
+              ? `Rayon ${formatRadius(mapState.radiusMeters)}`
+              : "Rayon"}
+          </span>
         </div>
-        <span>
-          {mapState.status === "ready"
-            ? `Rayon ${formatRadius(mapState.radiusMeters)}`
-            : "Rayon"}
-        </span>
-      </div>
+      )}
 
       {mapState.status === "ready" && (
         <MapClient
