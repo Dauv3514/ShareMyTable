@@ -285,7 +285,7 @@
 .hostSection {
   margin-top: 22px;
   display: grid;
-  grid-template-columns: minmax(240px, 260px) minmax(0, 1fr);
+  grid-template-columns: minmax(240px, 560px) minmax(0, 1fr);
   gap: 18px;
   align-items: center;
 }
@@ -335,8 +335,7 @@
 }
 
 .hostCard h2,
-.hostCard p,
-.hostQuote {
+.hostCard p {
   margin: 0;
 }
 
@@ -375,50 +374,13 @@
   font-weight: 400;
 }
 
-.hostContent {
-  display: grid;
-  gap: 24px;
-  justify-items: start;
-}
-
-.hostQuotePanel {
-  padding: 0;
-  display: grid;
-  grid-template-columns: auto minmax(0, auto) auto;
-  gap: 12px;
-  align-items: start;
-}
-
-.hostQuoteMark,
-.hostQuoteMarkEnd {
-  color: #8b7c47;
-  font-size: clamp(34px, 4.5vw, 50px);
-  line-height: 0.8;
-  font-weight: 800;
-  font-family: var(--font-open-sans), "Avenir Next", "Segoe UI", sans-serif;
-}
-
-.hostQuoteMarkEnd {
-  align-self: end;
-}
-
-.hostQuote {
-  color: #201d11;
-  font-size: clamp(24px, 3.2vw, 34px);
-  line-height: 1.12;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  max-width: 720px;
-}
-
 .hostProfileLink {
-  min-height: 44px;
-  padding: 0 28px;
-  border: 2px solid #6a700d;
-  border-radius: 16px;
   display: inline-flex;
   align-items: center;
+  justify-content: flex-end;
+  justify-self: end;
   gap: 10px;
+  white-space: nowrap;
   color: #6a700d;
   background: transparent;
   text-decoration: none;
@@ -435,7 +397,6 @@
 
 .hostProfileLink:hover,
 .hostProfileLink:focus-visible {
-  background: #fbf7e7;
   color: #4f5408;
   outline: none;
 }
@@ -895,6 +856,17 @@
   align-items: center;
 }
 
+@media (max-width: 900px) {
+  .hostSection {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .hostProfileLink {
+    justify-self: end;
+  }
+}
+
 @media (max-width: 640px) {
   .page {
     padding-top: 8px;
@@ -1011,25 +983,8 @@
     height: 16px;
   }
 
-  .hostQuotePanel {
-    width: 100%;
-    gap: 10px;
-  }
-
-  .hostQuoteMark,
-  .hostQuoteMarkEnd {
-    font-size: 30px;
-  }
-
-  .hostQuote {
-    font-size: 24px;
-    line-height: 1.16;
-    max-width: none;
-  }
-
   .hostProfileLink {
-    min-height: 40px;
-    padding: 0 22px;
+    padding: 0;
     font-size: 14px;
   }
 

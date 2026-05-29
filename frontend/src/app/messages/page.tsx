@@ -1,6 +1,6 @@
 "use client";
 
-import { Search } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -281,11 +281,18 @@ export default function MessagesPage() {
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Filtrer une discussion"
             />
-            <Search className={styles.searchIcon} />
+            <Image
+              src="/rechercher.svg"
+              alt=""
+              width={20}
+              height={20}
+              className={styles.searchIcon}
+              aria-hidden="true"
+            />
           </label>
 
           <Link href="/rechercher" className={styles.searchMealButton}>
-            Rechercher un repas
+            Rechercher un événement
           </Link>
         </div>
 

@@ -81,13 +81,6 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
           )}
         </div>
 
-        <div className={styles.quotePanel}>
-          <span className={styles.quoteMark} aria-hidden="true">
-            &ldquo;
-          </span>
-          <p className={styles.quote}>{host.quote}</p>
-        </div>
-
         <div className={styles.stats}>
           <article>
             <strong>{host.completedEvents}</strong>

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Search, ChevronRight, CalendarDays, MapPin } from "lucide-react";
+import { ChevronRight, CalendarDays, MapPin } from "lucide-react";
 import {
   useCallback,
   useDeferredValue,
@@ -228,11 +228,18 @@ export default function MealMessagesPage() {
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Filtrer une discussion"
             />
-            <Search className={styles.searchIcon} />
+            <Image
+              src="/rechercher.svg"
+              alt=""
+              width={20}
+              height={20}
+              className={styles.searchIcon}
+              aria-hidden="true"
+            />
           </label>
 
           <Link href="/rechercher" className={styles.searchMealButton}>
-            Rechercher un repas
+            Rechercher un événement
           </Link>
         </div>
 
@@ -305,7 +312,7 @@ export default function MealMessagesPage() {
                     href={buildMealEventHref(mealId)}
                     className={styles.mealLink}
                   >
-                    Voir la fiche du repas
+                    Voir la fiche de l'événement
                     <ChevronRight size={18} />
                   </Link>
                 </div>
