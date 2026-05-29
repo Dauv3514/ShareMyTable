@@ -619,6 +619,36 @@
   background: transparent;
 }
 
+.totalCommissionSummary {
+  margin: 0;
+  grid-column: 1 / -1;
+  color: #8c7f56;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: left;
+}
+
+.totalCommissionSection {
+  gap: 0;
+}
+
+.totalCommissionField {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+  gap: 16px;
+  align-items: end;
+}
+
+.totalCommissionField > span {
+  align-self: center;
+}
+
+.totalCommissionField .priceField {
+  width: 100%;
+}
+
 .chipRow {
   display: flex;
   flex-wrap: wrap;
@@ -933,6 +963,10 @@
   }
 
   .commissionGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .totalCommissionField {
     grid-template-columns: 1fr;
   }
 
