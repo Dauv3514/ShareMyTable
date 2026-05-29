@@ -402,8 +402,8 @@ function InscriptionPageContent() {
             <h2 className={styles.title}>Créez votre compte</h2>
             <p className={styles.subtitle}>
               Commence par les informations indispensables, puis ajoute ce qui
-              enrichit ton profil. Si tu veux devenir hôte dès maintenant, on
-              peut aussi envoyer la demande au même moment.
+              enrichit ton profil. Si tu veux devenir hôte dès maintenant, tu
+              peux aussi envoyer la demande au même moment.
             </p>
           </div>
 

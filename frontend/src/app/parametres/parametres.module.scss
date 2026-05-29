@@ -182,12 +182,14 @@
 }
 
 .primaryButton {
-  min-height: 42px;
-  padding: 0 20px;
-  border-radius: 999px;
-  border: 1px solid #b8a547;
-  background: #e1ec79;
-  color: #25210e;
+  min-height: 30px;
+  height: 30px;
+  min-width: 160px;
+  padding: 0 10px;
+  border-radius: 27px;
+  border: 1px solid #7B8613;
+  background: #7B8613;
+  color: #fcfbf8;
   font-size: 14px;
   font-weight: 700;
   font-family: inherit;

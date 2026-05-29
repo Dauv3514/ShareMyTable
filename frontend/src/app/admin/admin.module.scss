@@ -301,8 +301,9 @@
 
 .approveButton,
 .rejectButton {
-  min-height: 44px;
-  padding: 0 18px;
+  min-height: 30px;
+  height: 30px;
+  padding: 0 16px;
   border-radius: 999px;
   font: inherit;
   font-size: 14px;
@@ -321,9 +322,13 @@
 }
 
 .approveButton {
-  border: 1px solid #b8a547;
-  background: #e1ec79;
-  color: #25210e;
+  min-height: 30px;
+  min-width: 160px;
+  padding: 7px 10px;
+  border: 1px solid #7B8613;
+  border-radius: 27px;
+  background: #7B8613;
+  color: #fcfbf8;
 }
 
 .rejectButton {

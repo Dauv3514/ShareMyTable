@@ -96,11 +96,14 @@
 }
 
 .button {
-  min-height: 54px;
-  border: 1px solid #b8a547;
-  border-radius: 999px;
-  background: #e1ec79;
-  color: #25210e;
+  min-height: 30px;
+  height: 30px;
+  min-width: 160px;
+  padding: 0 10px;
+  border: 1px solid #7B8613;
+  border-radius: 27px;
+  background: #7B8613;
+  color: #fcfbf8;
   font-size: 16px;
   font-weight: 800;
   cursor: pointer;
@@ -112,7 +115,7 @@
   &:hover {
     transform: translateY(-1px);
     box-shadow: 0 14px 24px rgba(184, 165, 71, 0.24);
-    background: #e6f189;
+    background: #7B8613;
   }
 }
 
@@ -131,7 +134,8 @@
 }
 
 .oauthButton {
-  min-height: 54px;
+  min-height: 30px;
+  height: 30px;
   border-radius: 999px;
   border: 1px solid #b8a547;
   background: #ffffff;
@@ -191,6 +195,6 @@
   .input,
   .button,
   .oauthButton {
-    min-height: 50px;
+    min-height: 30px;
   }
 }

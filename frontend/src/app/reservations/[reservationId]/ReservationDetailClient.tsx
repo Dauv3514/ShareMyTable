@@ -618,7 +618,10 @@ export default function ReservationDetailClient({
               </div>
 
               <div className={styles.actions}>
-                <Link href={`/profil/${reservation.hostId}`} className={styles.secondaryButton}>
+                <Link
+                  href={`/profil/${reservation.hostId}`}
+                  className={`${styles.secondaryButton} ${styles.hostButton}`}
+                >
                   Voir l&apos;hôte
                 </Link>
                 <button

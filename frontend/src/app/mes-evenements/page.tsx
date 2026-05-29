@@ -331,7 +331,10 @@ function ReservationCard({ reservation }: ReservationCardProps) {
 
         <div className={styles.reservationFooter}>
           <span>{reservation.seats} place(s)</span>
-          <Link href={`/reservations/${reservation.id}`} className={styles.secondaryButton}>
+          <Link
+            href={`/reservations/${reservation.id}`}
+            className={`${styles.secondaryButton} ${styles.reservationDetailButton}`}
+          >
             Voir le détail
           </Link>
         </div>
@@ -853,7 +856,7 @@ export default function MesRepasPage() {
               </Link>
             </>
           ) : (
-            <Link href="/" className={styles.primaryButton}>
+            <Link href="/" className={`${styles.primaryButton} ${styles.discoverButton}`}>
               <Rocket />
               Découvrir les repas
             </Link>

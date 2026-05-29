@@ -53,8 +53,9 @@
 .secondaryButton,
 .primaryButton,
 .warningButton {
-  min-height: 50px;
-  padding: 0 20px;
+  min-height: 30px;
+  height: 30px;
+  padding: 0 16px;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
@@ -79,11 +80,31 @@
   background: rgba(255, 255, 255, 0.82);
 }
 
+.hostButton {
+  min-height: 30px;
+  height: 30px;
+  min-width: 160px;
+  padding: 0 10px;
+  border-radius: 27px;
+  border-color: #525a0c;
+  background: #ffffff;
+  color: #525a0c;
+  font-family: Alpino, sans-serif;
+  font-size: 16px;
+  font-weight: 507;
+  line-height: 1;
+}
+
 .primaryButton {
-  color: #352d14;
-  border-color: #c9ba56;
-  background: #e6f06f;
-  box-shadow: 0 12px 22px rgba(180, 167, 58, 0.22);
+  min-height: 30px;
+  height: 30px;
+  min-width: 160px;
+  padding: 0 10px;
+  color: #fcfbf8;
+  border-color: #7B8613;
+  border-radius: 27px;
+  background: #7B8613;
+  box-shadow: none;
 }
 
 .warningButton {
@@ -550,7 +571,8 @@
 
 .reviewStep--active span,
 .reviewStep--done span {
-  background: #dce95f;
+  background: #7b8613;
+  color: #ffffff;
 }
 
 .reviewStage {

@@ -1,6 +1,6 @@
 .navbar {
   width: 100%;
-  background: #ffffff;
+  background: #fbf9f4;
   border-bottom: 1px solid #e6e6e6;
 }
 
@@ -102,9 +102,14 @@
 }
 
 .navbar__btn--primary {
-  background: #E1EC79;
-  border-color: #B8A547;
-  color: #25210E;
+  height: 30px;
+  min-width: 0;
+  padding: 0 18px;
+  justify-content: center;
+  border-color: #7B8613;
+  border-radius: 27px;
+  background: #7B8613;
+  color: #fcfbf8;
 }
 
 .navbar__btn:hover {

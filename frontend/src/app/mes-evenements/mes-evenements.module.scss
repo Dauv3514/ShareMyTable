@@ -77,9 +77,10 @@
 .primaryButton,
 .secondaryButton,
 .warningButton {
-  min-height: 50px;
+  min-height: 30px;
+  height: 30px;
   border-radius: 999px;
-  padding: 0 22px;
+  padding: 0 16px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -97,8 +98,9 @@
 
 .panelSwitchButton,
 .filterButton {
-  min-height: 42px;
-  padding: 0 18px;
+  min-height: 30px;
+  height: 30px;
+  padding: 0 16px;
   background: transparent;
   color: #675d3d;
 }
@@ -111,16 +113,43 @@
 }
 
 .primaryButton {
-  background: #e6f06f;
-  border-color: #c9ba56;
-  color: #352d14;
-  box-shadow: 0 12px 22px rgba(180, 167, 58, 0.22);
+  min-height: 30px;
+  height: 30px;
+  min-width: 160px;
+  padding: 0 10px;
+  border-radius: 27px;
+  background: #7B8613;
+  border-color: #7B8613;
+  color: #fcfbf8;
+  box-shadow: none;
+}
+
+.discoverButton {
+  min-width: 250px;
+  padding-right: 28px;
+  padding-left: 24px;
+  gap: 16px;
 }
 
 .secondaryButton {
   background: rgba(255, 255, 255, 0.82);
   border-color: #d9cda8;
   color: #5c512c;
+}
+
+.reservationDetailButton {
+  min-height: 30px;
+  height: 30px;
+  min-width: 160px;
+  padding: 0 10px;
+  border-radius: 27px;
+  border-color: #525a0c;
+  background: #ffffff;
+  color: #525a0c;
+  font-family: Alpino, sans-serif;
+  font-size: 16px;
+  font-weight: 507;
+  line-height: 1;
 }
 
 .warningButton {
@@ -332,7 +361,8 @@
 .paginationButton,
 .paginationPage {
   min-width: 44px;
-  min-height: 44px;
+  min-height: 30px;
+  height: 30px;
   padding: 0 16px;
   border-radius: 999px;
   border: 1px solid #ddd1ae;

@@ -317,7 +317,8 @@
 .primaryButton,
 .secondaryButton,
 .fullWidthButton {
-  min-height: 44px;
+  min-height: 30px;
+  height: 30px;
   padding: 0 18px;
   border-radius: 16px;
   display: inline-flex;
@@ -334,10 +335,15 @@
 }
 
 .primaryButton {
-  border: 2px solid #c9ba48;
-  color: #2e270f;
-  background: #e6ef5e;
-  box-shadow: 0 12px 22px rgba(180, 167, 58, 0.22);
+  min-height: 30px;
+  height: 30px;
+  min-width: 160px;
+  padding: 0 10px;
+  border: 1px solid #7B8613;
+  border-radius: 27px;
+  color: #fcfbf8;
+  background: #7B8613;
+  box-shadow: none;
 }
 
 .secondaryButton,
@@ -618,7 +624,8 @@
 .modalSecondaryButton,
 .modalDangerButton {
   width: 100%;
-  min-height: 42px;
+  min-height: 30px;
+  height: 30px;
   padding: 0 18px;
   border-radius: 13px;
   display: inline-flex;
@@ -632,7 +639,8 @@
 .modalSheet--accept .modalPrimaryButton,
 .modalSheet--accept .modalSecondaryButton {
   min-height: 30px;
-  padding: 7px 20px;
+  height: 30px;
+  padding: 0 20px;
   border-radius: 10px;
   font-size: 16px;
   font-weight: 700;
@@ -640,15 +648,20 @@
 }
 
 .modalPrimaryButton {
-  border: 2px solid #c9ba48;
-  color: #2e270f;
-  background: #e6ef5e;
+  min-height: 30px;
+  height: 30px;
+  min-width: 160px;
+  padding: 0 10px;
+  border: 1px solid #7B8613;
+  border-radius: 27px;
+  color: #fcfbf8;
+  background: #7B8613;
 }
 
 .modalSheet--accept .modalPrimaryButton {
-  border: 1px solid #b8a547;
-  color: #25210e;
-  background: #e1ec79;
+  border: 1px solid #7B8613;
+  color: #fcfbf8;
+  background: #7B8613;
 }
 
 .modalSecondaryButton {

@@ -142,7 +142,9 @@
 
 .contactButton,
 .registerButton {
-  min-height: 48px;
+  min-height: 30px;
+  height: 30px;
+  max-height: 30px;
   border-radius: 14px;
   display: inline-flex;
   align-items: center;
@@ -151,25 +153,37 @@
   text-align: center;
   text-decoration: none;
   font-size: 15px;
-  line-height: 1.15;
+  line-height: 1;
   font-weight: 700;
 }
 
 .contactButton {
-  border: 2px solid #8f752d;
-  color: #6a700d;
-  background: #fffdf7;
+  width: 100%;
+  min-width: 160px;
+  padding: 0 18px;
+  border: 1px solid #525a0c;
+  border-radius: 27px;
+  color: #525a0c;
+  background: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .registerButton {
-  border: 2px solid #d4c34a;
-  color: #201d11;
-  background: linear-gradient(90deg, #e6f16d 0%, #e3ef67 100%);
+  min-height: 30px;
+  height: 30px;
+  max-height: 30px;
+  min-width: 160px;
+  padding: 0 10px;
+  border-radius: 27px;
+  border: 1px solid #7b8613;
+  color: #ffffff;
+  background: #7b8613;
 }
 
 .contactButton:hover,
 .contactButton:focus-visible {
-  background: #fbf7e7;
+  background: #ffffff;
   outline: none;
 }
 
@@ -210,7 +224,9 @@
 
   .contactButton,
   .registerButton {
-    min-height: 44px;
+    min-height: 30px;
+    height: 30px;
+    max-height: 30px;
     border-radius: 13px;
     padding: 0 14px;
     font-size: 14px;

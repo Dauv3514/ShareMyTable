@@ -89,6 +89,29 @@ a {
 // Buttons
 // =========================
 
+button:not(.filter-panel__backdrop):not(.profile-menu__overlay):not([class*="Backdrop"]):not([class*="backdrop"]):not([class*="Overlay"]):not([class*="overlay"]):not(.filter-panel__close):not(.profile-menu__close):not(.search-bar__button):not(.search-bar-shell__filters):not(.sectionNavButton):not(.date-picker__trigger):not(.date-picker__nav-button):not(.dp-nav-button):not(.navbar__profile-button):not(.bottom-menu__item--button):not(.chipRemoveButton):not(.addChipButton):not(.counterButton):not(.iconActionButton):not(.ratingButton):not(.sendButton),
+a[class*="Button"],
+a[class*="button"],
+a[class*="Btn"],
+a[class*="btn"] {
+  min-height: 40px !important;
+  height: 40px !important;
+  max-height: 40px !important;
+  border-radius: 27px !important;
+}
+
+@media (max-width: 767px) {
+  button:not(.filter-panel__backdrop):not(.profile-menu__overlay):not([class*="Backdrop"]):not([class*="backdrop"]):not([class*="Overlay"]):not([class*="overlay"]):not(.filter-panel__close):not(.profile-menu__close):not(.search-bar__button):not(.search-bar-shell__filters):not(.sectionNavButton):not(.date-picker__trigger):not(.date-picker__nav-button):not(.dp-nav-button):not(.navbar__profile-button):not(.bottom-menu__item--button):not(.chipRemoveButton):not(.addChipButton):not(.counterButton):not(.iconActionButton):not(.ratingButton):not(.sendButton),
+  a[class*="Button"],
+  a[class*="button"],
+  a[class*="Btn"],
+  a[class*="btn"] {
+    min-height: 30px !important;
+    height: 30px !important;
+    max-height: 30px !important;
+  }
+}
+
 button {
   &.primary {
     background-color: $primary;
