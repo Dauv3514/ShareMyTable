@@ -708,6 +708,7 @@ export default function ReservationDetailClient({
                       <div className={styles.tipCounter}>
                         <button
                           type="button"
+                          className={styles.tipCounterButton}
                           onClick={() => setTipAmount((value) => Math.max(0, value - 0.5))}
                           aria-label="Diminuer le pourboire"
                         >
@@ -716,6 +717,7 @@ export default function ReservationDetailClient({
                         <strong>{formatPrice(tipAmount)}</strong>
                         <button
                           type="button"
+                          className={styles.tipCounterButton}
                           onClick={() => setTipAmount((value) => Math.min(100, value + 0.5))}
                           aria-label="Augmenter le pourboire"
                         >

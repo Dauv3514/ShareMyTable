@@ -280,7 +280,7 @@
   min-height: 30px;
   height: 30px;
   min-width: 160px;
-  padding: 0 10px;
+  padding: 0 16px;
   border-radius: 27px;
   background: #7B8613;
   border-color: #7B8613;
@@ -289,10 +289,8 @@
 }
 
 .discoverButton {
-  min-width: 250px;
-  padding-right: 28px;
-  padding-left: 24px;
-  gap: 16px;
+  min-width: auto;
+  gap: 0;
 }
 
 .secondaryButton {
@@ -305,14 +303,14 @@
   min-height: 30px;
   height: 30px;
   min-width: 160px;
-  padding: 0 10px;
+  padding: 0 16px;
   border-radius: 27px;
   border-color: #525a0c;
   background: #ffffff;
   color: #525a0c;
   font-family: Alpino, sans-serif;
-  font-size: 16px;
-  font-weight: 507;
+  font-size: 0.96rem;
+  font-weight: 700;
   line-height: 1;
 }
 
@@ -482,6 +480,15 @@
 .hostGuardCard {
   display: grid;
   gap: 18px;
+  width: calc(100% - 160px);
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.hostGuardCard .secondaryButton {
+  border-color: #525a0c;
+  background: #ffffff;
+  color: #525a0c;
 }
 
 .hostGuardIcon {
@@ -578,7 +585,7 @@
 }
 
 .pagination {
-  margin-top: 6px;
+  margin-top: 20px;
 }
 
 .paginationButton,
@@ -1096,6 +1103,10 @@
     padding: 44px 40px 52px;
   }
 
+  .hostGuardCard {
+    width: calc(100% - 80px);
+  }
+
   .hero--hosting .heroHeader {
     display: contents;
     grid-template-columns: minmax(0, 1fr);
@@ -1156,6 +1167,10 @@
   .sectionCard {
     padding: 22px 18px;
     border-radius: 24px;
+  }
+
+  .hostGuardCard {
+    width: 100%;
   }
 
   .mealCard {

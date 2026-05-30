@@ -128,10 +128,7 @@ function GuestRequestCard({
           alt={guestName}
           size={96}
         />
-        <span>
-          {guestFirstName}
-          <small className={styles.arrowLogo} aria-hidden="true" />
-        </span>
+        <span>{guestFirstName}</span>
       </div>
 
       <div className={styles.requestContent}>
@@ -146,7 +143,7 @@ function GuestRequestCard({
 
           {booking.bookingStatus === "pending" ? (
             <span className={styles.newBadge}>+1</span>
-          ) : (
+          ) : booking.bookingStatus === "refused" ? null : (
             <span
               className={`${styles.statusPill} ${
                 styles[`statusPill--${booking.bookingStatus}`]
@@ -309,10 +306,7 @@ function ModerationModal({
             alt={guestName}
             size={94}
           />
-          <span>
-            {guestFirstName}
-            <small className={styles.arrowLogo} aria-hidden="true" />
-          </span>
+          <span>{guestFirstName}</span>
         </div>
 
         <div className={styles.modalBody}>

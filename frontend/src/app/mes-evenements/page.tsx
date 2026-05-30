@@ -8,9 +8,7 @@ import {
   Clock3,
   Euro,
   History,
-  Rocket,
   ShieldCheck,
-  Ticket,
   Users,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -75,7 +73,7 @@ const HOSTING_FILTER_OPTIONS: Array<{ key: HostingFilter; label: string }> = [
 const ATTENDING_FILTER_OPTIONS: Array<{ key: AttendingFilter; label: string }> = [
   { key: "all", label: "Toutes" },
   { key: "confirmed", label: "Confirmées" },
-  { key: "pending", label: "En attente de confirmation" },
+  { key: "pending", label: "En attente" },
   { key: "refused", label: "Refusées" },
   { key: "past", label: "Passées" },
 ];
@@ -845,11 +843,7 @@ export default function MesRepasPage() {
 
   return (
     <section className={styles.page}>
-      <div
-	        className={`${styles.hero} ${
-	          activePanel === "hosting" ? styles["hero--hosting"] : ""
-	        }`}
-	      >
+      <div className={`${styles.hero} ${styles["hero--hosting"]}`}>
 	        {isHostUser ? (
 	          <div className={styles.panelSwitch}>
 	            <button
@@ -884,7 +878,7 @@ export default function MesRepasPage() {
 	            <h1>
               {activePanel === "hosting"
                 ? "Gère tes événements, et pilote leur publication"
-                : "Consulte facilement toutes tes réservations au même endroit."}
+                : "Consulte toutes tes réservations au même endroit."}
             </h1>
             <p className={styles.description}>
               {activePanel === "hosting" ? (
@@ -897,7 +891,10 @@ export default function MesRepasPage() {
                   </span>
                 </>
               ) : (
-                "Retrouve tes réservations confirmées, en attente, refusées et passées dans un seul espace."
+                <>
+                  Retrouve tes <strong>réservations</strong> confirmées, en attente,
+                  refusées et passées dans un seul espace.
+                </>
               )}
             </p>
           </div>
@@ -925,7 +922,29 @@ export default function MesRepasPage() {
                   <strong>{hostedStats.pastCount}</strong>
                 </article>
               </div>
-            ) : null}
+            ) : (
+              <div className={`${styles.statsGrid} ${styles.hostingStatsGrid}`}>
+                <article className={styles.statCard}>
+                  <span>Réservations</span>
+                  <strong>{attendingStats.total}</strong>
+                </article>
+
+                <article className={styles.statCard}>
+                  <span>Confirmées</span>
+                  <strong>{attendingStats.confirmed}</strong>
+                </article>
+
+                <article className={styles.statCard}>
+                  <span>En attente</span>
+                  <strong>{attendingStats.pending}</strong>
+                </article>
+
+                <article className={styles.statCard}>
+                  <span>Refusées</span>
+                  <strong>{attendingStats.refused}</strong>
+                </article>
+              </div>
+            )}
           </div>
         </div>
 
@@ -941,8 +960,7 @@ export default function MesRepasPage() {
             </>
           ) : (
             <Link href="/" className={`${styles.primaryButton} ${styles.discoverButton}`}>
-              <Rocket />
-              Découvrir les repas
+              Découvrir les événements
             </Link>
           )}
         </div>
@@ -961,6 +979,26 @@ export default function MesRepasPage() {
                       : ""
                   }`}
                   onClick={() => setHostingFilter(filterOption.key)}
+                >
+                  {filterOption.label}
+                </button>
+              ))}
+            </div>
+          </>
+        ) : activePanel === "attending" && !attendingError ? (
+          <>
+            <span className={styles.heroDivider} aria-hidden="true" />
+            <div className={styles.filtersBar}>
+              {ATTENDING_FILTER_OPTIONS.map((filterOption) => (
+                <button
+                  key={filterOption.key}
+                  type="button"
+                  className={`${styles.filterButton} ${
+                    attendingFilter === filterOption.key
+                      ? styles["filterButton--active"]
+                      : ""
+                  }`}
+                  onClick={() => setAttendingFilter(filterOption.key)}
                 >
                   {filterOption.label}
                 </button>
@@ -1089,57 +1127,6 @@ export default function MesRepasPage() {
         </>
       ) : (
         <>
-          <div className={styles.statsGrid}>
-            <article className={styles.statCard}>
-              <span className={styles.statIcon}>
-                <Ticket />
-              </span>
-              <strong>{attendingStats.total}</strong>
-              <span>réservations</span>
-            </article>
-
-            <article className={styles.statCard}>
-              <span className={styles.statIcon}>
-                <ShieldCheck />
-              </span>
-              <strong>{attendingStats.confirmed}</strong>
-              <span>confirmées</span>
-            </article>
-
-            <article className={styles.statCard}>
-              <span className={styles.statIcon}>
-                <Clock3 />
-              </span>
-              <strong>{attendingStats.pending}</strong>
-              <span>en attente de confirmation</span>
-            </article>
-
-            <article className={styles.statCard}>
-              <span className={styles.statIcon}>
-                <CircleAlert />
-              </span>
-              <strong>{attendingStats.refused}</strong>
-              <span>refusées</span>
-            </article>
-          </div>
-
-          <div className={styles.filtersBar}>
-            {ATTENDING_FILTER_OPTIONS.map((filterOption) => (
-              <button
-                key={filterOption.key}
-                type="button"
-                className={`${styles.filterButton} ${
-                  attendingFilter === filterOption.key
-                    ? styles["filterButton--active"]
-                    : ""
-                }`}
-                onClick={() => setAttendingFilter(filterOption.key)}
-              >
-                {filterOption.label}
-              </button>
-            ))}
-          </div>
-
           {fetchingAttendingReservations ? (
             <div className={styles.loadingPanel}>
               Chargement de tes réservations...
@@ -1162,15 +1149,15 @@ export default function MesRepasPage() {
                   Réessayer
                 </button>
                 <Link href="/" className={styles.primaryButton}>
-                  Explorer les repas
+                  Explorer les événéments
                 </Link>
               </div>
             </div>
           ) : filteredAttendingReservations.length === 0 ? (
             <EmptyStateCard
               title="Aucune réservation dans cette vue"
-              description="Explore les repas publics pour réserver une nouvelle place."
-              actionLabel="Explorer les repas"
+              description="Explore les événements publics pour réserver une nouvelle place."
+              actionLabel="Explorer les événements"
               actionHref="/"
             />
           ) : (

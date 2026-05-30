@@ -145,21 +145,10 @@
   border-radius: 999px;
 }
 
-.confirmedGuestCard span::after {
-  content: "";
-  display: inline-block;
-  flex: 0 0 auto;
-  margin-left: 5px;
-  width: 0;
-  height: 0;
-  border-top: 4px solid transparent;
-  border-bottom: 4px solid transparent;
-  border-left: 6px solid #6f632a;
-}
-
 .confirmedGuestCard span {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   line-height: 1;
 }
 
@@ -202,7 +191,7 @@
 .avatarColumn span {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  justify-content: center;
 }
 
 .arrowLogo {
@@ -217,7 +206,7 @@
   min-width: 0;
   display: grid;
   align-content: center;
-  gap: 14px;
+  gap: 8px;
 }
 
 .requestHead {
@@ -242,10 +231,10 @@
 }
 
 .ratingStars {
-  margin-top: 12px;
+  margin-top: 9px;
   display: flex;
   gap: 6px;
-  color: #776522;
+  color: #7B8613;
 }
 
 .ratingStars svg {
@@ -536,7 +525,7 @@
 .modalGuest span {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
   line-height: 1;
 }
 
@@ -565,10 +554,11 @@
 
 .modalSheet--accept .modalBody {
   width: 100%;
+  padding-inline: 18px;
   color: #000000;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 400;
-  line-height: 1;
+  line-height: 1.12;
 }
 
 .modalBody strong {
