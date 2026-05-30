@@ -18,7 +18,7 @@ export enum MessageConversationType {
   MEAL_DIRECT = 'meal_direct',
 }
 
-// Conversation de messagerie liee a un repas.
+// Conversation de messagerie liee a un événement.
 // Le type permet de distinguer un chat reservation, un groupe de repas
 // ou un direct entre participants deja acceptes.
 @Entity('message_conversations')

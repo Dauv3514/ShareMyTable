@@ -175,8 +175,8 @@ export default function DevenirHotePage() {
     return {
       title: "Profil hôte déjà valide",
       description:
-        "Ton profil hôte est déjà approuvé. Tu peux désormais créer des repas.",
-      submitLabel: "Créer un repas",
+        "Ton profil hôte est déjà approuvé. Tu peux désormais créer des événements.",
+      submitLabel: "Créer un événement",
     };
   }, [hostProfile]);
 

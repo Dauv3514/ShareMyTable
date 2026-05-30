@@ -312,7 +312,7 @@ function ModerationModal({
         <div className={styles.modalBody}>
           {isAccept ? (
             <p>
-              {guestFirstName} souhaite rejoindre le repas, il s&apos;est engagé
+              {guestFirstName} souhaite rejoindre l'événement, il s&apos;est engagé
               à respecter les <strong>règles de la maison.</strong>
             </p>
           ) : null}
@@ -522,7 +522,7 @@ export default function HostMealRequestsClient({
       <header className={styles.hero}>
         <div>
           <span className={styles.statusBadge}>Publié</span>
-          <h1>{mealBookings.mealTitle || "Repas sans titre"}</h1>
+          <h1>{mealBookings.mealTitle || "Événement sans titre"}</h1>
           <p>{formatMealDate(mealBookings.mealDateTime)}</p>
         </div>
       </header>

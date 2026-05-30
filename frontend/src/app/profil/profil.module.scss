@@ -32,9 +32,13 @@
   right: -4px;
   bottom: -2px;
   width: 36px;
+  min-width: 36px;
   height: 36px;
+  min-height: 36px;
+  padding: 0;
   border: 1px solid #d5c470;
   border-radius: 50%;
+  flex: 0 0 36px;
   background: #eef37e;
   color: #4b4418;
   display: inline-flex;
@@ -336,9 +340,13 @@
 
 .addChipButton {
   width: 32px;
+  min-width: 32px;
   height: 32px;
+  min-height: 32px;
+  padding: 0;
   border: none;
   border-radius: 50%;
+  flex: 0 0 32px;
   background: #ddd09f;
   color: #4e451d;
   display: inline-flex;
@@ -539,7 +547,7 @@
   min-height: 40px;
   border: none;
   border-radius: 999px;
-  background: #252525;
+  background: #7B8613;
   color: #ffffff;
   font-size: 13px;
   font-weight: 800;
@@ -579,6 +587,8 @@
 
 .actionRow {
   width: 100%;
+  min-height: 58px;
+  font-family: var(--font-merriweather-sans), "Trebuchet MS", sans-serif;
   border: 1px solid #ebe1ca;
   border-radius: 18px;
   background: #ffffff;
@@ -587,7 +597,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 15px 16px;
+  padding: 12px 16px;
   text-align: left;
   cursor: pointer;
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
@@ -647,13 +657,16 @@
 }
 
 .actionLabel {
-  font-size: 15px;
+  font-family: var(--font-merriweather-sans), "Trebuchet MS", sans-serif;
+  font-size: 15px !important;
+  line-height: 1;
   font-weight: 700;
   color: #2a2716;
 }
 
 .actionValue {
-  font-size: 13px;
+  font-family: var(--font-merriweather-sans), "Trebuchet MS", sans-serif;
+  font-size: 14px;
   font-weight: 700;
   color: #877c58;
 }
@@ -867,6 +880,12 @@
   border: 1px solid #ece1c2;
   background: #fbf7eb;
   color: #746943;
+}
+
+.closeButton {
+  border: 1px solid #7B8613;
+  background: #ffffff;
+  color: #52590d;
 }
 
 .primaryButton:hover,

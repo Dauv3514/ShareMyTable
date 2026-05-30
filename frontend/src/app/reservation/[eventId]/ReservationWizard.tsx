@@ -422,7 +422,7 @@ export default function ReservationWizard({
 
   const recapRows = useMemo(
     () => [
-      { label: "Repas", value: event.title },
+      { label: "Événement", value: event.title },
       { label: "Hôte", value: hostProfile.name },
       { label: "Date", value: event.detailDateLabel },
       { label: "Heure", value: event.timeLabel },
@@ -503,7 +503,7 @@ export default function ReservationWizard({
         <>
           <Link href={buildMealEventHref(event.id)} className={styles.footerGhostButton}>
             <ChevronLeft />
-            Retour au repas
+            Retour à l'événement
           </Link>
           <button
             type="button"
@@ -629,7 +629,7 @@ export default function ReservationWizard({
         <aside className={styles.sidebar}>
           <Link href={buildMealEventHref(event.id)} className={styles.backLink}>
             <ChevronLeft />
-            Retour au repas
+            Retour à l'événement
           </Link>
 
           <div className={styles.sidebarCard}>
@@ -817,7 +817,7 @@ export default function ReservationWizard({
                     <div className={`${styles.infoCard} ${styles.infoCardHighlight}`}>
                       <h3>Infos importantes</h3>
                       <ul className={styles.noticeList}>
-                        <li>Paiement bloqué jusqu&apos;à la tenue du repas.</li>
+                        <li>Paiement bloqué jusqu&apos;à la tenue de l'événement.</li>
                         <li>Adresse exacte partagée 24h avant.</li>
                         <li>Annulation gratuite jusqu&apos;à 48h avant, puis retenue partielle.</li>
                         <li>Tu pourras suivre le statut de tes réservations dans Mes événements</li>
@@ -907,7 +907,7 @@ export default function ReservationWizard({
                       <p>{draft.seats} place(s) pour {event.title}</p>
                       <ul className={styles.paymentNotes}>
                         <li>Autorisation immédiate du paiement</li>
-                        <li>Blocage des fonds jusqu&apos;au repas</li>
+                        <li>Blocage des fonds jusqu&apos;à l'événement</li>
                         <li>L&apos;hôte confirme ou non votre réservation selon le mode de validation choisi</li>
                         {paymentIntent ? (
                           <li>Paiement Stripe préparé pour la réservation #{paymentIntent.bookingId}</li>
@@ -933,7 +933,7 @@ export default function ReservationWizard({
                           <strong>{getReservationStatusLabel(createdReservation.status)}</strong>
                           <p>
                             {createdReservation.status === "confirmed"
-                              ? "Ta place est confirmée. Tu retrouveras l'adresse exacte 24h avant le repas."
+                              ? "Ta place est confirmée. Tu retrouveras l'adresse exacte 24h avant l'événement."
                               : "Ta demande a bien été envoyée. Le paiement reste autorisé en attendant la validation de l'hôte."}
                           </p>
                         </div>
@@ -944,7 +944,7 @@ export default function ReservationWizard({
                           <h3>Réservation enregistrée</h3>
                           <dl className={styles.recapList}>
                             <div>
-                              <dt>Repas</dt>
+                              <dt>Evénement</dt>
                               <dd>{createdReservation.mealTitle}</dd>
                             </div>
                             <div>

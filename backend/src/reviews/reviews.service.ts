@@ -132,7 +132,7 @@ export class ReviewsService {
 
     if (!this.canReviewBooking(booking)) {
       throw new BadRequestException(
-        'Un avis peut seulement etre laisse apres un repas confirme.',
+        'Un avis peut seulement etre laisse apres un événement confirme.',
       );
     }
 

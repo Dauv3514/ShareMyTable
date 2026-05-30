@@ -145,7 +145,7 @@ export async function getHostMealBookings(mealId: string | number) {
     throw new Error(
       getHostBookingsErrorMessage(
         error,
-        "Impossible de charger les demandes de ce repas.",
+        "Impossible de charger les demandes de cette événement.",
       ),
     );
   }

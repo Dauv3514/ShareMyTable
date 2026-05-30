@@ -42,7 +42,7 @@ function NewsletterModal({
         <p className={styles.modalEyebrow}>Newsletter</p>
         <h2 id="newsletter-title">S&apos;inscrire à notre newsletter ?</h2>
         <p>
-          Recevez les nouveaux repas, les idées de tables et les événements près de
+          Recevez les nouveaux événements, les idées de tables et les événements près de
           chez vous.
         </p>
 

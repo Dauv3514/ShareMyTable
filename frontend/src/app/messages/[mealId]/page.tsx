@@ -33,7 +33,7 @@ function getLatestSenderLabel(
   const message = conversation.latestMessage;
 
   if (!message) {
-    return conversation.type === "meal_group" ? "Discussion repas" : "Participant";
+    return conversation.type === "meal_group" ? "Discussion événement" : "Participant";
   }
 
   if (message.sender.userId === currentUserId) {
@@ -107,7 +107,7 @@ export default function MealMessagesPage() {
       setMealDetails(nextMealDetails);
     } catch (error) {
       const fallbackMessage =
-        "Impossible de charger les discussions de ce repas.";
+        "Impossible de charger les discussions de cet événement.";
       setErrorMessage(error instanceof Error ? error.message : fallbackMessage);
     } finally {
       setIsFetching(false);
@@ -200,7 +200,7 @@ export default function MealMessagesPage() {
       <section className={styles.page}>
         <div className={styles.shell}>
           <div className={styles.stateCard}>
-            <h2>Chargement du repas</h2>
+            <h2>Chargement de l'événement</h2>
             <p>On recupere tes discussions en cours.</p>
           </div>
         </div>
@@ -221,7 +221,7 @@ export default function MealMessagesPage() {
         </Link>
 
         <div className={styles.searchArea}>
-          <label className={styles.searchBar} aria-label="Filtrer les discussions du repas">
+          <label className={styles.searchBar} aria-label="Filtrer les discussions de l'événement">
             <input
               type="search"
               value={query}
@@ -250,12 +250,12 @@ export default function MealMessagesPage() {
           </div>
         ) : errorMessage ? (
           <div className={styles.stateCard}>
-            <h2>Ce repas n&apos;est pas disponible</h2>
+            <h2>Cet événement n&apos;est pas disponible</h2>
             <p>{errorMessage}</p>
           </div>
         ) : mealConversations.length === 0 ? (
           <div className={styles.stateCard}>
-            <h2>Aucune conversation pour ce repas</h2>
+            <h2>Aucune conversation pour cet événement</h2>
             <p>
               Apres une reservation, tu pourras echanger ici avec l&apos;hote et
               les participants de cet evenement.
@@ -265,7 +265,7 @@ export default function MealMessagesPage() {
           <>
             <section className={styles.mealPreviewSection}>
               <h1 className={styles.mealPreviewTitle}>
-                {mealDetails?.title || mealConversations[0]?.meal?.title || "Nom du repas"}
+                {mealDetails?.title || mealConversations[0]?.meal?.title || "Nom de l'événement"}
               </h1>
 
               <article className={styles.sectionCard}>
@@ -273,7 +273,7 @@ export default function MealMessagesPage() {
                 <div className={styles.mealCardMedia}>
                   <Image
                     src="/photoRepas.png"
-                    alt={mealDetails?.title || "Repas"}
+                    alt={mealDetails?.title || "Evénement"}
                     fill
                     className={styles.mealCardImage}
                     sizes="(max-width: 900px) 100vw, 380px"
@@ -282,7 +282,7 @@ export default function MealMessagesPage() {
 
                 <div className={styles.mealCardContent}>
                   <h2 className={styles.mealCardTitle}>
-                    {mealDetails?.title || mealConversations[0]?.meal?.title || "Nom du repas"}
+                    {mealDetails?.title || mealConversations[0]?.meal?.title || "Nom de l'événement"}
                   </h2>
 
                   <div className={styles.mealCardMeta}>
@@ -305,7 +305,7 @@ export default function MealMessagesPage() {
 
                   <p className={styles.mealCardDescription}>
                     {mealDetails?.menuDescription ||
-                      "Retrouve ici le groupe du repas ainsi que les conversations individuelles ouvertes autour de cette table."}
+                      "Retrouve ici le groupe de l'événement ainsi que les conversations individuelles ouvertes autour de cette table."}
                   </p>
 
                   <Link

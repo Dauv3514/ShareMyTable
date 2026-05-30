@@ -185,7 +185,7 @@ export default function SearchResultsPage() {
           </div>
         ) : (
           <div className={styles.empty}>
-            <h2>Aucun repas ne correspond</h2>
+            <h2>Aucun événement ne correspond</h2>
             <p>Essayez une autre ville, une autre date ou moins de filtres.</p>
           </div>
         )}

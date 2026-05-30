@@ -129,12 +129,12 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
                 </div>
 
                 <p>{review.comment}</p>
-                <span className={styles.reviewEvent}>Repas : {review.eventTitle}</span>
+                <span className={styles.reviewEvent}>Événement : {review.eventTitle}</span>
               </article>
             ))
           ) : (
             <p className={styles.emptyReviews}>
-              Les avis laissés après les repas de cet hôte apparaîtront ici.
+              Les avis laissés après les événements de cet hôte apparaîtront ici.
             </p>
           )}
         </div>

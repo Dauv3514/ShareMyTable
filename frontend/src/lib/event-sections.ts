@@ -16,14 +16,14 @@ const EVENT_SECTIONS: EventSection[] = [
     title: "Prochainement",
     description: "Ne manquez pas les prochains événements !",
     emptyTitle: "Aucun événement à venir",
-    emptyDescription: "Les prochains repas apparaîtront ici.",
+    emptyDescription: "Les prochains événements apparaîtront ici.",
   },
   {
     slug: "veggie",
     title: "Veggie",
     description: "Découvrez la cuisine végétarienne",
-    emptyTitle: "Aucun repas veggie pour le moment",
-    emptyDescription: "Les prochains repas végétariens et végétaliens apparaîtront ici.",
+    emptyTitle: "Aucun événement veggie pour le moment",
+    emptyDescription: "Les prochains événements végétariens et végétaliens apparaîtront ici.",
   },
   {
     slug: "autour-de-moi",

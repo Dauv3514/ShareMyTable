@@ -149,7 +149,7 @@ export class BookingsService {
     });
 
     if (!meal || meal.status !== MealStatus.PUBLISHED) {
-      throw new NotFoundException('Repas publie introuvable');
+      throw new NotFoundException('Événement publie introuvable');
     }
 
     if (meal.host.id === userId) {
@@ -160,7 +160,7 @@ export class BookingsService {
 
     if (meal.dateTime.getTime() <= Date.now()) {
       throw new BadRequestException(
-        'Ce repas est deja passe et ne peut plus etre reserve',
+        'Cet événement est deja passe et ne peut plus etre reserve',
       );
     }
 
@@ -238,7 +238,7 @@ export class BookingsService {
 
     if (booking.meal.dateTime.getTime() <= Date.now()) {
       throw new BadRequestException(
-        'Ce repas est deja passe et ne peut plus etre annule',
+        'Cet événement est deja passe et ne peut plus etre annule',
       );
     }
 
@@ -415,7 +415,7 @@ export class BookingsService {
     });
 
     if (!meal) {
-      throw new NotFoundException('Repas hote introuvable');
+      throw new NotFoundException('Événements hote introuvable');
     }
 
     return meal;
@@ -551,7 +551,7 @@ export class BookingsService {
       exactLocationLat: hostProfile?.lat ?? null,
       exactLocationLng: hostProfile?.lng ?? null,
       addressReleaseLabel:
-        'Adresse exacte partagée 24h avant le repas',
+        'Adresse exacte partagée 24h avant l événement',
       cancellationPolicyLabel:
         "Annulation gratuite jusqu'a 48h avant, puis retenue partielle.",
       houseRules: this.buildHouseRules(booking.meal, hostProfile),
@@ -720,18 +720,18 @@ export class BookingsService {
 
   private buildHouseRules(meal: Meal, hostProfile: HostProfile | null): string[] {
     const rules = [
-      'Adresse exacte partagée 24h avant le repas.',
-      "Paiement bloqué jusqu'à la tenue du repas.",
+      "Adresse exacte partagée 24h avant l'événement.",
+      "Paiement bloqué jusqu'à la tenue de l'événement.",
     ];
 
     if (this.normalizeNullableString(meal.houseRules)) {
       rules.push(meal.houseRules!.trim());
     } else if (hostProfile?.address) {
       rules.push(
-        `Annulation gratuite jusqu'à 48h avant le repas prévu à ${hostProfile.city}.`,
+        `Annulation gratuite jusqu'à 48h avant l'événement prévu à ${hostProfile.city}.`,
       );
     } else {
-      rules.push("Annulation gratuite jusqu'à 48h avant le repas.");
+      rules.push("Annulation gratuite jusqu'à 48h avant l'événement.");
     }
 
     return rules;

@@ -788,14 +788,14 @@ function InscriptionPageContent() {
                       <li>Créer un profil vérifié avec des informations exactes et à jour</li>
                       <li>Respecter les règles de sécurité de la plateforme</li>
                       <li>{"Accepter la politique d'annulation de la plateforme"}</li>
-                      <li>{"Accepter la publication d'avis après chaque repas"}</li>
+                      <li>{"Accepter la publication d'avis après chaque événement"}</li>
                       <li>Ne pas utiliser la plateforme à des fins commerciales ou frauduleuses</li>
                     </ul>
 
                     <p>Rôle et limites de la plateforme</p>
                     <ul>
                       <li>Ramène Ta Poire agit comme intermédiaire technique entre hôtes et invités</li>
-                      <li>La plateforme ne garantit pas la qualité des repas proposés</li>
+                      <li>La plateforme ne garantit pas la qualité des événements proposés</li>
                       <li>La plateforme sécurise les paiements et les données personnelles</li>
                       <li>{"La plateforme se réserve le droit de suspendre tout compte en cas d'abus"}</li>
                     </ul>
@@ -805,7 +805,7 @@ function InscriptionPageContent() {
                     <h3>CGV</h3>
                     <ul>
                       <li>{"Paiement sécurisé exclusivement via l'application (Stripe, Apple Pay, PayPal, Samsung Pay)"}</li>
-                      <li>{"Paiement bloqué jusqu'au repas - libéré 24-48h après l'événement"}</li>
+                      <li>{"Paiement bloqué jusqu'à l'événement - libéré 24-48h après l'événement"}</li>
                       <li>{"Remboursement selon la politique d'annulation (délai, conditions) - à préciser"}</li>
                       <li>{"Commission Ramène Ta Poire déduite automatiquement avant virement à l'hôte"}</li>
                       <li>Prix affichés toutes taxes comprises</li>

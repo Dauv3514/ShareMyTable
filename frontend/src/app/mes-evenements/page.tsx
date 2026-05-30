@@ -213,7 +213,7 @@ function MealCard({
       <div className={styles.mealCardMedia}>
         <Image
           src="/photoRepas.png"
-          alt={meal.title || "Repas"}
+          alt={meal.title || "Evénement sans titre"}
           fill
           className={styles.mealCardImage}
           sizes="(max-width: 960px) 100vw, 520px"
@@ -227,13 +227,13 @@ function MealCard({
             {getStatusLabel(meal.status)}
           </span>
 
-          <span className={styles.mealTypeChip}>{meal.mealType || "Repas"}</span>
+          <span className={styles.mealTypeChip}>{meal.mealType || "Événement"}</span>
         </div>
       </div>
 
       <div className={styles.mealCardContent}>
         <div className={styles.mealCardBody}>
-          <h2>{meal.title || "Repas sans titre"}</h2>
+          <h2>{meal.title || "Événement sans titre"}</h2>
           <p>{meal.menuDescription || "Ajoute une description pour donner envie."}</p>
         </div>
 
@@ -548,7 +548,7 @@ export default function MesRepasPage() {
 
     if (!token || !apiUrl) {
       setFetchingHostedMeals(false);
-      setHostingError("Impossible de charger tes repas organisés pour le moment.");
+      setHostingError("Impossible de charger tes événements organisés pour le moment.");
       return;
     }
 
@@ -816,8 +816,8 @@ export default function MesRepasPage() {
       updateMealInState(response.data);
       toast.success(
         action === "publish"
-          ? "Le repas est maintenant publié."
-          : "Le repas a bien été annulé.",
+          ? "L'événement est maintenant publié."
+          : "L'événement a bien été annulé.",
       );
     } catch (error: unknown) {
       const message = axios.isAxiosError(error)
@@ -832,7 +832,7 @@ export default function MesRepasPage() {
   if (loading) {
     return (
       <section className={styles.page}>
-        <div className={styles.loadingState}>Chargement de ton espace repas...</div>
+        <div className={styles.loadingState}>Chargement de ton espace événements...</div>
       </section>
     );
   }
@@ -1032,13 +1032,13 @@ export default function MesRepasPage() {
             <>
               {fetchingHostedMeals ? (
                 <div className={styles.loadingPanel}>
-                  Chargement de tes repas organisés...
+                  Chargement de tes événements organisés...
                 </div>
               ) : filteredHostedMeals.length === 0 ? (
                 <EmptyStateCard
-                  title="Aucun repas dans cette vue"
-                  description="Change de filtre ou crée un nouveau repas pour commencer à remplir ton espace hôte."
-                  actionLabel="Organiser un repas"
+                  title="Aucun événement dans cette vue"
+                  description="Change de filtre ou crée un nouveau événement pour commencer à remplir ton espace hôte."
+                  actionLabel="Organiser un événement"
                   actionHref="/mes-evenements/creer"
                 />
               ) : (

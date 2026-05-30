@@ -121,7 +121,7 @@ export default function SearchMap({ location, eventCount }: SearchMapProps) {
   }
 
   return (
-    <section className="search-map" aria-label="Zone approximative des repas">
+    <section className="search-map" aria-label="Zone approximative des événements">
       <div className="search-map__header">
         <div>
           <h2>Zone approximative</h2>

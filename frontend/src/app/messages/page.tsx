@@ -50,7 +50,7 @@ function getLatestSenderLabel(
   currentUserId: number,
 ) {
   if (!message) {
-    return "Discussion repas";
+    return "Discussion événement";
   }
 
   if (message.sender.userId === currentUserId) {
@@ -250,7 +250,7 @@ export default function MessagesPage() {
         <div className={styles.shell}>
           <div className={styles.stateCard}>
             <h2>Chargement de la messagerie</h2>
-            <p>On prépare tes discussions repas...</p>
+            <p>On prépare tes discussions événements...</p>
           </div>
         </div>
       </section>
@@ -299,7 +299,7 @@ export default function MessagesPage() {
         {isFetching ? (
           <div className={styles.stateCard}>
             <h2>Chargement en cours</h2>
-            <p>On rassemble tes repas à venir et passés.</p>
+            <p>On rassemble tes événements à venir et passés.</p>
           </div>
         ) : errorMessage ? (
           <div className={styles.stateCard}>

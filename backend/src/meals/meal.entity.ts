@@ -19,7 +19,7 @@ export enum MealStatus {
   DONE = 'done',
 }
 
-// Repas cree par un host approuve et actif.
+// Événement créé par un host approuve et actif.
 @Entity('meals')
 export class Meal {
   @PrimaryGeneratedColumn()

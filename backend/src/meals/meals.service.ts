@@ -75,7 +75,7 @@ type PaginatedMealsResponse = {
   totalPages: number;
 };
 
-// Service metier de gestion des repas.
+// Service metier de gestion des événements.
 // Il verifie qu'un user est bien host actif et approuve avant toute action privee.
 @Injectable()
 export class MealsService implements OnModuleInit {
@@ -201,7 +201,7 @@ export class MealsService implements OnModuleInit {
     });
 
     if (!meal) {
-      throw new NotFoundException('Repas publie introuvable');
+      throw new NotFoundException('Événement publie introuvable');
     }
 
     const participantCounts = await this.getCurrentParticipantCounts([meal.id]);
@@ -245,7 +245,7 @@ export class MealsService implements OnModuleInit {
 
     if (meal.status === MealStatus.DONE) {
       throw new BadRequestException(
-        'Un repas termine ne peut plus etre modifie',
+        'Un événement termine ne peut plus etre modifie',
       );
     }
 
@@ -297,13 +297,13 @@ export class MealsService implements OnModuleInit {
 
     if (meal.status === MealStatus.CANCELLED) {
       throw new BadRequestException(
-        'Un repas annule ne peut pas etre republie',
+        'Un événement annulé ne peut pas etre republié',
       );
     }
 
     if (meal.status !== MealStatus.DRAFT) {
       throw new BadRequestException(
-        'Seul un repas en brouillon peut etre publie',
+        'Seul un événement en brouillon peut etre publié',
       );
     }
 
@@ -319,12 +319,12 @@ export class MealsService implements OnModuleInit {
     const meal = await this.findOwnedMealEntity(userId, mealId);
 
     if (meal.status === MealStatus.CANCELLED) {
-      throw new BadRequestException('Ce repas est deja annule');
+      throw new BadRequestException('Ce événement est deja annulé');
     }
 
     if (meal.status === MealStatus.DONE) {
       throw new BadRequestException(
-        'Un repas termine ne peut pas etre annule',
+        'Un événement termine ne peut pas etre annulé',
       );
     }
 
@@ -339,18 +339,18 @@ export class MealsService implements OnModuleInit {
     const meal = await this.findOwnedMealEntity(userId, mealId);
 
     if (meal.status === MealStatus.DONE) {
-      throw new BadRequestException('Ce repas est deja termine');
+      throw new BadRequestException('Ce événement est deja termine');
     }
 
     if (meal.status === MealStatus.CANCELLED) {
       throw new BadRequestException(
-        'Un repas annule ne peut pas etre marque comme termine',
+        'Un événement annulé ne peut pas etre marque comme termine',
       );
     }
 
     if (meal.dateTime.getTime() > Date.now()) {
       throw new BadRequestException(
-        'Un repas ne peut etre marque comme termine que lorsque sa date est passee',
+        'Un événement ne peut etre marque comme termine que lorsque sa date est passee',
       );
     }
 
@@ -372,7 +372,7 @@ export class MealsService implements OnModuleInit {
 
     if (user.role.name !== RoleName.HOST) {
       throw new ForbiddenException(
-        'Seul un host peut creer ou gerer des repas',
+        'Seul un host peut creer ou gerer des événements',
       );
     }
 
@@ -392,7 +392,7 @@ export class MealsService implements OnModuleInit {
       !hostProfile.isActive
     ) {
       throw new ForbiddenException(
-        'Le profil host doit etre approuve et actif pour gerer des repas',
+        'Le profil host doit etre approuve et actif pour gerer des événements',
       );
     }
 
@@ -409,7 +409,7 @@ export class MealsService implements OnModuleInit {
     });
 
     if (!meal) {
-      throw new NotFoundException('Repas introuvable');
+      throw new NotFoundException('Événement introuvable');
     }
 
     return meal;
@@ -418,31 +418,31 @@ export class MealsService implements OnModuleInit {
   private ensureMealCanBePublished(meal: Meal): void {
     if (!meal.title || meal.title.trim().length === 0) {
       throw new BadRequestException(
-        'Le titre est obligatoire pour publier un repas',
+        'Le titre est obligatoire pour publier un événement',
       );
     }
 
     if (!meal.mealType || meal.mealType.trim().length === 0) {
       throw new BadRequestException(
-        'Le type de repas est obligatoire pour publier un repas',
+        'Le type de l événement est obligatoire pour publier un événement',
       );
     }
 
     if (!this.hasMenuContent(meal)) {
       throw new BadRequestException(
-        'Le menu est obligatoire pour publier un repas',
+        'Le menu est obligatoire pour publier un événement',
       );
     }
 
     if (!meal.dateTime) {
       throw new BadRequestException(
-        'La date du repas est obligatoire pour publier',
+        'La date de l événement est obligatoire pour publier',
       );
     }
 
     if (meal.dateTime.getTime() <= Date.now()) {
       throw new BadRequestException(
-        'Un repas dans le passe ne peut pas etre publie',
+        'Un événement dans le passe ne peut pas etre publie',
       );
     }
 
@@ -467,7 +467,7 @@ export class MealsService implements OnModuleInit {
       !hasHouseRuleTag
     ) {
       throw new BadRequestException(
-        'Les regles de la maison sont obligatoires pour publier un repas',
+        'Les regles de la maison sont obligatoires pour publier un événement',
       );
     }
   }

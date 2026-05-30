@@ -299,7 +299,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
               </div>
             ) : (
               <p className={styles.reviewsEmpty}>
-                Les avis laissés après les repas de cet hôte apparaîtront ici.
+                Les avis laissés après les événements de cet hôte apparaîtront ici.
               </p>
             )}
           </section>
