@@ -10,6 +10,8 @@ type ApiMealHostSummary = {
   pseudo: string | null;
   city: string;
   country: string;
+  lat?: number | null;
+  lng?: number | null;
 };
 
 type ApiMealMenuItem = {
@@ -428,6 +430,14 @@ function mapMealToEvent(
       options?.hostProfile?.address ||
       options?.hostProfile?.city ||
       fallbackEvent.locationLabel,
+    locationLat:
+      typeof meal.host.lat === "number"
+        ? meal.host.lat
+        : fallbackEvent.locationLat,
+    locationLng:
+      typeof meal.host.lng === "number"
+        ? meal.host.lng
+        : fallbackEvent.locationLng,
     hostId: String(meal.host.userId),
     date: format(eventDate, "yyyy-MM-dd"),
     dateLabel: capitalize(format(eventDate, "EEE d MMM", { locale: fr })),

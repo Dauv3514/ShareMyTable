@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import axios from "axios";
 import "./search-map.scss";
+import type { SearchMapPin } from "./SearchMapClient";
 
 const DEFAULT_RADIUS_METERS = 2000;
 
@@ -54,6 +55,7 @@ type SearchMapProps = {
   location: string;
   eventCount: number;
   variant?: "default" | "hero";
+  pins?: SearchMapPin[];
 };
 
 type MapState =
@@ -71,6 +73,7 @@ export default function SearchMap({
   location,
   eventCount,
   variant = "default",
+  pins = [],
 }: SearchMapProps) {
   const [mapState, setMapState] = useState<MapState>({ status: "loading" });
 
@@ -153,6 +156,7 @@ export default function SearchMap({
         <MapClient
           center={mapState.center}
           radiusMeters={mapState.radiusMeters}
+          pins={pins}
         />
       )}
 

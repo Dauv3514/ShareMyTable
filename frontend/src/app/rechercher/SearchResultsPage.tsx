@@ -100,6 +100,26 @@ export default function SearchResultsPage() {
     })
     .filter((filter): filter is { id: string; label: string } => Boolean(filter));
   const mapLocation = location.trim() || "Rennes";
+  const mapPins = useMemo(
+    () =>
+      events
+        .filter(
+          (event) =>
+            typeof event.locationLat === "number" &&
+            typeof event.locationLng === "number",
+        )
+        .map((event) => ({
+          id: event.id,
+          title: event.title,
+          city: event.city,
+          dateLabel: event.dateLabel,
+          imageSrc: "/photoRepas.png",
+          href: buildMealEventHref(event.id),
+          lat: event.locationLat as number,
+          lng: event.locationLng as number,
+        })),
+    [events],
+  );
 
   const updateSearch = (nextCriteria: {
     location?: string;
@@ -222,6 +242,7 @@ export default function SearchResultsPage() {
             location={mapLocation}
             eventCount={events.length}
             variant="hero"
+            pins={mapPins}
           />
 
           <button
