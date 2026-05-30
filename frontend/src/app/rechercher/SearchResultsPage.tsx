@@ -97,7 +97,6 @@ export default function SearchResultsPage() {
       return filter ? { id: filterId, label: filter.label } : null;
     })
     .filter((filter): filter is { id: string; label: string } => Boolean(filter));
-  const hasCriteria = Boolean(location || date || filters.length > 0);
   const mapLocation = location.trim() || "Rennes";
 
   const updateSearch = (nextCriteria: {
@@ -168,7 +167,6 @@ export default function SearchResultsPage() {
                   <X aria-hidden="true" />
                 </button>
               ))}
-              {!hasCriteria && <span className={styles.filterHint}>Tous les repas</span>}
             </section>
           </div>
 
