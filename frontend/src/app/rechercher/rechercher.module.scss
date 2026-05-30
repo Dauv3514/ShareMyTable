@@ -138,6 +138,112 @@
   outline: none;
 }
 
+.radiusControl {
+  width: min(100%, 260px);
+  display: grid;
+  gap: 8px;
+  padding: 10px 14px 12px;
+  border: 1px solid #d5c990;
+  border-radius: 16px;
+  background: rgba(251, 249, 244, 0.94);
+  box-shadow: 0 4px 14px rgba(74, 66, 28, 0.12);
+  color: #52590d;
+}
+
+.radiusControlHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.radiusControlHead strong {
+  color: #6e6038;
+  font-size: 13px;
+}
+
+.radiusControl input {
+  --radius-progress: 0%;
+  appearance: none;
+  width: 100%;
+  height: 20px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.radiusControl input::-webkit-slider-runnable-track {
+  height: 8px;
+  border: 1px solid #d5c990;
+  border-radius: 999px;
+  background:
+    linear-gradient(
+      90deg,
+      #dce84d 0 var(--radius-progress),
+      #f0ead8 var(--radius-progress) 100%
+    );
+  box-shadow: inset 0 1px 2px rgba(74, 66, 28, 0.16);
+}
+
+.radiusControl input::-webkit-slider-thumb {
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -8px;
+  border: 2px solid #fbf9f4;
+  border-radius: 50%;
+  background: #dce84d;
+  box-shadow:
+    0 0 0 1px #948438,
+    0 3px 8px rgba(74, 66, 28, 0.24);
+}
+
+.radiusControl input::-moz-range-track {
+  height: 8px;
+  border: 1px solid #d5c990;
+  border-radius: 999px;
+  background: #f0ead8;
+  box-shadow: inset 0 1px 2px rgba(74, 66, 28, 0.16);
+}
+
+.radiusControl input::-moz-range-progress {
+  height: 8px;
+  border-radius: 999px;
+  background: #dce84d;
+}
+
+.radiusControl input::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #fbf9f4;
+  border-radius: 50%;
+  background: #dce84d;
+  box-shadow:
+    0 0 0 1px #948438,
+    0 3px 8px rgba(74, 66, 28, 0.24);
+}
+
+.radiusControl input:focus-visible {
+  outline: none;
+}
+
+.radiusControl input:focus-visible::-webkit-slider-thumb {
+  box-shadow:
+    0 0 0 1px #948438,
+    0 0 0 5px rgba(220, 232, 77, 0.32),
+    0 3px 8px rgba(74, 66, 28, 0.24);
+}
+
+.radiusControl input:focus-visible::-moz-range-thumb {
+  box-shadow:
+    0 0 0 1px #948438,
+    0 0 0 5px rgba(220, 232, 77, 0.32),
+    0 3px 8px rgba(74, 66, 28, 0.24);
+}
+
 .panelToggle {
   border: 1px solid #e3dbb5;
   background: #f8f6ed;
@@ -315,6 +421,13 @@
   margin-right: -16px;
   scroll-snap-type: x proximity;
   scrollbar-width: none;
+  cursor: grab;
+  user-select: none;
+}
+
+.suggestionCardsDragging {
+  cursor: grabbing;
+  scroll-snap-type: none;
 }
 
 .suggestionCards::-webkit-scrollbar {
