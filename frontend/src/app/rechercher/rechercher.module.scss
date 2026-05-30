@@ -244,6 +244,44 @@
     0 3px 8px rgba(74, 66, 28, 0.24);
 }
 
+.aroundMeButton {
+  min-height: 34px;
+  width: fit-content;
+  min-width: 150px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #525a0c;
+  border-radius: 27px;
+  background: #ffffff;
+  color: #525a0c;
+  padding: 7px 14px;
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(74, 66, 28, 0.16);
+  cursor: pointer;
+}
+
+.aroundMeButton svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.4;
+}
+
+.aroundMeButton:hover,
+.aroundMeButton:focus-visible {
+  background: #fbf9f4;
+  outline: none;
+}
+
+.aroundMeButton:disabled {
+  border-color: #d5c990;
+  color: #948438;
+  cursor: wait;
+}
+
 .panelToggle {
   border: 1px solid #e3dbb5;
   background: #f8f6ed;
@@ -516,6 +554,13 @@
     right: 22px;
     z-index: 500;
     max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
   }
 
   .panelToggle,
