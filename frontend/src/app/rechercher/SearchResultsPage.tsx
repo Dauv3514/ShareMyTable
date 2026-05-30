@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { WheelEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import EventCard from "@/components/EventCard";
@@ -57,6 +58,7 @@ export default function SearchResultsPage() {
   const searchParams = useSearchParams();
   const [mealEvents, setMealEvents] = useState<MealEvent[]>([]);
   const [panelOpen, setPanelOpen] = useState(false);
+  const suggestionCardsRef = useRef<HTMLDivElement>(null);
   const location = searchParams.get("lieu") ?? "";
   const date = searchParams.get("date") ?? "";
   const filters = useMemo(
@@ -89,7 +91,7 @@ export default function SearchResultsPage() {
     const resultIds = new Set(events.map((event) => event.id));
     const recommendations = mealEvents.filter((event) => !resultIds.has(event.id));
 
-    return (recommendations.length > 0 ? recommendations : mealEvents).slice(0, 4);
+    return (recommendations.length > 0 ? recommendations : mealEvents).slice(0, 8);
   }, [events, mealEvents]);
   const activeFilters = filters
     .map((filterId) => {
@@ -110,6 +112,51 @@ export default function SearchResultsPage() {
         date: nextCriteria.date ?? date,
         filters: nextCriteria.filters ?? filters,
       }),
+    );
+  };
+
+  const scrollSuggestions = () => {
+    const container = suggestionCardsRef.current;
+    const firstCard = container?.querySelector<HTMLElement>(".event-card");
+
+    if (!container || !firstCard) {
+      return;
+    }
+
+    const gap = Number.parseFloat(window.getComputedStyle(container).columnGap || "0");
+    container.scrollBy({
+      left: firstCard.offsetWidth + gap,
+      behavior: "smooth",
+    });
+  };
+
+  const handleSuggestionsWheel = (event: WheelEvent<HTMLDivElement>) => {
+    const container = suggestionCardsRef.current;
+
+    if (!container || window.innerWidth < 1024) {
+      return;
+    }
+
+    const maxScrollLeft = container.scrollWidth - container.clientWidth;
+    if (maxScrollLeft <= 0) {
+      return;
+    }
+
+    const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY)
+      ? event.deltaX
+      : event.deltaY;
+    const canScroll =
+      (delta > 0 && container.scrollLeft < maxScrollLeft) ||
+      (delta < 0 && container.scrollLeft > 0);
+
+    if (!canScroll) {
+      return;
+    }
+
+    event.preventDefault();
+    container.scrollLeft = Math.min(
+      maxScrollLeft,
+      Math.max(0, container.scrollLeft + delta),
     );
   };
 
@@ -222,14 +269,18 @@ export default function SearchResultsPage() {
           <button
             type="button"
             className={styles.seeMoreButton}
-            onClick={() => setPanelOpen(true)}
+            onClick={scrollSuggestions}
           >
             Voir plus
             <ChevronUp aria-hidden="true" />
           </button>
         </div>
 
-        <div className={styles.suggestionCards}>
+        <div
+          className={styles.suggestionCards}
+          ref={suggestionCardsRef}
+          onWheel={handleSuggestionsWheel}
+        >
           {recommendedEvents.map((event) => (
             <EventCard
               key={`suggestion-${event.id}`}
