@@ -41,6 +41,11 @@ type SearchMapProps = {
   variant?: "default" | "hero";
   pins?: SearchMapPin[];
   radiusKm?: number;
+  centerOverride?: {
+    center: [number, number];
+    label: string;
+    locationKey: string;
+  } | null;
   onMapScopeChange?: (scope: {
     locationKey: string;
     cityName: string;
@@ -64,12 +69,22 @@ export default function SearchMap({
   variant = "default",
   pins = [],
   radiusKm = DEFAULT_RADIUS_KM,
+  centerOverride = null,
   onMapScopeChange,
 }: SearchMapProps) {
   const [mapState, setMapState] = useState<MapState>({ status: "loading" });
   const selectedRadiusMeters = radiusKm * 1000;
 
   useEffect(() => {
+    if (centerOverride) {
+      onMapScopeChange?.({
+        locationKey: centerOverride.locationKey,
+        cityName: centerOverride.label,
+        center: centerOverride.center,
+      });
+      return;
+    }
+
     const query = location.trim();
 
     if (!query) {
@@ -123,9 +138,17 @@ export default function SearchMap({
       });
 
     return () => controller.abort();
-  }, [location, onMapScopeChange]);
+  }, [centerOverride, location, onMapScopeChange]);
 
-  if (mapState.status === "empty") {
+  const visibleMapState: MapState = centerOverride
+    ? {
+        status: "ready",
+        cityName: centerOverride.label,
+        center: centerOverride.center,
+      }
+    : mapState;
+
+  if (visibleMapState.status === "empty") {
     return null;
   }
 
@@ -139,36 +162,36 @@ export default function SearchMap({
           <div>
             <h2>Zone approximative</h2>
             <p>
-              {mapState.status === "ready"
+              {visibleMapState.status === "ready"
                 ? `${eventCount} ${
                     eventCount === 1 ? "événement" : "événements"
-                  } autour de ${mapState.cityName}`
+                  } autour de ${visibleMapState.cityName}`
                 : "Localisation de la commune en cours"}
             </p>
           </div>
           <span>
-            {mapState.status === "ready"
+            {visibleMapState.status === "ready"
               ? `Rayon ${formatRadius(selectedRadiusMeters)}`
               : "Rayon"}
           </span>
         </div>
       )}
 
-      {mapState.status === "ready" && (
+      {visibleMapState.status === "ready" && (
         <MapClient
-          center={mapState.center}
+          center={visibleMapState.center}
           radiusMeters={selectedRadiusMeters}
           pins={pins}
         />
       )}
 
-      {mapState.status === "loading" && (
+      {visibleMapState.status === "loading" && (
         <div className="search-map__loading" aria-live="polite">
           Chargement de la carte...
         </div>
       )}
 
-      {mapState.status === "error" && (
+      {visibleMapState.status === "error" && (
         <div className="search-map__message">
           La carte est indisponible pour le moment.
         </div>

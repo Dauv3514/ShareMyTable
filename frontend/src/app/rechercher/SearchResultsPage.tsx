@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, ChangeEvent, PointerEvent, WheelEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronDown, ChevronUp, X } from "lucide-react";
+import { ChevronDown, ChevronUp, LocateFixed, X } from "lucide-react";
 import EventCard from "@/components/EventCard";
 import SearchResultCard from "@/components/SearchResultCard";
 import SearchBar from "@/components/SearchBar";
@@ -59,6 +59,10 @@ type MapScope = {
   center: [number, number];
 };
 
+type UserPosition = {
+  center: [number, number];
+};
+
 const EARTH_RADIUS_METERS = 6_371_000;
 const DEFAULT_RADIUS_KM = 5;
 const RADIUS_STEPS_KM = [1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
@@ -94,11 +98,14 @@ export default function SearchResultsPage() {
   const [panelOpen, setPanelOpen] = useState(false);
   const [mapScope, setMapScope] = useState<MapScope | null>(null);
   const [radiusKm, setRadiusKm] = useState(DEFAULT_RADIUS_KM);
+  const [userPosition, setUserPosition] = useState<UserPosition | null>(null);
+  const [isLocatingUser, setIsLocatingUser] = useState(false);
   const radiusStepIndex = RADIUS_STEPS_KM.indexOf(radiusKm);
   const radiusProgress =
     (Math.max(0, radiusStepIndex) / MAX_RADIUS_STEP_INDEX) * 100;
   const [isDraggingSuggestions, setIsDraggingSuggestions] = useState(false);
   const suggestionCardsRef = useRef<HTMLDivElement>(null);
+  const hasTriedInitialLocationRef = useRef(false);
   const suggestionDragRef = useRef({
     hasMoved: false,
     pointerId: null as number | null,
@@ -129,13 +136,73 @@ export default function SearchResultsPage() {
     };
   }, []);
 
+  const locateUser = useCallback(
+    (options?: { clearLocation?: boolean }) => {
+      if (!("geolocation" in navigator)) {
+        return;
+      }
+
+      setIsLocatingUser(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserPosition({
+            center: [position.coords.latitude, position.coords.longitude],
+          });
+          setRadiusKm(DEFAULT_RADIUS_KM);
+          setIsLocatingUser(false);
+
+          if (options?.clearLocation) {
+            router.push(
+              buildSearchUrl({
+                location: "",
+                date,
+                filters,
+              }),
+            );
+          }
+        },
+        () => {
+          setIsLocatingUser(false);
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 60_000,
+          timeout: 8_000,
+        },
+      );
+    },
+    [date, filters, router],
+  );
+
+  useEffect(() => {
+    if (hasTriedInitialLocationRef.current || location.trim()) {
+      return;
+    }
+
+    hasTriedInitialLocationRef.current = true;
+    window.setTimeout(() => locateUser(), 0);
+  }, [locateUser, location]);
+
   const mapLocation = location.trim() || "Rennes";
+  const activeUserPosition = location.trim() ? null : userPosition;
+  const activeMapLocationKey = activeUserPosition ? "around-me" : mapLocation;
+  const mapCenterOverride = useMemo(
+    () =>
+      activeUserPosition
+        ? {
+            center: activeUserPosition.center,
+            label: "Autour de moi",
+            locationKey: activeMapLocationKey,
+          }
+        : null,
+    [activeMapLocationKey, activeUserPosition],
+  );
   const filteredEvents = useMemo(
     () => filterMealEvents({ events: mealEvents, location, date, filters }),
     [date, filters, location, mealEvents],
   );
   const events = useMemo(() => {
-    if (!mapScope || mapScope.locationKey !== mapLocation) {
+    if (!mapScope || mapScope.locationKey !== activeMapLocationKey) {
       return filteredEvents;
     }
 
@@ -152,7 +219,7 @@ export default function SearchResultsPage() {
         radiusKm * 1000
       );
     });
-  }, [filteredEvents, mapLocation, mapScope, radiusKm]);
+  }, [activeMapLocationKey, filteredEvents, mapScope, radiusKm]);
   const recommendedEvents = useMemo(() => {
     const resultIds = new Set(events.map((event) => event.id));
     const recommendations = mealEvents.filter((event) => !resultIds.has(event.id));
@@ -389,15 +456,26 @@ export default function SearchResultsPage() {
                 }
               />
             </section>
+
+            <button
+              type="button"
+              className={styles.aroundMeButton}
+              onClick={() => locateUser({ clearLocation: true })}
+              disabled={isLocatingUser}
+            >
+              <LocateFixed aria-hidden="true" />
+              {isLocatingUser ? "Localisation..." : "Autour de moi"}
+            </button>
           </div>
 
           <SearchMap
-            key={mapLocation}
+            key={activeMapLocationKey}
             location={mapLocation}
             eventCount={events.length}
             variant="hero"
             pins={mapPins}
             radiusKm={radiusKm}
+            centerOverride={mapCenterOverride}
             onMapScopeChange={handleMapScopeChange}
           />
 
