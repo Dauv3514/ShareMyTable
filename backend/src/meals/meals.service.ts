@@ -30,6 +30,8 @@ type MealHostSummary = {
   pseudo: string | null;
   city: string;
   country: string;
+  lat: number | null;
+  lng: number | null;
 };
 
 type MealResponse = {
@@ -133,6 +135,7 @@ export class MealsService implements OnModuleInit {
     const queryBuilder = this.mealsRepository
       .createQueryBuilder('meal')
       .leftJoinAndSelect('meal.host', 'host')
+      .leftJoinAndSelect('host.hostProfile', 'hostProfile')
       .leftJoinAndSelect('meal.menuItems', 'menuItems')
       .leftJoinAndSelect('meal.tagAssignments', 'tagAssignments')
       .leftJoinAndSelect('tagAssignments.tag', 'tag')
@@ -197,7 +200,13 @@ export class MealsService implements OnModuleInit {
   async findOnePublished(id: number): Promise<MealResponse> {
     const meal = await this.mealsRepository.findOne({
       where: { id, status: MealStatus.PUBLISHED },
-      relations: ['host', 'menuItems', 'tagAssignments', 'tagAssignments.tag'],
+      relations: [
+        'host',
+        'host.hostProfile',
+        'menuItems',
+        'tagAssignments',
+        'tagAssignments.tag',
+      ],
     });
 
     if (!meal) {
@@ -214,7 +223,13 @@ export class MealsService implements OnModuleInit {
 
     const meals = await this.mealsRepository.find({
       where: { host: { id: userId } },
-      relations: ['host', 'menuItems', 'tagAssignments', 'tagAssignments.tag'],
+      relations: [
+        'host',
+        'host.hostProfile',
+        'menuItems',
+        'tagAssignments',
+        'tagAssignments.tag',
+      ],
       order: { createdAt: 'DESC' },
     });
 
@@ -405,7 +420,13 @@ export class MealsService implements OnModuleInit {
   ): Promise<Meal> {
     const meal = await this.mealsRepository.findOne({
       where: { id: mealId, host: { id: userId } },
-      relations: ['host', 'menuItems', 'tagAssignments', 'tagAssignments.tag'],
+      relations: [
+        'host',
+        'host.hostProfile',
+        'menuItems',
+        'tagAssignments',
+        'tagAssignments.tag',
+      ],
     });
 
     if (!meal) {
@@ -553,6 +574,8 @@ export class MealsService implements OnModuleInit {
         pseudo: meal.host.pseudo,
         city: meal.host.city,
         country: meal.host.country,
+        lat: meal.host.hostProfile?.lat ?? null,
+        lng: meal.host.hostProfile?.lng ?? null,
       },
     };
   }

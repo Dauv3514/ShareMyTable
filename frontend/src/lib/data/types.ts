@@ -19,6 +19,8 @@ export type MealEvent = {
   title: string;
   city: string;
   locationLabel: string;
+  locationLat?: number | null;
+  locationLng?: number | null;
   hostId: string;
   date: string;
   dateLabel: string;
