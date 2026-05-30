@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import type { WheelEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties, ChangeEvent, PointerEvent, WheelEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import EventCard from "@/components/EventCard";
@@ -53,12 +53,58 @@ function buildSearchUrl({
   return `/rechercher${queryString ? `?${queryString}` : ""}`;
 }
 
+type MapScope = {
+  locationKey: string;
+  cityName: string;
+  center: [number, number];
+};
+
+const EARTH_RADIUS_METERS = 6_371_000;
+const DEFAULT_RADIUS_KM = 5;
+const RADIUS_STEPS_KM = [1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+const MAX_RADIUS_STEP_INDEX = RADIUS_STEPS_KM.length - 1;
+
+function getDistanceMeters(
+  [fromLat, fromLng]: [number, number],
+  [toLat, toLng]: [number, number],
+) {
+  const toRadians = (value: number) => (value * Math.PI) / 180;
+  const fromLatRad = toRadians(fromLat);
+  const toLatRad = toRadians(toLat);
+  const latDelta = toRadians(toLat - fromLat);
+  const lngDelta = toRadians(toLng - fromLng);
+
+  const haversine =
+    Math.sin(latDelta / 2) ** 2 +
+    Math.cos(fromLatRad) *
+      Math.cos(toLatRad) *
+      Math.sin(lngDelta / 2) ** 2;
+
+  return (
+    2 *
+    EARTH_RADIUS_METERS *
+    Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine))
+  );
+}
+
 export default function SearchResultsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [mealEvents, setMealEvents] = useState<MealEvent[]>([]);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [mapScope, setMapScope] = useState<MapScope | null>(null);
+  const [radiusKm, setRadiusKm] = useState(DEFAULT_RADIUS_KM);
+  const radiusStepIndex = RADIUS_STEPS_KM.indexOf(radiusKm);
+  const radiusProgress =
+    (Math.max(0, radiusStepIndex) / MAX_RADIUS_STEP_INDEX) * 100;
+  const [isDraggingSuggestions, setIsDraggingSuggestions] = useState(false);
   const suggestionCardsRef = useRef<HTMLDivElement>(null);
+  const suggestionDragRef = useRef({
+    hasMoved: false,
+    pointerId: null as number | null,
+    startX: 0,
+    startScrollLeft: 0,
+  });
   const location = searchParams.get("lieu") ?? "";
   const date = searchParams.get("date") ?? "";
   const filters = useMemo(
@@ -83,10 +129,30 @@ export default function SearchResultsPage() {
     };
   }, []);
 
-  const events = useMemo(
+  const mapLocation = location.trim() || "Rennes";
+  const filteredEvents = useMemo(
     () => filterMealEvents({ events: mealEvents, location, date, filters }),
     [date, filters, location, mealEvents],
   );
+  const events = useMemo(() => {
+    if (!mapScope || mapScope.locationKey !== mapLocation) {
+      return filteredEvents;
+    }
+
+    return filteredEvents.filter((event) => {
+      if (
+        typeof event.locationLat !== "number" ||
+        typeof event.locationLng !== "number"
+      ) {
+        return false;
+      }
+
+      return (
+        getDistanceMeters(mapScope.center, [event.locationLat, event.locationLng]) <=
+        radiusKm * 1000
+      );
+    });
+  }, [filteredEvents, mapLocation, mapScope, radiusKm]);
   const recommendedEvents = useMemo(() => {
     const resultIds = new Set(events.map((event) => event.id));
     const recommendations = mealEvents.filter((event) => !resultIds.has(event.id));
@@ -99,7 +165,9 @@ export default function SearchResultsPage() {
       return filter ? { id: filterId, label: filter.label } : null;
     })
     .filter((filter): filter is { id: string; label: string } => Boolean(filter));
-  const mapLocation = location.trim() || "Rennes";
+  const handleMapScopeChange = useCallback((scope: MapScope | null) => {
+    setMapScope(scope);
+  }, []);
   const mapPins = useMemo(
     () =>
       events
@@ -180,6 +248,71 @@ export default function SearchResultsPage() {
     );
   };
 
+  const handleSuggestionsPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    const container = suggestionCardsRef.current;
+
+    if (!container || event.pointerType !== "mouse" || event.button !== 0) {
+      return;
+    }
+
+    suggestionDragRef.current = {
+      hasMoved: false,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startScrollLeft: container.scrollLeft,
+    };
+    setIsDraggingSuggestions(true);
+    container.setPointerCapture(event.pointerId);
+  };
+
+  const handleSuggestionsPointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    const container = suggestionCardsRef.current;
+    const drag = suggestionDragRef.current;
+
+    if (!container || drag.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const deltaX = event.clientX - drag.startX;
+
+    if (Math.abs(deltaX) > 4) {
+      drag.hasMoved = true;
+    }
+
+    container.scrollLeft = drag.startScrollLeft - deltaX;
+  };
+
+  const stopSuggestionsDrag = (event: PointerEvent<HTMLDivElement>) => {
+    const container = suggestionCardsRef.current;
+    const drag = suggestionDragRef.current;
+
+    if (!container || drag.pointerId !== event.pointerId) {
+      return;
+    }
+
+    if (container.hasPointerCapture(event.pointerId)) {
+      container.releasePointerCapture(event.pointerId);
+    }
+
+    suggestionDragRef.current.pointerId = null;
+    setIsDraggingSuggestions(false);
+  };
+
+  const handleSuggestionClickCapture = (event: PointerEvent<HTMLDivElement>) => {
+    if (!suggestionDragRef.current.hasMoved) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    suggestionDragRef.current.hasMoved = false;
+  };
+
+  const handleRadiusChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const nextIndex = Number(event.target.value);
+    setRadiusKm(RADIUS_STEPS_KM[nextIndex] ?? DEFAULT_RADIUS_KM);
+  };
+
   return (
     <div className={styles.page}>
       <section
@@ -235,6 +368,27 @@ export default function SearchResultsPage() {
                 </button>
               ))}
             </section>
+
+            <section className={styles.radiusControl} aria-label="Rayon de recherche">
+              <div className={styles.radiusControlHead}>
+                <span>Rayon</span>
+                <strong>{radiusKm} km</strong>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max={MAX_RADIUS_STEP_INDEX}
+                step="1"
+                value={Math.max(0, radiusStepIndex)}
+                onChange={handleRadiusChange}
+                aria-label={`Rayon de recherche ${radiusKm} kilomètres`}
+                style={
+                  {
+                    "--radius-progress": `${radiusProgress}%`,
+                  } as CSSProperties
+                }
+              />
+            </section>
           </div>
 
           <SearchMap
@@ -243,6 +397,8 @@ export default function SearchResultsPage() {
             eventCount={events.length}
             variant="hero"
             pins={mapPins}
+            radiusKm={radiusKm}
+            onMapScopeChange={handleMapScopeChange}
           />
 
           <button
@@ -298,9 +454,18 @@ export default function SearchResultsPage() {
         </div>
 
         <div
-          className={styles.suggestionCards}
+          className={`${styles.suggestionCards} ${
+            isDraggingSuggestions ? styles.suggestionCardsDragging : ""
+          }`}
           ref={suggestionCardsRef}
           onWheel={handleSuggestionsWheel}
+          onPointerDown={handleSuggestionsPointerDown}
+          onPointerMove={handleSuggestionsPointerMove}
+          onPointerUp={stopSuggestionsDrag}
+          onPointerCancel={stopSuggestionsDrag}
+          onLostPointerCapture={stopSuggestionsDrag}
+          onClickCapture={handleSuggestionClickCapture}
+          onDragStart={(event) => event.preventDefault()}
         >
           {recommendedEvents.map((event) => (
             <EventCard

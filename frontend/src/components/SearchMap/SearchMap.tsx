@@ -6,23 +6,7 @@ import axios from "axios";
 import "./search-map.scss";
 import type { SearchMapPin } from "./SearchMapClient";
 
-const DEFAULT_RADIUS_METERS = 2000;
-
-const getRadiusFromPopulation = (population?: number) => {
-  if (!population) {
-    return DEFAULT_RADIUS_METERS;
-  }
-
-  if (population < 20_000) {
-    return 1000;
-  } else if (population < 100_000) {
-    return 2000;
-  } else if (population < 500_000) {
-    return 3000;
-  }
-
-  return 5000;
-};
+const DEFAULT_RADIUS_KM = 5;
 
 const formatRadius = (radiusMeters: number) => {
   return radiusMeters >= 1000
@@ -56,6 +40,12 @@ type SearchMapProps = {
   eventCount: number;
   variant?: "default" | "hero";
   pins?: SearchMapPin[];
+  radiusKm?: number;
+  onMapScopeChange?: (scope: {
+    locationKey: string;
+    cityName: string;
+    center: [number, number];
+  } | null) => void;
 };
 
 type MapState =
@@ -64,7 +54,6 @@ type MapState =
       status: "ready";
       cityName: string;
       center: [number, number];
-      radiusMeters: number;
     }
   | { status: "empty" }
   | { status: "error" };
@@ -74,17 +63,22 @@ export default function SearchMap({
   eventCount,
   variant = "default",
   pins = [],
+  radiusKm = DEFAULT_RADIUS_KM,
+  onMapScopeChange,
 }: SearchMapProps) {
   const [mapState, setMapState] = useState<MapState>({ status: "loading" });
+  const selectedRadiusMeters = radiusKm * 1000;
 
   useEffect(() => {
     const query = location.trim();
 
     if (!query) {
+      onMapScopeChange?.(null);
       return;
     }
 
     const controller = new AbortController();
+    onMapScopeChange?.(null);
 
     axios
       .get<CommuneResponse[]>("https://geo.api.gouv.fr/communes", {
@@ -101,27 +95,35 @@ export default function SearchMap({
 
         if (!commune?.centre?.coordinates) {
           setMapState({ status: "empty" });
+          onMapScopeChange?.(null);
           return;
         }
 
         const [longitude, latitude] = commune.centre.coordinates;
-        const radiusMeters = getRadiusFromPopulation(commune.population);
+        const center: [number, number] = [latitude, longitude];
 
-        setMapState({
+        const nextMapState = {
           status: "ready",
           cityName: commune.nom,
-          center: [latitude, longitude],
-          radiusMeters,
+          center,
+        } satisfies MapState;
+
+        setMapState(nextMapState);
+        onMapScopeChange?.({
+          locationKey: query,
+          cityName: nextMapState.cityName,
+          center: nextMapState.center,
         });
       })
       .catch((error) => {
         if (!axios.isCancel(error)) {
           setMapState({ status: "error" });
+          onMapScopeChange?.(null);
         }
       });
 
     return () => controller.abort();
-  }, [location]);
+  }, [location, onMapScopeChange]);
 
   if (mapState.status === "empty") {
     return null;
@@ -146,7 +148,7 @@ export default function SearchMap({
           </div>
           <span>
             {mapState.status === "ready"
-              ? `Rayon ${formatRadius(mapState.radiusMeters)}`
+              ? `Rayon ${formatRadius(selectedRadiusMeters)}`
               : "Rayon"}
           </span>
         </div>
@@ -155,7 +157,7 @@ export default function SearchMap({
       {mapState.status === "ready" && (
         <MapClient
           center={mapState.center}
-          radiusMeters={mapState.radiusMeters}
+          radiusMeters={selectedRadiusMeters}
           pins={pins}
         />
       )}
