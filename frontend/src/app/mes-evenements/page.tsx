@@ -7,7 +7,6 @@ import {
   CirclePlus,
   Clock3,
   Euro,
-  FileText,
   History,
   Rocket,
   ShieldCheck,
@@ -179,13 +178,40 @@ type MealCardProps = {
   footer?: React.ReactNode;
   hostLabel?: string;
   bookingSummary?: HostMealBookingSummary | null;
+  variant?: "default" | "hosting";
 };
 
-function MealCard({ meal, footer, hostLabel, bookingSummary }: MealCardProps) {
+function formatMealDay(dateTime: string) {
+  return format(new Date(dateTime), "d", {
+    locale: fr,
+  });
+}
+
+function formatMealMonth(dateTime: string) {
+  const month = format(new Date(dateTime), "MMM", {
+    locale: fr,
+  }).replace(".", "");
+
+  return month.charAt(0).toUpperCase() + month.slice(1);
+}
+
+function MealCard({
+  meal,
+  footer,
+  hostLabel,
+  bookingSummary,
+  variant = "default",
+}: MealCardProps) {
   const houseRuleLabels = getHouseRuleLabels(meal);
+  const isHostingVariant = variant === "hosting";
+  const confirmedSeatsCount = bookingSummary?.confirmedSeatsCount ?? 0;
 
   return (
-    <article className={styles.mealCard}>
+    <article
+      className={`${styles.mealCard} ${
+        isHostingVariant ? styles.hostingMealCard : ""
+      }`}
+    >
       <div className={styles.mealCardMedia}>
         <Image
           src="/photoRepas.png"
@@ -215,7 +241,19 @@ function MealCard({ meal, footer, hostLabel, bookingSummary }: MealCardProps) {
 
         {hostLabel ? <p className={styles.hostHint}>{hostLabel}</p> : null}
 
-        {bookingSummary ? (
+        {isHostingVariant ? (
+          <div className={styles.hostingCardStats}>
+            <div>
+              <span>Participant(s)</span>
+              <strong>{confirmedSeatsCount}</strong>
+            </div>
+            <div>
+              <span>Date</span>
+              <strong>{formatMealDay(meal.dateTime)}</strong>
+              <em>{formatMealMonth(meal.dateTime)}</em>
+            </div>
+          </div>
+        ) : bookingSummary ? (
           <div className={styles.bookingSummaryBox}>
             <div>
               <strong>{bookingSummary.confirmedSeatsCount}</strong>
@@ -228,33 +266,35 @@ function MealCard({ meal, footer, hostLabel, bookingSummary }: MealCardProps) {
           </div>
         ) : null}
 
-        <dl className={styles.mealMetaList}>
-          <div>
-            <dt>
-              <CalendarDays />
-              Date
-            </dt>
-            <dd>{formatMealDate(meal.dateTime)}</dd>
-          </div>
+        {!isHostingVariant ? (
+          <dl className={styles.mealMetaList}>
+            <div>
+              <dt>
+                <CalendarDays />
+                Date
+              </dt>
+              <dd>{formatMealDate(meal.dateTime)}</dd>
+            </div>
 
-          <div>
-            <dt>
-              <Users />
-              Places
-            </dt>
-            <dd>{meal.seatsTotal} convives</dd>
-          </div>
+            <div>
+              <dt>
+                <Users />
+                Places
+              </dt>
+              <dd>{meal.seatsTotal} convives</dd>
+            </div>
 
-          <div>
-            <dt>
-              <Euro />
-              Prix
-            </dt>
-            <dd>{formatPrice(meal.pricePerSeatCents)} / place</dd>
-          </div>
-        </dl>
+            <div>
+              <dt>
+                <Euro />
+                Prix
+              </dt>
+              <dd>{formatPrice(meal.pricePerSeatCents)} / place</dd>
+            </div>
+          </dl>
+        ) : null}
 
-        {houseRuleLabels.length > 0 ? (
+        {!isHostingVariant && houseRuleLabels.length > 0 ? (
           <div className={styles.rulesBlock}>
             <span>Règles de la maison</span>
             <p>{houseRuleLabels.join(", ")}</p>
@@ -597,12 +637,19 @@ export default function MesRepasPage() {
       (meal) => meal.status === "published",
     ).length;
     const upcomingCount = hostedMeals.filter((meal) => isUpcomingMeal(meal)).length;
+    const pastCount = hostedMeals.filter(
+      (meal) =>
+        meal.status !== "draft" &&
+        meal.status !== "cancelled" &&
+        isPastMeal(meal),
+    ).length;
 
     return {
       total: hostedMeals.length,
       draftCount,
       publishedCount,
       upcomingCount,
+      pastCount,
     };
   }, [hostedMeals]);
 
@@ -798,61 +845,98 @@ export default function MesRepasPage() {
 
   return (
     <section className={styles.page}>
-      <div className={styles.hero}>
-        <div className={styles.heroHeader}>
-          <div className={styles.heroCopy}>
-            <p className={styles.kicker}>
-              {activePanel === "hosting" ? "Espace hôte" : "Espace invité"}
-            </p>
-            <h1>
+      <div
+	        className={`${styles.hero} ${
+	          activePanel === "hosting" ? styles["hero--hosting"] : ""
+	        }`}
+	      >
+	        {isHostUser ? (
+	          <div className={styles.panelSwitch}>
+	            <button
+	              type="button"
+	              className={`${styles.panelSwitchButton} ${
+	                activePanel === "attending"
+	                  ? styles["panelSwitchButton--active"]
+	                  : ""
+	              }`}
+	              onClick={() => setActivePanel("attending")}
+	            >
+	              Je participe
+	            </button>
+	            <button
+	              type="button"
+	              className={`${styles.panelSwitchButton} ${
+	                activePanel === "hosting"
+	                  ? styles["panelSwitchButton--active"]
+	                  : ""
+	              }`}
+	              onClick={() => setActivePanel("hosting")}
+	            >
+	              J&apos;organise
+	            </button>
+	          </div>
+	        ) : null}
+	        <div className={styles.heroHeader}>
+	          <div className={styles.heroCopy}>
+	            <p className={styles.kicker}>
+	              {activePanel === "hosting" ? "Espace hôte" : "Espace invité"}
+	            </p>
+	            <h1>
               {activePanel === "hosting"
-                ? "Gère les repas que tu organises et pilote leur publication."
+                ? "Gère tes événements, et pilote leur publication"
                 : "Consulte facilement toutes tes réservations au même endroit."}
             </h1>
             <p className={styles.description}>
-              {activePanel === "hosting"
-                ? "Retrouve tes repas à venir, passés et annulés dans un même espace."
-                : "Retrouve tes réservations confirmées, en attente, refusées et passées dans un seul espace."}
+              {activePanel === "hosting" ? (
+                <>
+                  <span className={styles.descriptionLine}>Ta vie de table ici.</span>
+                  <span className={styles.descriptionLine}>
+                    Retrouve tes <strong>événements à venir</strong>, tes{" "}
+                    <strong>souvenirs de table</strong> et tes{" "}
+                    <strong>annonces</strong> au même endroit
+                  </span>
+                </>
+              ) : (
+                "Retrouve tes réservations confirmées, en attente, refusées et passées dans un seul espace."
+              )}
             </p>
           </div>
 
-          {isHostUser ? (
-            <div className={styles.panelSwitch}>
-              <button
-                type="button"
-                className={`${styles.panelSwitchButton} ${
-                  activePanel === "attending"
-                    ? styles["panelSwitchButton--active"]
-                    : ""
-                }`}
-                onClick={() => setActivePanel("attending")}
-              >
-                Je participe
-              </button>
-              <button
-                type="button"
-                className={`${styles.panelSwitchButton} ${
-                  activePanel === "hosting"
-                    ? styles["panelSwitchButton--active"]
-                    : ""
-                }`}
-                onClick={() => setActivePanel("hosting")}
-              >
-                J&apos;organise
-              </button>
-            </div>
-          ) : null}
+          <div className={styles.heroAside}>
+            {activePanel === "hosting" ? (
+              <div className={`${styles.statsGrid} ${styles.hostingStatsGrid}`}>
+                <article className={styles.statCard}>
+                  <span>À venir</span>
+                  <strong>{hostedStats.upcomingCount}</strong>
+                </article>
+
+                <article className={styles.statCard}>
+                  <span>Publiés</span>
+                  <strong>{hostedStats.publishedCount}</strong>
+                </article>
+
+                <article className={styles.statCard}>
+                  <span>Brouillons</span>
+                  <strong>{hostedStats.draftCount}</strong>
+                </article>
+
+                <article className={styles.statCard}>
+                  <span>Passés</span>
+                  <strong>{hostedStats.pastCount}</strong>
+                </article>
+              </div>
+            ) : null}
+          </div>
         </div>
 
         <div className={styles.heroActions}>
           {activePanel === "hosting" ? (
             <>
               <Link href="/mes-evenements/creer" className={styles.primaryButton}>
-                <CirclePlus />
-                Créer un repas
+                Créer un événement
               </Link>
               <Link href="/" className={styles.secondaryButton}>
-                Voir les repas publics
+                Voir les événements
               </Link>
             </>
           ) : (
@@ -862,44 +946,32 @@ export default function MesRepasPage() {
             </Link>
           )}
         </div>
+
+        {activePanel === "hosting" && !hostingError ? (
+          <>
+            <span className={styles.heroDivider} aria-hidden="true" />
+            <div className={styles.filtersBar}>
+              {HOSTING_FILTER_OPTIONS.map((filterOption) => (
+                <button
+                  key={filterOption.key}
+                  type="button"
+                  className={`${styles.filterButton} ${
+                    hostingFilter === filterOption.key
+                      ? styles["filterButton--active"]
+                      : ""
+                  }`}
+                  onClick={() => setHostingFilter(filterOption.key)}
+                >
+                  {filterOption.label}
+                </button>
+              ))}
+            </div>
+          </>
+        ) : null}
       </div>
 
       {activePanel === "hosting" ? (
         <>
-          <div className={styles.statsGrid}>
-            <article className={styles.statCard}>
-              <span className={styles.statIcon}>
-                <FileText />
-              </span>
-              <strong>{hostedStats.total}</strong>
-              <span>repas créés</span>
-            </article>
-
-            <article className={styles.statCard}>
-              <span className={styles.statIcon}>
-                <Rocket />
-              </span>
-              <strong>{hostedStats.publishedCount}</strong>
-              <span>publiés</span>
-            </article>
-
-            <article className={styles.statCard}>
-              <span className={styles.statIcon}>
-                <Clock3 />
-              </span>
-              <strong>{hostedStats.draftCount}</strong>
-              <span>brouillons</span>
-            </article>
-
-            <article className={styles.statCard}>
-              <span className={styles.statIcon}>
-                <CalendarDays />
-              </span>
-              <strong>{hostedStats.upcomingCount}</strong>
-              <span>à venir</span>
-            </article>
-          </div>
-
           {hostingError ? (
             <div className={styles.hostGuardCard}>
               <div className={styles.hostGuardIcon}>
@@ -920,23 +992,6 @@ export default function MesRepasPage() {
             </div>
           ) : (
             <>
-              <div className={styles.filtersBar}>
-                {HOSTING_FILTER_OPTIONS.map((filterOption) => (
-                  <button
-                    key={filterOption.key}
-                    type="button"
-                    className={`${styles.filterButton} ${
-                      hostingFilter === filterOption.key
-                        ? styles["filterButton--active"]
-                        : ""
-                    }`}
-                    onClick={() => setHostingFilter(filterOption.key)}
-                  >
-                    {filterOption.label}
-                  </button>
-                ))}
-              </div>
-
               {fetchingHostedMeals ? (
                 <div className={styles.loadingPanel}>
                   Chargement de tes repas organisés...
@@ -962,13 +1017,14 @@ export default function MesRepasPage() {
                         <MealCard
                           key={meal.id}
                           meal={meal}
+                          variant="hosting"
                           bookingSummary={hostBookingSummariesByMealId.get(meal.id) ?? null}
                           footer={
                             <>
                               {meal.status === "published" || meal.status === "done" ? (
                                 <Link
                                   href={`/mes-evenements/${meal.id}/demandes`}
-                                  className={styles.secondaryButton}
+                                  className={styles.requestsButton}
                                 >
                                   Voir les demandes
                                 </Link>

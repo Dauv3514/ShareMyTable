@@ -2,9 +2,9 @@
   width: 100%;
   max-width: 1180px;
   margin: 0 auto;
-  padding: 12px 0 120px;
+  padding: 0px 0px 120px;
   display: grid;
-  gap: 24px;
+  gap: 0;
 }
 
 .hero {
@@ -19,11 +19,28 @@
   box-shadow: 0 18px 45px rgba(83, 61, 22, 0.08);
 }
 
+.hero--hosting {
+  gap: 40px;
+  padding: 26px 80px 70px;
+  border-radius: 0;
+  border: 0;
+  background: #f8f6ed;
+  box-shadow: none;
+}
+
 .heroHeader {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 18px;
+}
+
+.hero--hosting .heroHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  align-items: center;
+  column-gap: 84px;
+  row-gap: 32px;
 }
 
 .heroCopy {
@@ -47,11 +64,44 @@
   max-width: 14ch;
 }
 
+.hero--hosting .heroCopy h1 {
+  max-width: 20ch;
+  font-size: clamp(2.35rem, 3.4vw, 3.1rem);
+  line-height: 1.02;
+  letter-spacing: 0;
+}
+
 .description {
   max-width: 58ch;
   color: #5b513c;
   font-size: 1rem;
   line-height: 1.65;
+}
+
+.hero--hosting .description {
+  max-width: 48ch;
+  color: #18120d;
+  font-size: 1.34rem;
+  line-height: 1.16;
+  font-weight: 400;
+}
+
+.descriptionLine {
+  display: block;
+}
+
+.hero--hosting .description strong {
+  font-weight: 800;
+}
+
+.heroAside {
+  display: grid;
+  gap: 22px;
+  justify-items: end;
+}
+
+.heroAside:empty {
+  display: none;
 }
 
 .panelSwitch,
@@ -65,11 +115,88 @@
 }
 
 .panelSwitch {
-  padding: 6px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(217, 203, 165, 0.9);
-  box-shadow: 0 8px 24px rgba(83, 61, 22, 0.08);
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: min(100%, 520px);
+  padding: 0;
+  gap: 0;
+  border-radius: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.panelSwitch::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1px;
+  height: 50px;
+  background: #948438;
+  opacity: 0.35;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.hero--hosting .panelSwitch {
+  width: min(100%, 520px);
+  justify-self: center;
+  margin: 0 auto 10px;
+  gap: 0;
+  padding: 0;
+}
+
+.hero--hosting .heroCopy {
+  grid-column: 1;
+}
+
+.hero--hosting .hostingStatsGrid {
+  justify-self: end;
+}
+
+@media (min-width: 1180px) {
+  .hero--hosting .hostingStatsGrid {
+    transform: translateY(40px);
+  }
+}
+
+.hero--hosting .heroActions {
+  gap: 24px;
+}
+
+.hero--hosting .secondaryButton {
+  border-color: #525a0c;
+  background: #ffffff;
+  color: #525a0c;
+}
+
+.heroDivider {
+  width: 100%;
+  height: 1px;
+  background: #ded1ad;
+}
+
+.hero--hosting .filtersBar {
+  justify-content: center;
+  gap: 12px;
+}
+
+.hero--hosting .filterButton {
+  width: auto;
+  min-width: 118px;
+  border-color: #ded1ad;
+  background: #ffffff;
+  color: #948438;
+  font-size: 1.2rem;
+  font-weight: 400;
+}
+
+.hero--hosting .filterButton--active {
+  border-color: #2b2b2b;
+  background: #2b2b2b;
+  color: #ffffff;
 }
 
 .panelSwitchButton,
@@ -105,7 +232,44 @@
   color: #675d3d;
 }
 
-.panelSwitchButton--active,
+.panelSwitchButton {
+  appearance: none;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  color: #52590d;
+  font-weight: 700;
+  font-size: 1.08rem;
+  min-height: 44px !important;
+  height: 44px !important;
+  max-height: 44px !important;
+  box-shadow: none !important;
+}
+
+.panelSwitchButton:focus,
+.panelSwitchButton:focus-visible {
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+.panelSwitchButton:last-child {
+  color: #948438;
+}
+
+.panelSwitchButton--active {
+  background: transparent;
+  border-color: transparent;
+  color: inherit;
+}
+
+.panelSwitchButton--active:first-child {
+  color: #52590d;
+}
+
+.panelSwitchButton--active:last-child {
+  color: #948438;
+}
+
 .filterButton--active {
   background: #2b2b2b;
   border-color: #2b2b2b;
@@ -158,17 +322,42 @@
   color: #925037;
 }
 
+.requestsButton {
+  min-height: 32px;
+  height: 32px;
+  min-width: 138px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid #525A0C;
+  background: #ffffff;
+  color: #525A0C;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease;
+  cursor: pointer;
+}
+
 .panelSwitchButton:hover,
 .filterButton:hover,
 .primaryButton:hover,
 .secondaryButton:hover,
-.warningButton:hover {
+.warningButton:hover,
+.requestsButton:hover {
   transform: translateY(-1px);
 }
 
 .primaryButton:disabled,
 .secondaryButton:disabled,
-.warningButton:disabled {
+.warningButton:disabled,
+.requestsButton:disabled {
   cursor: wait;
   opacity: 0.72;
   transform: none;
@@ -180,6 +369,12 @@
   gap: 16px;
 }
 
+.hostingStatsGrid {
+  width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
 .statCard,
 .sectionCard {
   display: grid;
@@ -188,6 +383,34 @@
   border-radius: 24px;
   border: 1px solid rgba(216, 206, 178, 0.9);
   background: rgba(255, 253, 246, 0.86);
+}
+
+.hostingStatsGrid .statCard {
+  min-height: 124px;
+  align-content: center;
+  justify-items: center;
+  gap: 8px;
+  padding: 18px 14px;
+  border-color: #ded1ad;
+  border-radius: 10px;
+  background: #FBF9F4;
+  text-align: center;
+}
+
+.hostingStatsGrid .statCard span {
+  order: 1;
+  color: #25210e;
+  font-size: 0.95rem;
+  line-height: 1.1;
+  font-weight: 400;
+}
+
+.hostingStatsGrid .statCard strong {
+  order: 2;
+  color: #000000;
+  font-size: clamp(3rem, 5vw, 4rem);
+  line-height: 0.9;
+  font-weight: 900;
 }
 
 .statIcon {
@@ -410,11 +633,21 @@
   box-shadow: 0 14px 30px rgba(84, 62, 22, 0.08);
 }
 
+.hostingMealCard {
+  border-radius: 18px;
+  background: #FBF9F4;
+  box-shadow: none;
+}
+
 .mealCardMedia {
   position: relative;
   min-height: 230px;
   overflow: hidden;
   background: #f4ead6;
+}
+
+.hostingMealCard .mealCardMedia {
+  min-height: 166px;
 }
 
 .mealCardImage {
@@ -431,6 +664,10 @@
     radial-gradient(circle at top right, rgba(231, 241, 111, 0.18), transparent 38%);
 }
 
+.hostingMealCard .mealCardMedia::after {
+  background: linear-gradient(180deg, rgba(23, 18, 13, 0.03) 0%, rgba(23, 18, 13, 0.08) 100%);
+}
+
 .mealCardOverlay {
   position: absolute;
   z-index: 1;
@@ -441,10 +678,19 @@
   gap: 12px;
 }
 
+.hostingMealCard .mealCardOverlay {
+  inset: 18px 20px;
+}
+
 .mealCardContent {
   padding: 24px;
   display: grid;
   gap: 18px;
+}
+
+.hostingMealCard .mealCardContent {
+  padding: 18px 28px 24px;
+  gap: 22px;
 }
 
 .mealCardTop {
@@ -529,10 +775,20 @@
   gap: 10px;
 }
 
+.hostingMealCard .mealCardBody {
+  gap: 4px;
+}
+
 .mealCardBody h2 {
   font-size: 1.45rem;
   line-height: 1.05;
   color: #1c1710;
+}
+
+.hostingMealCard .mealCardBody h2 {
+  font-size: 1.28rem;
+  line-height: 1.1;
+  color: #000000;
 }
 
 .mealCardBody p,
@@ -549,6 +805,83 @@
   background: #fbf6e9;
   border: 1px solid #eadfc2;
   font-size: 0.94rem;
+}
+
+.hostingMealCard .mealCardBody p {
+  color: #17120d;
+  font-size: 0.95rem;
+  line-height: 1.25;
+}
+
+.hostingCardStats {
+  display: grid;
+  grid-template-columns: repeat(2, 190px);
+  justify-content: center;
+  gap: 68px;
+}
+
+.hostingCardStats div {
+  width: 190px;
+  min-height: 150px;
+  padding: 18px 14px 16px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  background: #FBF9F4;
+  border: 1px solid #e8e1cf;
+  box-shadow: 0 10px 22px rgba(32, 24, 11, 0.1);
+  text-align: center;
+}
+
+.hostingCardStats span {
+  color: #000000;
+  font-size: 1.18rem;
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.hostingCardStats strong {
+  color: #000000;
+  font-size: 3.15rem;
+  font-weight: 900;
+  line-height: 0.9;
+}
+
+.hostingCardStats em {
+  margin-top: -6px;
+  color: #000000;
+  font-size: 1.2rem;
+  font-style: normal;
+  line-height: 1;
+}
+
+.hostingMealCard .mealActions {
+  justify-content: center;
+  gap: 10px;
+  padding: 0;
+}
+
+.hostingMealCard .requestsButton,
+.hostingMealCard .warningButton,
+.hostingMealCard .secondaryButton,
+.hostingMealCard .primaryButton {
+  min-width: auto;
+  width: auto;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 18px;
+}
+
+.hostingMealCard .requestsButton {
+  font-size: 13px;
+}
+
+.hostingMealCard .warningButton,
+.hostingMealCard .secondaryButton,
+.hostingMealCard .primaryButton {
+  font-size: 0.82rem;
 }
 
 .bookingSummaryBox {
@@ -754,6 +1087,59 @@
   .heroHeader {
     display: grid;
   }
+
+  .mealsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero--hosting {
+    padding: 44px 40px 52px;
+  }
+
+  .hero--hosting .heroHeader {
+    display: contents;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+
+  .hero--hosting .panelSwitch,
+  .hero--hosting .heroCopy,
+  .hero--hosting .hostingStatsGrid {
+    grid-column: 1;
+  }
+
+  .hero--hosting .heroCopy {
+    order: 1;
+  }
+
+  .hero--hosting .heroActions {
+    order: 2;
+  }
+
+  .hero--hosting .hostingStatsGrid {
+    order: 3;
+    transform: none;
+  }
+
+  .hero--hosting .heroDivider {
+    order: 4;
+  }
+
+  .hero--hosting .filtersBar {
+    order: 5;
+  }
+
+  .hero--hosting .heroAside {
+    display: contents;
+  }
+
+  .heroAside {
+    justify-items: stretch;
+  }
+
+  .hero--hosting .panelSwitch {
+    justify-self: center;
+  }
 }
 
 @media (max-width: 720px) {
@@ -797,6 +1183,34 @@
     font-size: 2rem;
   }
 
+  .hero--hosting {
+    padding: 28px 20px 36px;
+    gap: 24px;
+  }
+
+  .hero--hosting .heroHeader {
+    display: contents;
+  }
+
+  .hero--hosting .heroCopy h1 {
+    font-size: 2.35rem;
+    line-height: 0.98;
+  }
+
+  .hero--hosting .description {
+    font-size: 1.06rem;
+    line-height: 1.3;
+  }
+
+  .hero--hosting .heroCopy {
+    order: 1;
+  }
+
+  .hero--hosting .heroActions {
+    order: 2;
+    gap: 12px;
+  }
+
   .panelSwitch,
   .heroActions,
   .hostGuardActions,
@@ -808,6 +1222,82 @@
   .panelSwitch {
     width: 100%;
     border-radius: 22px;
+  }
+
+  .hero--hosting .panelSwitch {
+    order: 1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    margin: 12px 0 34px;
+    padding: 0;
+    gap: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    justify-self: stretch;
+  }
+
+  .hero--hosting .panelSwitchButton {
+    width: 100%;
+    min-height: 44px !important;
+    height: 44px !important;
+    padding: 0 12px;
+    border: 0 !important;
+    border-radius: 0 !important;
+    outline: 0 !important;
+    background: transparent;
+    color: #52590d;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .hero--hosting .heroAside {
+    display: contents;
+  }
+
+  .hero--hosting .panelSwitchButton:last-child {
+    color: #948438;
+  }
+
+  .hero--hosting .panelSwitchButton--active {
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .hero--hosting .hostingStatsGrid {
+    order: 3;
+    transform: none;
+  }
+
+  .hero--hosting .primaryButton svg {
+    display: none;
+  }
+
+  .hero--hosting .heroDivider {
+    order: 4;
+  }
+
+  .hero--hosting .filtersBar {
+    order: 5;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .hero--hosting .filtersBar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .hero--hosting .filterButton {
+    width: auto;
+    min-width: max-content;
+    flex: 0 0 auto;
+    font-size: 1rem;
   }
 
   .panelSwitchButton,
@@ -823,6 +1313,29 @@
   .mealMetaList,
   .reservationsGrid {
     grid-template-columns: 1fr;
+  }
+
+  .hostingCardStats {
+    grid-template-columns: repeat(2, minmax(0, 190px));
+    gap: 16px;
+  }
+
+  .hostingCardStats div {
+    width: 100%;
+    min-height: 140px;
+  }
+
+  .hostingStatsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hostingStatsGrid .statCard {
+    min-height: 108px;
+    padding: 16px 10px;
+  }
+
+  .hostingStatsGrid .statCard strong {
+    font-size: 2.75rem;
   }
 
   .reservationFooter {
