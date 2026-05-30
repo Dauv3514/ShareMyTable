@@ -554,6 +554,13 @@
     right: 22px;
     z-index: 500;
     max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
   }
 
   .panelToggle,
