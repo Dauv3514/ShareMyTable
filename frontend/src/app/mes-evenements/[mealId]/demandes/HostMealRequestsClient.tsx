@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import UserAvatar from "@/components/UserAvatar";
+import ConversationAvatar from "@/app/messages/ConversationAvatar";
 import {
   acceptHostBooking,
   getHostMealBookings,
@@ -22,6 +23,13 @@ import {
   type HostBooking,
   type HostMealBookings,
 } from "@/lib/host-bookings";
+import {
+  fetchMessagingConversations,
+  formatConversationTime,
+  groupConversationsByMeal,
+  type MessagingMealThread,
+  type MessagingMessageSummary,
+} from "@/lib/messaging";
 import { useAuth } from "@/app/providers/AuthProvider";
 import styles from "./host-meal-requests.module.scss";
 
@@ -71,6 +79,25 @@ function getGuestFirstName(booking: HostBooking) {
   return booking.guest.firstName || booking.guest.pseudo || "Invité";
 }
 
+function getLatestDiscussionSenderLabel(
+  message: MessagingMessageSummary | null,
+  currentUserId?: number,
+) {
+  if (!message) {
+    return "Discussion événement";
+  }
+
+  if (currentUserId && message.sender.userId === currentUserId) {
+    return "Vous";
+  }
+
+  return message.sender.firstName || message.sender.pseudo || "Participant";
+}
+
+function getLatestDiscussionBody(message: MessagingMessageSummary | null) {
+  return message?.body || "Aucun message pour le moment.";
+}
+
 function RatingStars() {
   return (
     <div className={styles.ratingStars} aria-label="Note invitée">
@@ -78,6 +105,82 @@ function RatingStars() {
         <Star key={index} className={index < 4 ? styles.filledStar : ""} />
       ))}
     </div>
+  );
+}
+
+function DiscussionRow({
+  discussion,
+  currentUserId,
+}: {
+  discussion: MessagingMealThread;
+  currentUserId?: number;
+}) {
+  const groupConversation = discussion.conversations.find(
+    (conversation) => conversation.type === "meal_group",
+  );
+  const avatarUsers = groupConversation?.members ?? discussion.participants;
+  const latestDate =
+    discussion.latestMessage?.createdAt ??
+    discussion.conversations[0]?.updatedAt ??
+    discussion.dateTime;
+
+  return (
+    <Link href={`/messages/${discussion.mealId}`} className={styles.discussionRow}>
+      <ConversationAvatar
+        users={avatarUsers}
+        currentUserId={currentUserId}
+        alt={discussion.mealTitle}
+        includeCurrentUser={Boolean(groupConversation)}
+      />
+
+      <div className={styles.discussionBody}>
+        <div className={styles.discussionTitleRow}>
+          <h3>{discussion.mealTitle}</h3>
+          <time dateTime={latestDate}>{formatConversationTime(latestDate)}</time>
+        </div>
+        <p className={styles.discussionMeta}>
+          {getLatestDiscussionSenderLabel(discussion.latestMessage, currentUserId)} :
+        </p>
+        <p className={styles.discussionPreview}>
+          {getLatestDiscussionBody(discussion.latestMessage)}
+        </p>
+      </div>
+    </Link>
+  );
+}
+
+function DiscussionsSection({
+  discussions,
+  currentUserId,
+}: {
+  discussions: MessagingMealThread[];
+  currentUserId?: number;
+}) {
+  return (
+    <section className={`${styles.requestsSection} ${styles.discussionsSection}`}>
+      <div className={styles.discussionsHead}>
+        <h2>Discussions</h2>
+        <Link
+          href="/messages"
+          className={styles.messagesShortcut}
+          aria-label="Aller à la messagerie"
+        />
+      </div>
+
+      {discussions.length > 0 ? (
+        <div className={styles.discussionsList}>
+          {discussions.map((discussion) => (
+            <DiscussionRow
+              key={discussion.mealId}
+              discussion={discussion}
+              currentUserId={currentUserId}
+            />
+          ))}
+        </div>
+      ) : (
+        <p className={styles.emptySection}>Aucune discussion pour cet événement.</p>
+      )}
+    </section>
   );
 }
 
@@ -312,7 +415,7 @@ function ModerationModal({
         <div className={styles.modalBody}>
           {isAccept ? (
             <p>
-              {guestFirstName} souhaite rejoindre l'événement, il s&apos;est engagé
+              {guestFirstName} souhaite rejoindre l&apos;événement, il s&apos;est engagé
               à respecter les <strong>règles de la maison.</strong>
             </p>
           ) : null}
@@ -363,8 +466,9 @@ export default function HostMealRequestsClient({
   mealId,
 }: HostMealRequestsClientProps) {
   const router = useRouter();
-  const { isLoggedIn, loading } = useAuth();
+  const { isLoggedIn, loading, user } = useAuth();
   const [mealBookings, setMealBookings] = useState<HostMealBookings | null>(null);
+  const [mealDiscussions, setMealDiscussions] = useState<MessagingMealThread[]>([]);
   const [isFetching, setIsFetching] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyBookingId, setBusyBookingId] = useState<number | null>(null);
@@ -402,6 +506,35 @@ export default function HostMealRequestsClient({
 
     void loadMealBookings();
   }, [isLoggedIn, loadMealBookings, loading]);
+
+  const loadMealDiscussions = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    const numericMealId = Number(mealId);
+
+    if (!token || Number.isNaN(numericMealId)) {
+      setMealDiscussions([]);
+      return;
+    }
+
+    try {
+      const conversations = await fetchMessagingConversations(token);
+      setMealDiscussions(
+        groupConversationsByMeal(conversations).filter(
+          (discussion) => discussion.mealId === numericMealId,
+        ),
+      );
+    } catch {
+      setMealDiscussions([]);
+    }
+  }, [mealId]);
+
+  useEffect(() => {
+    if (loading || !isLoggedIn) {
+      return;
+    }
+
+    void loadMealDiscussions();
+  }, [isLoggedIn, loadMealDiscussions, loading]);
 
   const groupedBookings = useMemo(() => {
     const bookings = mealBookings?.bookings ?? [];
@@ -464,6 +597,7 @@ export default function HostMealRequestsClient({
       setModerationAction(null);
       setRefusalReason("");
       void loadMealBookings();
+      void loadMealDiscussions();
     } catch (moderationError) {
       toast.error(
         moderationError instanceof Error
@@ -553,6 +687,11 @@ export default function HostMealRequestsClient({
         busyBookingId={busyBookingId}
         onAccept={openAcceptModal}
         onRefuse={openRefuseModal}
+      />
+
+      <DiscussionsSection
+        discussions={mealDiscussions}
+        currentUserId={user?.id}
       />
 
       {groupedBookings.cancelled.length > 0 ? (
