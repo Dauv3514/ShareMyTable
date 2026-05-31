@@ -176,6 +176,7 @@ type MealCardProps = {
   footer?: React.ReactNode;
   hostLabel?: string;
   bookingSummary?: HostMealBookingSummary | null;
+  showPastState?: boolean;
   variant?: "default" | "hosting";
 };
 
@@ -198,11 +199,15 @@ function MealCard({
   footer,
   hostLabel,
   bookingSummary,
+  showPastState = false,
   variant = "default",
 }: MealCardProps) {
   const houseRuleLabels = getHouseRuleLabels(meal);
   const isHostingVariant = variant === "hosting";
   const confirmedSeatsCount = bookingSummary?.confirmedSeatsCount ?? 0;
+  const isPastHostedMeal = isHostingVariant && showPastState;
+  const badgeStatus = isPastHostedMeal ? "past" : meal.status;
+  const badgeLabel = isPastHostedMeal ? "Passé" : getStatusLabel(meal.status);
 
   return (
     <article
@@ -221,10 +226,10 @@ function MealCard({
         <div className={styles.mealCardOverlay}>
           <span
             className={`${styles.statusBadge} ${
-              styles[`statusBadge--${meal.status}`]
+              styles[`statusBadge--${badgeStatus}`]
             }`}
           >
-            {getStatusLabel(meal.status)}
+            {badgeLabel}
           </span>
 
           <span className={styles.mealTypeChip}>{meal.mealType || "Événement"}</span>
@@ -1046,9 +1051,11 @@ export default function MesRepasPage() {
                   <div className={styles.mealsGrid}>
                     {paginatedHostedMeals.items.map((meal) => {
                       const canPublish = meal.status === "draft";
-                      const canCancel = meal.status === "published";
+                      const canCancel =
+                        meal.status === "published" && hostingFilter !== "past";
                       const canEdit =
                         meal.status === "draft" || meal.status === "cancelled";
+                      const showRequestsButton = hostingFilter !== "past";
                       const isBusy = activeMealId === meal.id;
 
                       return (
@@ -1057,15 +1064,28 @@ export default function MesRepasPage() {
                           meal={meal}
                           variant="hosting"
                           bookingSummary={hostBookingSummariesByMealId.get(meal.id) ?? null}
+                          showPastState={
+                            hostingFilter === "past" && isPastMeal(meal)
+                          }
                           footer={
                             <>
                               {meal.status === "published" || meal.status === "done" ? (
-                                <Link
-                                  href={`/mes-evenements/${meal.id}/demandes`}
-                                  className={styles.requestsButton}
-                                >
-                                  Voir les demandes
-                                </Link>
+                                <>
+                                  <Link
+                                    href={`/evenements/${meal.id}`}
+                                    className={styles.hostEventButton}
+                                  >
+                                    Voir l&apos;événement
+                                  </Link>
+                                  {showRequestsButton ? (
+                                    <Link
+                                      href={`/mes-evenements/${meal.id}/demandes`}
+                                      className={styles.requestsButton}
+                                    >
+                                      Voir les demandes
+                                    </Link>
+                                  ) : null}
+                                </>
                               ) : null}
 
                               {canEdit ? (

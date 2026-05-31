@@ -320,7 +320,8 @@
   color: #925037;
 }
 
-.requestsButton {
+.requestsButton,
+.hostEventButton {
   min-height: 32px;
   height: 32px;
   min-width: 138px;
@@ -334,7 +335,7 @@
   justify-content: center;
   gap: 10px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
   transition:
     transform 0.2s ease,
@@ -343,19 +344,27 @@
   cursor: pointer;
 }
 
+.hostEventButton {
+  border-color: #7B8613;
+  background: #7B8613;
+  color: #fcfbf8;
+}
+
 .panelSwitchButton:hover,
 .filterButton:hover,
 .primaryButton:hover,
 .secondaryButton:hover,
 .warningButton:hover,
-.requestsButton:hover {
+.requestsButton:hover,
+.hostEventButton:hover {
   transform: translateY(-1px);
 }
 
 .primaryButton:disabled,
 .secondaryButton:disabled,
 .warningButton:disabled,
-.requestsButton:disabled {
+.requestsButton:disabled,
+.hostEventButton:disabled {
   cursor: wait;
   opacity: 0.72;
   transform: none;
