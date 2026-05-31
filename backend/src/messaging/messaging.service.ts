@@ -258,7 +258,7 @@ export class MessagingService {
       return this.createConversationWithMembers({
         type: MessageConversationType.MEAL_GROUP,
         meal,
-        title: meal.title ? `Groupe - ${meal.title}` : 'Groupe du repas',
+        title: meal.title ? `Groupe - ${meal.title}` : 'Groupe de l\'événement',
         members: acceptedUsers.map((user) => ({
           user,
           role:
@@ -708,7 +708,7 @@ export class MessagingService {
     });
 
     if (!meal) {
-      throw new NotFoundException('Repas introuvable');
+      throw new NotFoundException('Événement introuvable');
     }
 
     return meal;

@@ -81,13 +81,6 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
           )}
         </div>
 
-        <div className={styles.quotePanel}>
-          <span className={styles.quoteMark} aria-hidden="true">
-            &ldquo;
-          </span>
-          <p className={styles.quote}>{host.quote}</p>
-        </div>
-
         <div className={styles.stats}>
           <article>
             <strong>{host.completedEvents}</strong>
@@ -136,12 +129,12 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
                 </div>
 
                 <p>{review.comment}</p>
-                <span className={styles.reviewEvent}>Repas : {review.eventTitle}</span>
+                <span className={styles.reviewEvent}>Événement : {review.eventTitle}</span>
               </article>
             ))
           ) : (
             <p className={styles.emptyReviews}>
-              Les avis laissés après les repas de cet hôte apparaîtront ici.
+              Les avis laissés après les événements de cet hôte apparaîtront ici.
             </p>
           )}
         </div>

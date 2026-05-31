@@ -155,7 +155,7 @@ export default function SearchMap({
   return (
     <section
       className={`search-map search-map--${variant}`}
-      aria-label="Zone approximative des repas"
+      aria-label="Zone approximative des événements"
     >
       {variant === "default" && (
         <div className="search-map__header">

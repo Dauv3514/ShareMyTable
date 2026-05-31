@@ -301,7 +301,7 @@ export class PaymentsService {
 
     if (booking.meal.dateTime.getTime() > Date.now()) {
       throw new BadRequestException(
-        'Le paiement ne peut etre capturé qu apres la date du repas',
+        'Le paiement ne peut etre capturé qu apres la date de lévénement',
       );
     }
 

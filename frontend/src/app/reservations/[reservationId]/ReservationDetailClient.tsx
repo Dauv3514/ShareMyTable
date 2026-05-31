@@ -545,7 +545,7 @@ export default function ReservationDetailClient({
                 <div className={styles.exactMapHeader}>
                   <div>
                     <h2>Adresse exacte</h2>
-                    <p>Le point indique l&apos;adresse du repas.</p>
+                    <p>Le point indique l&apos;adresse de l'événement.</p>
                   </div>
                 </div>
                 <ReservationExactMap
@@ -618,7 +618,10 @@ export default function ReservationDetailClient({
               </div>
 
               <div className={styles.actions}>
-                <Link href={`/profil/${reservation.hostId}`} className={styles.secondaryButton}>
+                <Link
+                  href={`/profil/${reservation.hostId}`}
+                  className={`${styles.secondaryButton} ${styles.hostButton}`}
+                >
                   Voir l&apos;hôte
                 </Link>
                 <button
@@ -639,7 +642,7 @@ export default function ReservationDetailClient({
                 <div>
                   <h2>Donner mon avis</h2>
                   <p>
-                    Partage ton ressenti sur ce repas et ajoute un pourboire si tu le souhaites.
+                    Partage ton ressenti sur cet événement et ajoute un pourboire si tu le souhaites.
                   </p>
                 </div>
                 <div className={styles.reviewSteps}>
@@ -678,7 +681,7 @@ export default function ReservationDetailClient({
                   {reviewStep === 1 ? (
                     <div className={styles.reviewStage}>
                       <span className={styles.reviewLabel}>Une note ?</span>
-                      <div className={styles.ratingButtons} aria-label="Note du repas">
+                      <div className={styles.ratingButtons} aria-label="Note de l'événement">
                         {[1, 2, 3, 4, 5].map((value) => (
                           <button
                             key={value}
@@ -700,11 +703,12 @@ export default function ReservationDetailClient({
                     <div className={styles.reviewStage}>
                       <span className={styles.reviewLabel}>Un pourboire ?</span>
                       <p className={styles.reviewHelper}>
-                        Montre que vous avez apprécié le repas en laissant un pourboire.
+                        Montre que vous avez apprécié l'événement en laissant un pourboire.
                       </p>
                       <div className={styles.tipCounter}>
                         <button
                           type="button"
+                          className={styles.tipCounterButton}
                           onClick={() => setTipAmount((value) => Math.max(0, value - 0.5))}
                           aria-label="Diminuer le pourboire"
                         >
@@ -713,6 +717,7 @@ export default function ReservationDetailClient({
                         <strong>{formatPrice(tipAmount)}</strong>
                         <button
                           type="button"
+                          className={styles.tipCounterButton}
                           onClick={() => setTipAmount((value) => Math.min(100, value + 0.5))}
                           aria-label="Augmenter le pourboire"
                         >
@@ -791,7 +796,7 @@ export default function ReservationDetailClient({
               <div className={styles.reviewSummaryHeader}>
                 <div>
                   <h2>Mon avis</h2>
-                  <p>Tu peux modifier la note et le commentaire laissés sur ce repas.</p>
+                  <p>Tu peux modifier la note et le commentaire laissés sur cette événement.</p>
                 </div>
                 {!isEditingReview ? (
                   <button
@@ -841,14 +846,14 @@ export default function ReservationDetailClient({
                     <span>Mon avis</span>
                     <p>
                       {reservation.review.comment?.trim() ||
-                        "Aucun commentaire laissé pour ce repas."}
+                        "Aucun commentaire laissé pour cette événement."}
                     </p>
                   </article>
                 </>
               ) : (
                 <div className={styles.reviewEditForm}>
                   <span className={styles.reviewLabel}>Modifier mon avis</span>
-                  <div className={styles.ratingButtons} aria-label="Modifier la note du repas">
+                  <div className={styles.ratingButtons} aria-label="Modifier la note de l'événement">
                     {[1, 2, 3, 4, 5].map((value) => (
                       <button
                         key={value}

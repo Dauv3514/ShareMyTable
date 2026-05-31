@@ -47,29 +47,30 @@ $message-other: #292d06;
 .searchBar {
   min-width: 0;
   flex: 1;
-  height: 40px;
+  height: 58px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 5px 20px;
-  border: 1px solid $stroke-classic;
-  border-radius: 20px;
-  background: $bg-secondary;
-  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.25);
+  padding: 0 20px 0 28px;
+  border: 1px solid #e0d9c7;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
 .searchMealButton {
-  min-height: 40px;
+  min-height: 30px;
+  height: 30px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   padding: 0 14px;
-  border: 1px solid $stroke-classic;
+  border: 1px solid #525A0C;
   border-radius: 20px;
-  background: $bg-secondary;
-  color: $text-classic;
+  background: #ffffff;
+  color: #525A0C;
   font-size: 14px;
   font-weight: 700;
   line-height: 1;
@@ -83,20 +84,38 @@ $message-other: #292d06;
   border: 0;
   outline: 0;
   background: transparent;
-  color: $text-classic;
-  font: inherit;
-  font-size: 16px;
+  color: #948438 !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
   line-height: 1;
+  appearance: none;
+  -webkit-text-fill-color: #948438;
 
   &::placeholder {
-    color: $text-muted;
+    color: #948438 !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    opacity: 1;
+  }
+
+  &::-webkit-input-placeholder {
+    color: #948438 !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    opacity: 1;
+  }
+
+  &::-moz-placeholder {
+    color: #948438 !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    opacity: 1;
   }
 }
 
 .searchIcon {
   width: 20px;
   height: 20px;
-  color: #756724;
   flex-shrink: 0;
 }
 
@@ -105,15 +124,21 @@ $message-other: #292d06;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: $text-muted;
+  color: #5a4c21;
   font-size: 14px;
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.2;
   text-decoration: none;
 
   svg {
     transform: rotate(180deg);
   }
+}
+
+.backToMessages:hover,
+.backToMessages:focus-visible {
+  color: #3e3312;
+  outline: none;
 }
 
 .listSection {
@@ -591,12 +616,15 @@ $message-other: #292d06;
 }
 
 .chatBackButton {
-  width: 30px;
-  height: 30px;
+  width: 30px !important;
+  min-width: 30px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  max-height: 30px !important;
   display: grid;
   place-items: center;
   border: 1px solid $stroke-classic;
-  border-radius: 70px;
+  border-radius: 50% !important;
   background: $bg-secondary;
   color: #756724;
 
@@ -856,12 +884,15 @@ $message-other: #292d06;
 }
 
 .sendButton {
-  width: 30px;
-  height: 30px;
+  width: 30px !important;
+  min-width: 30px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  max-height: 30px !important;
   display: grid;
   place-items: center;
   border: 0;
-  border-radius: 70px;
+  border-radius: 50% !important;
   background: $stroke-thin;
   color: #000000;
   cursor: pointer;

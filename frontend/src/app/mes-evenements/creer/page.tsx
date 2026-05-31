@@ -10,7 +10,6 @@ import {
   ChevronRight,
   Clock3,
   CookingPot,
-  MapPin,
   NotebookText,
   Plus,
   Trash2,
@@ -531,8 +530,8 @@ export default function CreerRepasPage() {
         });
       } catch (error: unknown) {
         const message = axios.isAxiosError(error)
-          ? error.response?.data?.message ?? "Impossible de charger ce repas."
-          : "Impossible de charger ce repas.";
+          ? error.response?.data?.message ?? "Impossible de charger cet événement."
+          : "Impossible de charger cet événement.";
         toast.error(Array.isArray(message) ? message.join(", ") : message);
         router.replace("/mes-evenements");
       } finally {
@@ -707,21 +706,21 @@ export default function CreerRepasPage() {
             Authorization: `Bearer ${token}`,
           },
         });
-        toast.success("Le repas a été mis à jour.");
+        toast.success("L'événement a été mis à jour.");
       } else {
         await axios.post(`${apiUrl}/meals`, payload, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        toast.success("Ton repas a été créé en brouillon.");
+        toast.success("Ton événement a été créé en brouillon.");
       }
 
       router.push("/mes-evenements");
     } catch (error: unknown) {
       const message = axios.isAxiosError(error)
-        ? error.response?.data?.message ?? "L'enregistrement du repas a échoué."
-        : "L'enregistrement du repas a échoué.";
+        ? error.response?.data?.message ?? "L'enregistrement de l'événement a échoué."
+        : "L'enregistrement de l'événement a échoué.";
       toast.error(Array.isArray(message) ? message.join(", ") : message);
     } finally {
       setSubmitting(false);
@@ -732,7 +731,7 @@ export default function CreerRepasPage() {
     return (
       <section className={styles.page}>
         <div className={styles.loadingState}>
-          {loadingMeal ? "Chargement du repas..." : "Préparation du créateur de repas..."}
+          {loadingMeal ? "Chargement de l'événement..." : "Préparation du créateur de événement..."}
         </div>
       </section>
     );
@@ -748,16 +747,16 @@ export default function CreerRepasPage() {
         <aside className={styles.sidebar}>
           <div className={styles.sidebarCard}>
             <p className={styles.sidebarKicker}>
-              {isEditingMeal ? "Modification de repas" : "Création de repas"}
+              {isEditingMeal ? "Modification de l'événement" : "Création de l'événement"}
             </p>
             <h1>
               {isEditingMeal
-                ? "Reprends ton repas et ajuste seulement ce qui compte."
-                : "Organiser un repas devient plus simple, étape par étape."}
+                ? "Reprends ton événement et ajuste seulement ce qui compte."
+                : "Organiser un événement devient plus simple, étape par étape."}
             </h1>
             <p className={styles.sidebarDescription}>
               Compose d&apos;abord l&apos;essentiel, puis ajoute les informations qui
-              rassurent tes futurs invités. Le repas restera brouillon tant que tu
+              rassurent tes futurs invités. L&apos;événement restera brouillon tant que tu
               ne le publies pas.
             </p>
 
@@ -793,40 +792,6 @@ export default function CreerRepasPage() {
               })}
             </div>
 
-            <div className={styles.summaryCard}>
-              <h2>Apercu</h2>
-
-              <dl className={styles.summaryList}>
-                <div>
-                  <dt>
-                    <Users />
-                    Convives
-                  </dt>
-                  <dd>{seatsTotalValue > 0 ? seatsTotalValue : "À définir"}</dd>
-                </div>
-                <div>
-                  <dt>
-                    <CalendarDays />
-                    Date
-                  </dt>
-                  <dd>{selectedDateLabel}</dd>
-                </div>
-                <div>
-                  <dt>
-                    <Clock3 />
-                    Heure
-                  </dt>
-                  <dd>{form.time || "À définir"}</dd>
-                </div>
-                <div>
-                  <dt>
-                    <MapPin />
-                    Adresse
-                  </dt>
-                  <dd>{hostProfile?.city || "Profil hôte requis"}</dd>
-                </div>
-              </dl>
-            </div>
           </div>
         </aside>
 
@@ -863,11 +828,11 @@ export default function CreerRepasPage() {
             {step === 0 ? (
               <div className={`${styles.centerStage} ${styles.introStage}`}>
                 <h2 className={styles.introTitle}>
-                  {isEditingMeal ? "Modifier ton repas" : "Organiser un repas"}
+                  {isEditingMeal ? "Modifier ton événement" : "Organiser un événement"}
                 </h2>
                 <p className={styles.introDescription}>
                   {isEditingMeal
-                    ? "Toutes les informations déjà saisies sont reprises pour que tu puisses ajuster ton repas sans recommencer."
+                    ? "Toutes les informations déjà saisies sont reprises pour que tu puisses ajuster ton événement sans recommencer."
                     : "Vous souhaitez cuisiner et accueillir des gens ? On construit d'abord l'essentiel, puis on affine les détails pour rassurer vos invités."}
                 </p>
               </div>
@@ -941,7 +906,7 @@ export default function CreerRepasPage() {
 
             {step === 2 ? (
               <div className={styles.centerStage}>
-                <h2>Quand souhaitez-vous organiser le repas ?</h2>
+                <h2>Quand souhaitez-vous organiser l'événement ?</h2>
 
                 <div className={styles.dateTimeGrid}>
                   <div className={styles.datePickerWrap}>
@@ -955,7 +920,7 @@ export default function CreerRepasPage() {
                       }
                       placeholder="Choisir une date"
                       variant="input"
-                      ariaLabel="Choisir une date pour le repas"
+                      ariaLabel="Choisir une date pour l'événement"
                     />
                   </div>
 
@@ -1047,7 +1012,7 @@ export default function CreerRepasPage() {
                 <div className={styles.sectionTitle}>
                   <h2>Quelques informations supplémentaires</h2>
                   <p>
-                    Afin d&apos;organiser correctement votre repas, nous avons besoin
+                    Afin d&apos;organiser correctement votre événement, nous avons besoin
                     de quelques détails.
                   </p>
                 </div>
@@ -1063,7 +1028,7 @@ export default function CreerRepasPage() {
 
                   <div className={styles.formGrid}>
                     <label className={`${styles.field} ${styles.titleField}`}>
-                      <span>Titre du repas</span>
+                      <span>Titre de l'événement</span>
                       <input
                         type="text"
                         value={form.title}

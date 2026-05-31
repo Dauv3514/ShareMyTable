@@ -483,7 +483,7 @@ export default function SearchResultsPage() {
             type="button"
             className={styles.panelToggle}
             onClick={() => setPanelOpen((isOpen) => !isOpen)}
-            aria-label={panelOpen ? "Refermer la liste des repas" : "Voir la liste des repas"}
+            aria-label={panelOpen ? "Refermer la liste des événements" : "Voir la liste des événements"}
           >
             {panelOpen ? <ChevronDown aria-hidden="true" /> : <ChevronUp aria-hidden="true" />}
           </button>
@@ -495,7 +495,7 @@ export default function SearchResultsPage() {
             <div>
               <h1>Recherche</h1>
               <p>
-                {events.length} {events.length > 1 ? "repas trouvés" : "repas trouvé"}
+                {events.length} {events.length > 1 ? "événements trouvés" : "événement trouvé"}
               </p>
             </div>
           </div>
@@ -508,7 +508,7 @@ export default function SearchResultsPage() {
             </div>
           ) : (
             <div className={styles.empty}>
-              <h2>Aucun repas ne correspond</h2>
+              <h2>Aucun événement ne correspond</h2>
               <p>Essayez une autre ville, une autre date ou moins de filtres.</p>
             </div>
           )}

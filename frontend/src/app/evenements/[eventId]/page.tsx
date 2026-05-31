@@ -212,27 +212,13 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
               <p>{hostReviewCount} avis</p>
             </article>
 
-            <div className={styles.hostContent}>
-              <div className={styles.hostQuotePanel}>
-                <span className={styles.hostQuoteMark} aria-hidden="true">
-                  &ldquo;
-                </span>
-                <blockquote className={styles.hostQuote}>
-                  {hostProfile.quote}
-                </blockquote>
-                <span className={styles.hostQuoteMarkEnd} aria-hidden="true">
-                  &rdquo;
-                </span>
-              </div>
-
-              <Link
-                href={buildHostProfileHref(hostProfile.id)}
-                className={styles.hostProfileLink}
-              >
-                <span>Voir le profil de l&apos;hôte</span>
-                <span className={styles.detailChevron} aria-hidden="true" />
-              </Link>
-            </div>
+            <Link
+              href={buildHostProfileHref(hostProfile.id)}
+              className={styles.hostProfileLink}
+            >
+              <span>Voir le profil de l&apos;hôte</span>
+              <span className={styles.detailChevron} aria-hidden="true" />
+            </Link>
           </section>
 
           <section className={styles.menuSection} aria-label="Au menu">
@@ -313,7 +299,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
               </div>
             ) : (
               <p className={styles.reviewsEmpty}>
-                Les avis laissés après les repas de cet hôte apparaîtront ici.
+                Les avis laissés après les événements de cet hôte apparaîtront ici.
               </p>
             )}
           </section>

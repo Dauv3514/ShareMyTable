@@ -344,14 +344,14 @@
 }
 
 .date-picker--input .date-picker__trigger {
-  min-height: 56px;
-  border: 1px solid #dfd3b1;
-  border-radius: 16px;
+  min-height: 54px;
+  border: 1px solid #d8c890;
+  border-radius: 18px;
   background: #ffffff;
   padding: 0 16px;
   font-size: 15px;
   color: #312914;
-  box-shadow: 0 8px 18px rgba(59, 45, 18, 0.06);
+  box-shadow: none;
 }
 
 .date-picker--input .date-picker__trigger:hover {
@@ -360,8 +360,8 @@
 
 .date-picker--input .date-picker__trigger:focus-visible {
   outline: none;
-  border-color: #cab35a;
-  box-shadow: 0 0 0 4px rgba(225, 236, 121, 0.25);
+  border-color: #b8a547;
+  box-shadow: 0 0 0 4px rgba(225, 236, 121, 0.22);
 }
 
 .date-picker--input .date-picker__trigger-label {

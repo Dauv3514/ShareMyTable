@@ -7,11 +7,8 @@ import {
   CirclePlus,
   Clock3,
   Euro,
-  FileText,
   History,
-  Rocket,
   ShieldCheck,
-  Ticket,
   Users,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -76,7 +73,7 @@ const HOSTING_FILTER_OPTIONS: Array<{ key: HostingFilter; label: string }> = [
 const ATTENDING_FILTER_OPTIONS: Array<{ key: AttendingFilter; label: string }> = [
   { key: "all", label: "Toutes" },
   { key: "confirmed", label: "Confirmées" },
-  { key: "pending", label: "En attente de confirmation" },
+  { key: "pending", label: "En attente" },
   { key: "refused", label: "Refusées" },
   { key: "past", label: "Passées" },
 ];
@@ -179,17 +176,44 @@ type MealCardProps = {
   footer?: React.ReactNode;
   hostLabel?: string;
   bookingSummary?: HostMealBookingSummary | null;
+  variant?: "default" | "hosting";
 };
 
-function MealCard({ meal, footer, hostLabel, bookingSummary }: MealCardProps) {
+function formatMealDay(dateTime: string) {
+  return format(new Date(dateTime), "d", {
+    locale: fr,
+  });
+}
+
+function formatMealMonth(dateTime: string) {
+  const month = format(new Date(dateTime), "MMM", {
+    locale: fr,
+  }).replace(".", "");
+
+  return month.charAt(0).toUpperCase() + month.slice(1);
+}
+
+function MealCard({
+  meal,
+  footer,
+  hostLabel,
+  bookingSummary,
+  variant = "default",
+}: MealCardProps) {
   const houseRuleLabels = getHouseRuleLabels(meal);
+  const isHostingVariant = variant === "hosting";
+  const confirmedSeatsCount = bookingSummary?.confirmedSeatsCount ?? 0;
 
   return (
-    <article className={styles.mealCard}>
+    <article
+      className={`${styles.mealCard} ${
+        isHostingVariant ? styles.hostingMealCard : ""
+      }`}
+    >
       <div className={styles.mealCardMedia}>
         <Image
           src="/photoRepas.png"
-          alt={meal.title || "Repas"}
+          alt={meal.title || "Evénement sans titre"}
           fill
           className={styles.mealCardImage}
           sizes="(max-width: 960px) 100vw, 520px"
@@ -203,19 +227,31 @@ function MealCard({ meal, footer, hostLabel, bookingSummary }: MealCardProps) {
             {getStatusLabel(meal.status)}
           </span>
 
-          <span className={styles.mealTypeChip}>{meal.mealType || "Repas"}</span>
+          <span className={styles.mealTypeChip}>{meal.mealType || "Événement"}</span>
         </div>
       </div>
 
       <div className={styles.mealCardContent}>
         <div className={styles.mealCardBody}>
-          <h2>{meal.title || "Repas sans titre"}</h2>
+          <h2>{meal.title || "Événement sans titre"}</h2>
           <p>{meal.menuDescription || "Ajoute une description pour donner envie."}</p>
         </div>
 
         {hostLabel ? <p className={styles.hostHint}>{hostLabel}</p> : null}
 
-        {bookingSummary ? (
+        {isHostingVariant ? (
+          <div className={styles.hostingCardStats}>
+            <div>
+              <span>Participant(s)</span>
+              <strong>{confirmedSeatsCount}</strong>
+            </div>
+            <div>
+              <span>Date</span>
+              <strong>{formatMealDay(meal.dateTime)}</strong>
+              <em>{formatMealMonth(meal.dateTime)}</em>
+            </div>
+          </div>
+        ) : bookingSummary ? (
           <div className={styles.bookingSummaryBox}>
             <div>
               <strong>{bookingSummary.confirmedSeatsCount}</strong>
@@ -228,33 +264,35 @@ function MealCard({ meal, footer, hostLabel, bookingSummary }: MealCardProps) {
           </div>
         ) : null}
 
-        <dl className={styles.mealMetaList}>
-          <div>
-            <dt>
-              <CalendarDays />
-              Date
-            </dt>
-            <dd>{formatMealDate(meal.dateTime)}</dd>
-          </div>
+        {!isHostingVariant ? (
+          <dl className={styles.mealMetaList}>
+            <div>
+              <dt>
+                <CalendarDays />
+                Date
+              </dt>
+              <dd>{formatMealDate(meal.dateTime)}</dd>
+            </div>
 
-          <div>
-            <dt>
-              <Users />
-              Places
-            </dt>
-            <dd>{meal.seatsTotal} convives</dd>
-          </div>
+            <div>
+              <dt>
+                <Users />
+                Places
+              </dt>
+              <dd>{meal.seatsTotal} convives</dd>
+            </div>
 
-          <div>
-            <dt>
-              <Euro />
-              Prix
-            </dt>
-            <dd>{formatPrice(meal.pricePerSeatCents)} / place</dd>
-          </div>
-        </dl>
+            <div>
+              <dt>
+                <Euro />
+                Prix
+              </dt>
+              <dd>{formatPrice(meal.pricePerSeatCents)} / place</dd>
+            </div>
+          </dl>
+        ) : null}
 
-        {houseRuleLabels.length > 0 ? (
+        {!isHostingVariant && houseRuleLabels.length > 0 ? (
           <div className={styles.rulesBlock}>
             <span>Règles de la maison</span>
             <p>{houseRuleLabels.join(", ")}</p>
@@ -331,7 +369,10 @@ function ReservationCard({ reservation }: ReservationCardProps) {
 
         <div className={styles.reservationFooter}>
           <span>{reservation.seats} place(s)</span>
-          <Link href={`/reservations/${reservation.id}`} className={styles.secondaryButton}>
+          <Link
+            href={`/reservations/${reservation.id}`}
+            className={`${styles.secondaryButton} ${styles.reservationDetailButton}`}
+          >
             Voir le détail
           </Link>
         </div>
@@ -507,7 +548,7 @@ export default function MesRepasPage() {
 
     if (!token || !apiUrl) {
       setFetchingHostedMeals(false);
-      setHostingError("Impossible de charger tes repas organisés pour le moment.");
+      setHostingError("Impossible de charger tes événements organisés pour le moment.");
       return;
     }
 
@@ -594,12 +635,19 @@ export default function MesRepasPage() {
       (meal) => meal.status === "published",
     ).length;
     const upcomingCount = hostedMeals.filter((meal) => isUpcomingMeal(meal)).length;
+    const pastCount = hostedMeals.filter(
+      (meal) =>
+        meal.status !== "draft" &&
+        meal.status !== "cancelled" &&
+        isPastMeal(meal),
+    ).length;
 
     return {
       total: hostedMeals.length,
       draftCount,
       publishedCount,
       upcomingCount,
+      pastCount,
     };
   }, [hostedMeals]);
 
@@ -768,8 +816,8 @@ export default function MesRepasPage() {
       updateMealInState(response.data);
       toast.success(
         action === "publish"
-          ? "Le repas est maintenant publié."
-          : "Le repas a bien été annulé.",
+          ? "L'événement est maintenant publié."
+          : "L'événement a bien été annulé.",
       );
     } catch (error: unknown) {
       const message = axios.isAxiosError(error)
@@ -784,7 +832,7 @@ export default function MesRepasPage() {
   if (loading) {
     return (
       <section className={styles.page}>
-        <div className={styles.loadingState}>Chargement de ton espace repas...</div>
+        <div className={styles.loadingState}>Chargement de ton espace événements...</div>
       </section>
     );
   }
@@ -795,108 +843,173 @@ export default function MesRepasPage() {
 
   return (
     <section className={styles.page}>
-      <div className={styles.hero}>
-        <div className={styles.heroHeader}>
-          <div className={styles.heroCopy}>
-            <p className={styles.kicker}>
-              {activePanel === "hosting" ? "Espace hôte" : "Espace invité"}
-            </p>
-            <h1>
+      <div className={`${styles.hero} ${styles["hero--hosting"]}`}>
+	        {isHostUser ? (
+	          <div className={styles.panelSwitch}>
+	            <button
+	              type="button"
+	              className={`${styles.panelSwitchButton} ${
+	                activePanel === "attending"
+	                  ? styles["panelSwitchButton--active"]
+	                  : ""
+	              }`}
+	              onClick={() => setActivePanel("attending")}
+	            >
+	              Je participe
+	            </button>
+	            <button
+	              type="button"
+	              className={`${styles.panelSwitchButton} ${
+	                activePanel === "hosting"
+	                  ? styles["panelSwitchButton--active"]
+	                  : ""
+	              }`}
+	              onClick={() => setActivePanel("hosting")}
+	            >
+	              J&apos;organise
+	            </button>
+	          </div>
+	        ) : null}
+	        <div className={styles.heroHeader}>
+	          <div className={styles.heroCopy}>
+	            <p className={styles.kicker}>
+	              {activePanel === "hosting" ? "Espace hôte" : "Espace invité"}
+	            </p>
+	            <h1>
               {activePanel === "hosting"
-                ? "Gère les repas que tu organises et pilote leur publication."
-                : "Consulte facilement toutes tes réservations au même endroit."}
+                ? "Gère tes événements, et pilote leur publication"
+                : "Consulte toutes tes réservations au même endroit."}
             </h1>
             <p className={styles.description}>
-              {activePanel === "hosting"
-                ? "Retrouve tes repas à venir, passés et annulés dans un même espace."
-                : "Retrouve tes réservations confirmées, en attente, refusées et passées dans un seul espace."}
+              {activePanel === "hosting" ? (
+                <>
+                  <span className={styles.descriptionLine}>Ta vie de table ici.</span>
+                  <span className={styles.descriptionLine}>
+                    Retrouve tes <strong>événements à venir</strong>, tes{" "}
+                    <strong>souvenirs de table</strong> et tes{" "}
+                    <strong>annonces</strong> au même endroit
+                  </span>
+                </>
+              ) : (
+                <>
+                  Retrouve tes <strong>réservations</strong> confirmées, en attente,
+                  refusées et passées dans un seul espace.
+                </>
+              )}
             </p>
           </div>
 
-          {isHostUser ? (
-            <div className={styles.panelSwitch}>
-              <button
-                type="button"
-                className={`${styles.panelSwitchButton} ${
-                  activePanel === "attending"
-                    ? styles["panelSwitchButton--active"]
-                    : ""
-                }`}
-                onClick={() => setActivePanel("attending")}
-              >
-                Je participe
-              </button>
-              <button
-                type="button"
-                className={`${styles.panelSwitchButton} ${
-                  activePanel === "hosting"
-                    ? styles["panelSwitchButton--active"]
-                    : ""
-                }`}
-                onClick={() => setActivePanel("hosting")}
-              >
-                J&apos;organise
-              </button>
-            </div>
-          ) : null}
+          <div className={styles.heroAside}>
+            {activePanel === "hosting" ? (
+              <div className={`${styles.statsGrid} ${styles.hostingStatsGrid}`}>
+                <article className={styles.statCard}>
+                  <span>À venir</span>
+                  <strong>{hostedStats.upcomingCount}</strong>
+                </article>
+
+                <article className={styles.statCard}>
+                  <span>Publiés</span>
+                  <strong>{hostedStats.publishedCount}</strong>
+                </article>
+
+                <article className={styles.statCard}>
+                  <span>Brouillons</span>
+                  <strong>{hostedStats.draftCount}</strong>
+                </article>
+
+                <article className={styles.statCard}>
+                  <span>Passés</span>
+                  <strong>{hostedStats.pastCount}</strong>
+                </article>
+              </div>
+            ) : (
+              <div className={`${styles.statsGrid} ${styles.hostingStatsGrid}`}>
+                <article className={styles.statCard}>
+                  <span>Réservations</span>
+                  <strong>{attendingStats.total}</strong>
+                </article>
+
+                <article className={styles.statCard}>
+                  <span>Confirmées</span>
+                  <strong>{attendingStats.confirmed}</strong>
+                </article>
+
+                <article className={styles.statCard}>
+                  <span>En attente</span>
+                  <strong>{attendingStats.pending}</strong>
+                </article>
+
+                <article className={styles.statCard}>
+                  <span>Refusées</span>
+                  <strong>{attendingStats.refused}</strong>
+                </article>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className={styles.heroActions}>
           {activePanel === "hosting" ? (
             <>
               <Link href="/mes-evenements/creer" className={styles.primaryButton}>
-                <CirclePlus />
-                Créer un repas
+                Créer un événement
               </Link>
               <Link href="/" className={styles.secondaryButton}>
-                Voir les repas publics
+                Voir les événements
               </Link>
             </>
           ) : (
-            <Link href="/" className={styles.primaryButton}>
-              <Rocket />
-              Découvrir les repas
+            <Link href="/" className={`${styles.primaryButton} ${styles.discoverButton}`}>
+              Découvrir les événements
             </Link>
           )}
         </div>
+
+        {activePanel === "hosting" && !hostingError ? (
+          <>
+            <span className={styles.heroDivider} aria-hidden="true" />
+            <div className={styles.filtersBar}>
+              {HOSTING_FILTER_OPTIONS.map((filterOption) => (
+                <button
+                  key={filterOption.key}
+                  type="button"
+                  className={`${styles.filterButton} ${
+                    hostingFilter === filterOption.key
+                      ? styles["filterButton--active"]
+                      : ""
+                  }`}
+                  onClick={() => setHostingFilter(filterOption.key)}
+                >
+                  {filterOption.label}
+                </button>
+              ))}
+            </div>
+          </>
+        ) : activePanel === "attending" && !attendingError ? (
+          <>
+            <span className={styles.heroDivider} aria-hidden="true" />
+            <div className={styles.filtersBar}>
+              {ATTENDING_FILTER_OPTIONS.map((filterOption) => (
+                <button
+                  key={filterOption.key}
+                  type="button"
+                  className={`${styles.filterButton} ${
+                    attendingFilter === filterOption.key
+                      ? styles["filterButton--active"]
+                      : ""
+                  }`}
+                  onClick={() => setAttendingFilter(filterOption.key)}
+                >
+                  {filterOption.label}
+                </button>
+              ))}
+            </div>
+          </>
+        ) : null}
       </div>
 
       {activePanel === "hosting" ? (
         <>
-          <div className={styles.statsGrid}>
-            <article className={styles.statCard}>
-              <span className={styles.statIcon}>
-                <FileText />
-              </span>
-              <strong>{hostedStats.total}</strong>
-              <span>repas créés</span>
-            </article>
-
-            <article className={styles.statCard}>
-              <span className={styles.statIcon}>
-                <Rocket />
-              </span>
-              <strong>{hostedStats.publishedCount}</strong>
-              <span>publiés</span>
-            </article>
-
-            <article className={styles.statCard}>
-              <span className={styles.statIcon}>
-                <Clock3 />
-              </span>
-              <strong>{hostedStats.draftCount}</strong>
-              <span>brouillons</span>
-            </article>
-
-            <article className={styles.statCard}>
-              <span className={styles.statIcon}>
-                <CalendarDays />
-              </span>
-              <strong>{hostedStats.upcomingCount}</strong>
-              <span>à venir</span>
-            </article>
-          </div>
-
           {hostingError ? (
             <div className={styles.hostGuardCard}>
               <div className={styles.hostGuardIcon}>
@@ -917,32 +1030,15 @@ export default function MesRepasPage() {
             </div>
           ) : (
             <>
-              <div className={styles.filtersBar}>
-                {HOSTING_FILTER_OPTIONS.map((filterOption) => (
-                  <button
-                    key={filterOption.key}
-                    type="button"
-                    className={`${styles.filterButton} ${
-                      hostingFilter === filterOption.key
-                        ? styles["filterButton--active"]
-                        : ""
-                    }`}
-                    onClick={() => setHostingFilter(filterOption.key)}
-                  >
-                    {filterOption.label}
-                  </button>
-                ))}
-              </div>
-
               {fetchingHostedMeals ? (
                 <div className={styles.loadingPanel}>
-                  Chargement de tes repas organisés...
+                  Chargement de tes événements organisés...
                 </div>
               ) : filteredHostedMeals.length === 0 ? (
                 <EmptyStateCard
-                  title="Aucun repas dans cette vue"
-                  description="Change de filtre ou crée un nouveau repas pour commencer à remplir ton espace hôte."
-                  actionLabel="Organiser un repas"
+                  title="Aucun événement dans cette vue"
+                  description="Change de filtre ou crée un nouveau événement pour commencer à remplir ton espace hôte."
+                  actionLabel="Organiser un événement"
                   actionHref="/mes-evenements/creer"
                 />
               ) : (
@@ -959,13 +1055,14 @@ export default function MesRepasPage() {
                         <MealCard
                           key={meal.id}
                           meal={meal}
+                          variant="hosting"
                           bookingSummary={hostBookingSummariesByMealId.get(meal.id) ?? null}
                           footer={
                             <>
                               {meal.status === "published" || meal.status === "done" ? (
                                 <Link
                                   href={`/mes-evenements/${meal.id}/demandes`}
-                                  className={styles.secondaryButton}
+                                  className={styles.requestsButton}
                                 >
                                   Voir les demandes
                                 </Link>
@@ -1030,57 +1127,6 @@ export default function MesRepasPage() {
         </>
       ) : (
         <>
-          <div className={styles.statsGrid}>
-            <article className={styles.statCard}>
-              <span className={styles.statIcon}>
-                <Ticket />
-              </span>
-              <strong>{attendingStats.total}</strong>
-              <span>réservations</span>
-            </article>
-
-            <article className={styles.statCard}>
-              <span className={styles.statIcon}>
-                <ShieldCheck />
-              </span>
-              <strong>{attendingStats.confirmed}</strong>
-              <span>confirmées</span>
-            </article>
-
-            <article className={styles.statCard}>
-              <span className={styles.statIcon}>
-                <Clock3 />
-              </span>
-              <strong>{attendingStats.pending}</strong>
-              <span>en attente de confirmation</span>
-            </article>
-
-            <article className={styles.statCard}>
-              <span className={styles.statIcon}>
-                <CircleAlert />
-              </span>
-              <strong>{attendingStats.refused}</strong>
-              <span>refusées</span>
-            </article>
-          </div>
-
-          <div className={styles.filtersBar}>
-            {ATTENDING_FILTER_OPTIONS.map((filterOption) => (
-              <button
-                key={filterOption.key}
-                type="button"
-                className={`${styles.filterButton} ${
-                  attendingFilter === filterOption.key
-                    ? styles["filterButton--active"]
-                    : ""
-                }`}
-                onClick={() => setAttendingFilter(filterOption.key)}
-              >
-                {filterOption.label}
-              </button>
-            ))}
-          </div>
-
           {fetchingAttendingReservations ? (
             <div className={styles.loadingPanel}>
               Chargement de tes réservations...
@@ -1103,15 +1149,15 @@ export default function MesRepasPage() {
                   Réessayer
                 </button>
                 <Link href="/" className={styles.primaryButton}>
-                  Explorer les repas
+                  Explorer les événéments
                 </Link>
               </div>
             </div>
           ) : filteredAttendingReservations.length === 0 ? (
             <EmptyStateCard
               title="Aucune réservation dans cette vue"
-              description="Explore les repas publics pour réserver une nouvelle place."
-              actionLabel="Explorer les repas"
+              description="Explore les événements publics pour réserver une nouvelle place."
+              actionLabel="Explorer les événements"
               actionHref="/"
             />
           ) : (

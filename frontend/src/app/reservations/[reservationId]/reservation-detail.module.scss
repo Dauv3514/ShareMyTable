@@ -20,9 +20,7 @@
   overflow: hidden;
   border-radius: 32px;
   border: 1px solid rgba(213, 201, 167, 0.85);
-  background:
-    radial-gradient(circle at top right, rgba(255, 255, 255, 0.86), transparent 26%),
-    linear-gradient(180deg, #fffdf7 0%, #f7eedb 100%);
+  background: #F8F6ED;
   box-shadow: 0 18px 45px rgba(83, 61, 22, 0.08);
 }
 
@@ -53,8 +51,9 @@
 .secondaryButton,
 .primaryButton,
 .warningButton {
-  min-height: 50px;
-  padding: 0 20px;
+  min-height: 30px;
+  height: 30px;
+  padding: 0 16px;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
@@ -79,11 +78,36 @@
   background: rgba(255, 255, 255, 0.82);
 }
 
+.backLink {
+  border-color: transparent;
+  background: transparent;
+  padding: 0;
+}
+
+.hostButton {
+  min-height: 30px;
+  height: 30px;
+  min-width: 160px;
+  padding: 0 16px;
+  border-radius: 27px;
+  border-color: #525a0c;
+  background: #ffffff;
+  color: #525a0c;
+  font-size: 0.96rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .primaryButton {
-  color: #352d14;
-  border-color: #c9ba56;
-  background: #e6f06f;
-  box-shadow: 0 12px 22px rgba(180, 167, 58, 0.22);
+  min-height: 30px;
+  height: 30px;
+  min-width: 160px;
+  padding: 0 16px;
+  color: #fcfbf8;
+  border-color: #7B8613;
+  border-radius: 27px;
+  background: #7B8613;
+  box-shadow: none;
 }
 
 .warningButton {
@@ -171,13 +195,13 @@
 
 .metaChip {
   min-height: 42px;
-  padding: 0 16px;
+  padding: 0;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(217, 203, 165, 0.9);
+  background: transparent;
+  border: 1px solid transparent;
   color: #5c512c;
   font-weight: 700;
 }
@@ -219,11 +243,12 @@
 .locationSection,
 .emptyState {
   display: grid;
+  align-content: start;
   gap: 14px;
   padding: 22px;
   border-radius: 28px;
   border: 1px solid rgba(216, 206, 178, 0.9);
-  background: rgba(255, 253, 246, 0.86);
+  background: #FBF9F4;
 }
 
 .infoCard h2,
@@ -371,7 +396,7 @@
 .metaList div {
   padding: 14px;
   border-radius: 20px;
-  background: #faf6ea;
+  background: transparent;
   display: grid;
   gap: 8px;
 }
@@ -410,15 +435,16 @@
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 12px;
+  gap: 4px;
 }
 
 .noticeList li {
   position: relative;
-  padding: 14px 16px 14px 40px;
+  padding: 6px 16px 6px 40px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(217, 203, 165, 0.72);
+  background: #FBF9F4;
+  border: 0;
+  line-height: 1.35;
 }
 
 .noticeList li::before {
@@ -429,8 +455,8 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: linear-gradient(180deg, #e7f16f 0%, #c8d455 100%);
-  box-shadow: 0 0 0 4px rgba(231, 241, 111, 0.14);
+  background: #7B8613;
+  box-shadow: 0 0 0 4px rgba(123, 134, 19, 0.14);
 }
 
 .cancellationPreview {
@@ -438,8 +464,8 @@
   gap: 6px;
   padding: 16px;
   border-radius: 18px;
-  border: 1px solid rgba(239, 198, 182, 0.86);
-  background: linear-gradient(135deg, rgba(255, 248, 238, 0.96), rgba(255, 255, 255, 0.82));
+  border: 0;
+  background: #FBF9F4;
   color: #5c5039;
 }
 
@@ -493,7 +519,7 @@
   padding: 12px 14px;
   border: 1px solid transparent;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.5);
+  background: transparent;
   color: #6d654c;
   display: flex;
   align-items: center;
@@ -510,8 +536,13 @@
 
 .reviewStep:hover:not(:disabled) {
   transform: translateY(-1px);
-  background: rgba(246, 242, 205, 0.58);
+  background: rgba(205, 224, 31, 0.18);
   border-color: rgba(217, 200, 107, 0.68);
+}
+
+.reviewStep:hover:not(:disabled) span {
+  background: #7B8613;
+  color: #ffffff;
 }
 
 .reviewStep:disabled {
@@ -527,7 +558,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(232, 224, 198, 0.95);
+  background: rgba(205, 224, 31, 0.18);
   color: inherit;
   font-size: 0.92rem;
   font-weight: 700;
@@ -540,7 +571,7 @@
 
 .reviewStep--active {
   border-color: #d9c86b;
-  background: rgba(246, 242, 205, 0.78);
+  background: rgba(205, 224, 31, 0.18);
   color: #1d1811;
 }
 
@@ -550,15 +581,16 @@
 
 .reviewStep--active span,
 .reviewStep--done span {
-  background: #dce95f;
+  background: #7b8613;
+  color: #ffffff;
 }
 
 .reviewStage {
   min-height: 230px;
   padding: 20px;
   border-radius: 22px;
-  border: 1px solid rgba(217, 203, 165, 0.72);
-  background: rgba(255, 253, 246, 0.9);
+  border: 0;
+  background: #FBF9F4;
   display: grid;
   align-content: center;
   gap: 16px;
@@ -617,7 +649,7 @@
 }
 
 .ratingButton--active {
-  color: #7b6324;
+  color: #7B8613;
 }
 
 .tipCounter {
@@ -627,11 +659,14 @@
   gap: 18px;
 }
 
-.tipCounter button {
+.tipCounterButton {
   width: 62px;
+  min-width: 62px;
   height: 62px;
+  min-height: 62px !important;
+  max-height: 62px !important;
   border: 1px solid #d8c98f;
-  border-radius: 999px;
+  border-radius: 50% !important;
   background: rgba(233, 225, 196, 0.72);
   color: #665929;
   display: inline-flex;
@@ -642,7 +677,7 @@
   cursor: pointer;
 }
 
-.tipCounter button svg {
+.tipCounterButton svg {
   width: 22px;
   height: 22px;
   stroke-width: 1.8;
@@ -660,6 +695,19 @@
   display: flex;
   justify-content: space-between;
   gap: 12px;
+}
+
+.reviewPanel .secondaryButton {
+  border-color: #525a0c;
+  background: #ffffff;
+  color: #525a0c;
+}
+
+.reviewPanel .primaryButton,
+.reviewPanel .secondaryButton {
+  padding: 0 16px;
+  font-size: 0.96rem;
+  font-weight: 700;
 }
 
 .tipStripeForm {
@@ -719,7 +767,7 @@
 }
 
 .summaryStarActive {
-  color: #7b6324;
+  color: #7B8613;
   fill: currentColor;
 }
 
@@ -842,9 +890,12 @@
     gap: 12px;
   }
 
-  .tipCounter button {
+  .tipCounterButton {
     width: 54px;
+    min-width: 54px;
     height: 54px;
+    min-height: 54px !important;
+    max-height: 54px !important;
   }
 
   .tipCounter strong {

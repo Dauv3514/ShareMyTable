@@ -1,6 +1,6 @@
 "use client";
 
-import { Search } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -50,7 +50,7 @@ function getLatestSenderLabel(
   currentUserId: number,
 ) {
   if (!message) {
-    return "Discussion repas";
+    return "Discussion événement";
   }
 
   if (message.sender.userId === currentUserId) {
@@ -250,7 +250,7 @@ export default function MessagesPage() {
         <div className={styles.shell}>
           <div className={styles.stateCard}>
             <h2>Chargement de la messagerie</h2>
-            <p>On prépare tes discussions repas...</p>
+            <p>On prépare tes discussions événements...</p>
           </div>
         </div>
       </section>
@@ -281,18 +281,25 @@ export default function MessagesPage() {
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Filtrer une discussion"
             />
-            <Search className={styles.searchIcon} />
+            <Image
+              src="/rechercher.svg"
+              alt=""
+              width={20}
+              height={20}
+              className={styles.searchIcon}
+              aria-hidden="true"
+            />
           </label>
 
           <Link href="/rechercher" className={styles.searchMealButton}>
-            Rechercher un repas
+            Rechercher un événement
           </Link>
         </div>
 
         {isFetching ? (
           <div className={styles.stateCard}>
             <h2>Chargement en cours</h2>
-            <p>On rassemble tes repas à venir et passés.</p>
+            <p>On rassemble tes événements à venir et passés.</p>
           </div>
         ) : errorMessage ? (
           <div className={styles.stateCard}>
@@ -313,12 +320,14 @@ export default function MessagesPage() {
               threads={upcomingMeals}
               currentUserId={user.id}
             />
-            <ThreadSection
-              title="Passés"
-              threads={pastMeals}
-              currentUserId={user.id}
-              muted
-            />
+            {pastMeals.length > 0 ? (
+              <ThreadSection
+                title="Passés"
+                threads={pastMeals}
+                currentUserId={user.id}
+                muted
+              />
+            ) : null}
           </>
         )}
       </div>

@@ -366,6 +366,7 @@ const ActionRow = ({
   value,
   expanded = false,
   interactive = true,
+  showArrow = true,
   onClick,
 }: {
   icon: typeof Bell;
@@ -373,6 +374,7 @@ const ActionRow = ({
   value?: string;
   expanded?: boolean;
   interactive?: boolean;
+  showArrow?: boolean;
   onClick?: () => void;
 }) => {
   const content = (
@@ -386,7 +388,9 @@ const ActionRow = ({
 
       <span className={styles.actionRight}>
         {value ? <span className={styles.actionValue}>{value}</span> : null}
-        {interactive ? <span className={styles.sectionLink} aria-hidden="true" /> : null}
+        {interactive && showArrow ? (
+          <span className={styles.sectionLink} aria-hidden="true" />
+        ) : null}
       </span>
     </>
   );
@@ -717,7 +721,11 @@ const ProfileEditForm = ({
       </label>
 
       <div className={styles.formActions}>
-        <button type="button" className={styles.ghostButton} onClick={onClose}>
+        <button
+          type="button"
+          className={`${styles.ghostButton} ${styles.closeButton}`}
+          onClick={onClose}
+        >
           Fermer
         </button>
         <button type="submit" className={styles.primaryButton} disabled={saving}>
@@ -871,7 +879,11 @@ const PasswordEditForm = ({
               Minimum 8 caractères.
             </p>
             <div className={styles.formButtons}>
-              <button type="button" className={styles.ghostButton} onClick={onClose}>
+              <button
+                type="button"
+                className={`${styles.ghostButton} ${styles.closeButton}`}
+                onClick={onClose}
+              >
                 Fermer
               </button>
               <button type="submit" className={styles.primaryButton} disabled={saving}>
@@ -1222,7 +1234,7 @@ const ProfilPage = () => {
         label: "Aucune demande envoyée",
         toneClassName: styles.hostStatusNeutral,
         description:
-          "Tu peux envoyer une demande hôte pour proposer tes repas sur la plateforme.",
+          "Tu peux envoyer une demande hôte pour proposer tes événements sur la plateforme.",
         actionLabel: "Faire ma demande hôte",
         actionHref: "/profil/devenir-hote",
       };
@@ -1255,8 +1267,8 @@ const ProfilPage = () => {
       label: "Profil hôte valide",
       toneClassName: styles.hostStatusApproved,
       description:
-        "Ton profil hôte est approuvé. Tu peux maintenant organiser des repas.",
-      actionLabel: "Créer un repas",
+        "Ton profil hôte est approuvé. Tu peux maintenant organiser des événements.",
+      actionLabel: "Créer un événement",
       actionHref: "/mes-evenements/creer",
     };
   }, [hostProfile]);
@@ -1502,11 +1514,11 @@ const ProfilPage = () => {
 
             <div className={styles.statsGrid}>
               <StatCard
-                label="Repas organisés"
+                label="Evénements organisés"
                 value={activityValue(activityStats.organizedMeals)}
               />
               <StatCard
-                label="Repas participés"
+                label="Evénements participés"
                 value={activityValue(activityStats.participatedMeals)}
               />
               <StatCard label="Note" value={noteValue} />
@@ -1529,7 +1541,7 @@ const ProfilPage = () => {
               <div>
                 <h2>Statut hôte</h2>
                 <p className={styles.sectionHint}>
-                  Suis ta candidature et avance vers la création de repas.
+                  Suis ta candidature et avance vers la création d'événements.
                 </p>
               </div>
             </div>
@@ -1634,7 +1646,7 @@ const ProfilPage = () => {
                 />
                 <ActionRow
                   icon={History}
-                  label="Historique de repas"
+                  label="Historique d'événements"
                   value={activityValue(activityStats.guestMealHistory)}
                   interactive={false}
                 />
@@ -1646,7 +1658,7 @@ const ProfilPage = () => {
               <div className={styles.sectionList}>
                 <ActionRow
                   icon={UtensilsCrossed}
-                  label="Repas organisés"
+                  label="Événements organisés"
                   value={activityValue(activityStats.organizedMeals)}
                   interactive={false}
                 />
@@ -1658,7 +1670,7 @@ const ProfilPage = () => {
                 />
                 <ActionRow
                   icon={History}
-                  label="Historique de repas"
+                  label="Historique d'événements"
                   value={activityValue(activityStats.hostedMealHistory)}
                   interactive={false}
                 />
@@ -1675,21 +1687,25 @@ const ProfilPage = () => {
               <ActionRow
                 icon={CreditCard}
                 label="Moyens de paiement"
+                showArrow={false}
                 onClick={() => handlePlaceholderClick("Moyens de paiement")}
               />
               <ActionRow
                 icon={History}
                 label="Historique des paiements"
+                showArrow={false}
                 onClick={() => handlePlaceholderClick("Historique des paiements")}
               />
               <ActionRow
                 icon={Wallet}
                 label="Portefeuille"
+                showArrow={false}
                 onClick={() => handlePlaceholderClick("Portefeuille")}
               />
               <ActionRow
                 icon={TriangleAlert}
                 label="Remboursements"
+                showArrow={false}
                 onClick={() => handlePlaceholderClick("Remboursements")}
               />
             </div>
@@ -1705,6 +1721,7 @@ const ProfilPage = () => {
                 icon={ShieldCheck}
                 label="Modifier mon profil"
                 expanded={expandedPanel === "profile"}
+                showArrow={false}
                 onClick={() => handlePanelToggle("profile")}
               />
 
@@ -1718,6 +1735,7 @@ const ProfilPage = () => {
                 icon={LockKeyhole}
                 label="Modifier le mot de passe"
                 expanded={expandedPanel === "password"}
+                showArrow={false}
                 onClick={() => handlePanelToggle("password")}
               />
 
@@ -1734,6 +1752,7 @@ const ProfilPage = () => {
                 <ActionRow
                   icon={Bell}
                   label="Notifications"
+                  showArrow={false}
                   onClick={() => handlePlaceholderClick("Notifications")}
                 />
               </div>

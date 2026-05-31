@@ -5,7 +5,7 @@
 }
 
 .sheet {
-  background: #fffdf7;
+  background: #FBF9F4;
   border: 1px solid #e3d8b9;
   border-radius: 8px;
   overflow: hidden;
@@ -15,7 +15,7 @@
 .hero {
   background:
     linear-gradient(90deg, rgba(255, 244, 240, 0.64) 0, rgba(255, 244, 240, 0.64) 8%, transparent 8%, transparent 16%, rgba(255, 248, 234, 0.66) 16%, rgba(255, 248, 234, 0.66) 24%, transparent 24%, transparent 32%, rgba(255, 244, 240, 0.64) 32%, rgba(255, 244, 240, 0.64) 40%, transparent 40%, transparent 48%, rgba(255, 248, 234, 0.66) 48%, rgba(255, 248, 234, 0.66) 56%, transparent 56%, transparent 64%, rgba(255, 244, 240, 0.64) 64%, rgba(255, 244, 240, 0.64) 72%, transparent 72%, transparent 80%, rgba(255, 248, 234, 0.66) 80%, rgba(255, 248, 234, 0.66) 88%, transparent 88%, transparent 96%, rgba(255, 244, 240, 0.64) 96%, rgba(255, 244, 240, 0.64) 100%),
-    #fffdf7;
+    #FBF9F4;
 }
 
 .heroPhoto {
@@ -174,7 +174,7 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #e1ec79 0%, #a5b943 100%);
+  background: #7b8613;
 }
 
 .filters {
@@ -285,7 +285,7 @@
 .hostSection {
   margin-top: 22px;
   display: grid;
-  grid-template-columns: minmax(240px, 260px) minmax(0, 1fr);
+  grid-template-columns: minmax(240px, 560px) minmax(0, 1fr);
   gap: 18px;
   align-items: center;
 }
@@ -335,8 +335,7 @@
 }
 
 .hostCard h2,
-.hostCard p,
-.hostQuote {
+.hostCard p {
   margin: 0;
 }
 
@@ -361,10 +360,13 @@
 }
 
 .starFilled {
+  color: #7B8613;
   fill: currentColor;
+  stroke: currentColor;
 }
 
 .starEmpty {
+  color: #c7bc94;
   fill: none;
 }
 
@@ -375,50 +377,13 @@
   font-weight: 400;
 }
 
-.hostContent {
-  display: grid;
-  gap: 24px;
-  justify-items: start;
-}
-
-.hostQuotePanel {
-  padding: 0;
-  display: grid;
-  grid-template-columns: auto minmax(0, auto) auto;
-  gap: 12px;
-  align-items: start;
-}
-
-.hostQuoteMark,
-.hostQuoteMarkEnd {
-  color: #8b7c47;
-  font-size: clamp(34px, 4.5vw, 50px);
-  line-height: 0.8;
-  font-weight: 800;
-  font-family: var(--font-open-sans), "Avenir Next", "Segoe UI", sans-serif;
-}
-
-.hostQuoteMarkEnd {
-  align-self: end;
-}
-
-.hostQuote {
-  color: #201d11;
-  font-size: clamp(24px, 3.2vw, 34px);
-  line-height: 1.12;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  max-width: 720px;
-}
-
 .hostProfileLink {
-  min-height: 44px;
-  padding: 0 28px;
-  border: 2px solid #6a700d;
-  border-radius: 16px;
   display: inline-flex;
   align-items: center;
+  justify-content: flex-end;
+  justify-self: end;
   gap: 10px;
+  white-space: nowrap;
   color: #6a700d;
   background: transparent;
   text-decoration: none;
@@ -435,7 +400,6 @@
 
 .hostProfileLink:hover,
 .hostProfileLink:focus-visible {
-  background: #fbf7e7;
   color: #4f5408;
   outline: none;
 }
@@ -648,7 +612,7 @@
 }
 
 .reviewMeta time {
-  color: #d0b654;
+  color: #17120d;
   font-size: 11px;
   line-height: 1.2;
   font-weight: 500;
@@ -710,9 +674,7 @@
   padding: 18px;
   border: 1px solid #e3d8b9;
   border-radius: 22px;
-  background:
-    linear-gradient(90deg, rgba(255, 244, 240, 0.5) 0, rgba(255, 244, 240, 0.5) 8%, transparent 8%, transparent 16%, rgba(255, 248, 234, 0.56) 16%, rgba(255, 248, 234, 0.56) 24%, transparent 24%, transparent 32%, rgba(255, 244, 240, 0.5) 32%, rgba(255, 244, 240, 0.5) 40%, transparent 40%, transparent 48%, rgba(255, 248, 234, 0.56) 48%, rgba(255, 248, 234, 0.56) 56%, transparent 56%, transparent 64%, rgba(255, 244, 240, 0.5) 64%, rgba(255, 244, 240, 0.5) 72%, transparent 72%, transparent 80%, rgba(255, 248, 234, 0.56) 80%, rgba(255, 248, 234, 0.56) 88%, transparent 88%, transparent 96%, rgba(255, 244, 240, 0.5) 96%, rgba(255, 244, 240, 0.5) 100%),
-    #fffdf7;
+  background: #fffdf7;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
@@ -832,7 +794,9 @@
 
 .contactButton,
 .registerButton {
-  min-height: 52px;
+  min-height: 30px;
+  height: 30px;
+  max-height: 30px;
   border-radius: 16px;
   display: inline-flex;
   align-items: center;
@@ -841,25 +805,37 @@
   text-align: center;
   text-decoration: none;
   font-size: 16px;
-  line-height: 1.15;
+  line-height: 1;
   font-weight: 700;
 }
 
 .contactButton {
-  border: 2px solid #8f752d;
-  color: #6a700d;
-  background: #fffdf7;
+  width: 100%;
+  min-width: 160px;
+  padding: 0 18px;
+  border: 1px solid #525a0c;
+  border-radius: 27px;
+  color: #525a0c;
+  background: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .registerButton {
-  border: 2px solid #d4c34a;
-  color: #201d11;
-  background: linear-gradient(90deg, #e6f16d 0%, #e3ef67 100%);
+  min-height: 30px;
+  height: 30px;
+  max-height: 30px;
+  min-width: 160px;
+  padding: 0 10px;
+  border-radius: 27px;
+  border: 1px solid #7b8613;
+  color: #ffffff;
+  background: #7b8613;
 }
 
 .contactButton:hover,
 .contactButton:focus-visible {
-  background: #fbf7e7;
+  background: #ffffff;
   outline: none;
 }
 
@@ -881,6 +857,17 @@
   font-weight: 400;
   display: inline-flex;
   align-items: center;
+}
+
+@media (max-width: 900px) {
+  .hostSection {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .hostProfileLink {
+    justify-self: end;
+  }
 }
 
 @media (max-width: 640px) {
@@ -999,25 +986,8 @@
     height: 16px;
   }
 
-  .hostQuotePanel {
-    width: 100%;
-    gap: 10px;
-  }
-
-  .hostQuoteMark,
-  .hostQuoteMarkEnd {
-    font-size: 30px;
-  }
-
-  .hostQuote {
-    font-size: 24px;
-    line-height: 1.16;
-    max-width: none;
-  }
-
   .hostProfileLink {
-    min-height: 40px;
-    padding: 0 22px;
+    padding: 0;
     font-size: 14px;
   }
 
@@ -1163,11 +1133,21 @@
 
   .contactButton,
   .registerButton {
-    min-height: 46px;
-    padding: 0 14px;
+    min-height: 30px;
+    height: 30px;
+    max-height: 30px;
+    padding: 0 10px;
     border-radius: 14px;
     font-size: 14px;
     text-wrap: balance;
+  }
+
+  .registerButton {
+    min-height: 30px;
+    height: 30px;
+    max-height: 30px;
+    padding: 0 10px;
+    border-radius: 27px;
   }
 }
 

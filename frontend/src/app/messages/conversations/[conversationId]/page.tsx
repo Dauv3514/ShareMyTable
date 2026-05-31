@@ -375,7 +375,7 @@ export default function ConversationPage() {
 
             {conversation.meal ? (
               <Link href={mealHref} className={styles.chatMealLink}>
-                {conversation.meal.title?.trim() || "Voir le repas"}
+                {conversation.meal.title?.trim() || "Voir l'événement"}
               </Link>
             ) : null}
           </header>
