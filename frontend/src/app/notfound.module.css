@@ -7,11 +7,12 @@
   text-align: center;
   background-color: black;
   color: #ffffff;
-  font-family: 'Open Sans', sans-serif;
+  font-family: var(--font-body), sans-serif;
   padding: 0 1rem;
 }
 
 .title {
+  font-family: var(--font-heading), sans-serif;
   font-size: 6rem;
   margin: 0;
 }

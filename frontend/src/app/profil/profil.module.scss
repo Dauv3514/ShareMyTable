@@ -593,7 +593,7 @@
 .actionRow {
   width: 100%;
   min-height: 58px;
-  font-family: var(--font-merriweather-sans), "Trebuchet MS", sans-serif;
+  font-family: var(--font-body), "Trebuchet MS", sans-serif;
   border: 1px solid #ebe1ca;
   border-radius: 18px;
   background: #ffffff;
@@ -662,7 +662,7 @@
 }
 
 .actionLabel {
-  font-family: var(--font-merriweather-sans), "Trebuchet MS", sans-serif;
+  font-family: var(--font-body), "Trebuchet MS", sans-serif;
   font-size: 15px !important;
   line-height: 1;
   font-weight: 700;
@@ -670,7 +670,7 @@
 }
 
 .actionValue {
-  font-family: var(--font-merriweather-sans), "Trebuchet MS", sans-serif;
+  font-family: var(--font-body), "Trebuchet MS", sans-serif;
   font-size: 14px;
   font-weight: 700;
   color: #877c58;
