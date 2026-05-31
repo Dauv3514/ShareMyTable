@@ -1,7 +1,7 @@
 .filter-panel {
   position: fixed;
   inset: 0;
-  z-index: 140;
+  z-index: 1000;
   display: grid;
   align-items: end;
   justify-items: center;
@@ -74,7 +74,7 @@
 .filter-panel__content {
   min-height: 0;
   overflow-y: auto;
-  padding: 18px;
+  padding: 18px 18px 24px;
   display: grid;
   gap: 24px;
   scrollbar-color: #a8a8a8 transparent;
@@ -159,6 +159,9 @@
 }
 
 .filter-panel__footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
   padding: 12px 18px calc(16px + env(safe-area-inset-bottom));
   background: #ffffff;
   border-top: 1px solid #efe4ca;
@@ -201,13 +204,31 @@
   }
 }
 
-@media (max-width: 420px) {
+@media (max-width: 720px) {
+  .filter-panel {
+    align-items: stretch;
+  }
+
   .filter-panel__sheet {
     width: 100%;
+    height: calc(100dvh - 86px);
+    max-height: calc(100dvh - 86px);
+    align-self: start;
+    border-radius: 0;
     border-right: none;
     border-left: none;
   }
 
+  .filter-panel__content {
+    padding-bottom: 28px;
+  }
+
+  .filter-panel__footer {
+    padding-bottom: calc(18px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 420px) {
   .filter-panel__chip {
     width: 100%;
   }

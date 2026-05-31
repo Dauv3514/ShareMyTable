@@ -40,6 +40,18 @@ export function normalizeText(value: string) {
     .trim();
 }
 
+function getLocalDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function isMealAvailable(event: MealEvent, today = getLocalDateKey(new Date())) {
+  return !event.date || event.date >= today;
+}
+
 export function filterMealEvents({
   events,
   location,
@@ -55,6 +67,7 @@ export function filterMealEvents({
   const selectedFilters = new Set(filters ?? []);
 
   return events.filter((event) => {
+    const isAvailable = isMealAvailable(event);
     const matchesLocation =
       !normalizedLocation || normalizeText(event.city).includes(normalizedLocation);
     const matchesDate = !date || event.date === date;
@@ -62,6 +75,6 @@ export function filterMealEvents({
       selectedFilters.size === 0 ||
       Array.from(selectedFilters).every((filter) => event.filters.includes(filter));
 
-    return matchesLocation && matchesDate && matchesFilters;
+    return isAvailable && matchesLocation && matchesDate && matchesFilters;
   });
 }

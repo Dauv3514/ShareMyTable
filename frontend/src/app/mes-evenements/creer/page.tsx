@@ -89,6 +89,9 @@ type MealDraftForm = {
   houseRules: string;
 };
 
+const STANDARD_COMMISSION_RATE = 0.15;
+const FINAL_COMMISSION_FIXED_FEE = 1;
+
 const STEP_LABELS = [
   "Bienvenue",
   "Convives",
@@ -187,6 +190,23 @@ function parseSeatsTotal(value: string) {
   }
 
   return parsedValue;
+}
+
+function parsePricePerSeat(value: string) {
+  const parsedValue = Number(value.replace(",", "."));
+
+  if (!Number.isFinite(parsedValue) || parsedValue < 0) {
+    return 0;
+  }
+
+  return parsedValue;
+}
+
+function formatEuroInputValue(value: number) {
+  return value.toLocaleString("fr-FR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 function splitHouseRules(value: string) {
@@ -540,6 +560,24 @@ export default function CreerRepasPage() {
     () => parseSeatsTotal(form.seatsTotal),
     [form.seatsTotal],
   );
+  const pricePerSeatValue = useMemo(
+    () => parsePricePerSeat(form.pricePerSeat),
+    [form.pricePerSeat],
+  );
+  const hostRevenuePerSeat = useMemo(
+    () => pricePerSeatValue * (1 - STANDARD_COMMISSION_RATE),
+    [pricePerSeatValue],
+  );
+  const hostRevenuePerSeatLabel = formatEuroInputValue(hostRevenuePerSeat);
+  const hostTotalRevenueIfFull = useMemo(() => {
+    const totalAfterReservationCommission = hostRevenuePerSeat * seatsTotalValue;
+    const totalAfterFinalCommission =
+      totalAfterReservationCommission * (1 - STANDARD_COMMISSION_RATE) -
+      FINAL_COMMISSION_FIXED_FEE;
+
+    return Math.max(0, totalAfterFinalCommission);
+  }, [hostRevenuePerSeat, seatsTotalValue]);
+  const hostTotalRevenueIfFullLabel = formatEuroInputValue(hostTotalRevenueIfFull);
   const menuCategoryOptions = useMemo(
     () =>
       getMenuCategoriesForMealType(form.mealType).map((category) => ({
@@ -571,10 +609,18 @@ export default function CreerRepasPage() {
       form.mealType.trim().length > 0 &&
       getFilledMenuItems(form.menuItems).length > 0 &&
       (selectedHouseRuleCodes.length > 0 || form.houseRules.trim().length > 0) &&
-      Number(form.pricePerSeat.replace(",", ".")) >= 0 &&
+      pricePerSeatValue >= 0 &&
       Boolean(composedDateTime)
     );
-  }, [composedDateTime, form, locationReady, seatsTotalValue, selectedHouseRuleCodes, step]);
+  }, [
+    composedDateTime,
+    form,
+    locationReady,
+    pricePerSeatValue,
+    seatsTotalValue,
+    selectedHouseRuleCodes,
+    step,
+  ]);
 
   const selectedDateLabel = formatSelectedDate(form.date);
 
@@ -645,9 +691,7 @@ export default function CreerRepasPage() {
         menuItems: getFilledMenuItems(form.menuItems),
         dateTime: composedDateTime.toISOString(),
         seatsTotal: seatsTotalValue,
-        pricePerSeatCents: Math.round(
-          Number(form.pricePerSeat.replace(",", ".")) * 100,
-        ),
+        pricePerSeatCents: Math.round(pricePerSeatValue * 100),
         houseRules: form.houseRules.trim(),
         selectedTagCodes: [
           ...selectedHouseRuleCodes,
@@ -983,7 +1027,7 @@ export default function CreerRepasPage() {
                   </div>
 
                   <div className={styles.formGrid}>
-                    <label className={styles.field}>
+                    <label className={`${styles.field} ${styles.titleField}`}>
                       <span>Titre de l'événement</span>
                       <input
                         type="text"
@@ -998,8 +1042,9 @@ export default function CreerRepasPage() {
                       />
                     </label>
 
-                    <label className={styles.field}>
+                    <label className={`${styles.field} ${styles.priceInputField}`}>
                       <span>Prix par place</span>
+                      <small className={styles.fieldSubtitle}>Sans commission</small>
                       <div className={styles.priceField}>
                         <input
                           type="number"
@@ -1017,6 +1062,30 @@ export default function CreerRepasPage() {
                         <span>EUR</span>
                       </div>
                     </label>
+
+                    <div className={styles.commissionPreview}>
+                      <span>Prix sans commission (par personne)</span>
+                      <div className={styles.commissionField}>
+                        <small>Commission 15%</small>
+                        <div className={`${styles.priceField} ${styles.readonlyPriceField}`}>
+                          <input
+                            type="text"
+                            value={hostRevenuePerSeatLabel}
+                            readOnly
+                            aria-label="Montant touché par l'hôte avec commission de 15%"
+                          />
+                          <span>EUR</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <p className={styles.totalCommissionSummary}>
+                        Une commission de 15% est appliquée sur chaque
+                        réservation. Une fois la date limite de réservation
+                        dépassée, une commission finale de 15% + 1€ est
+                        appliquée sur le total restant.
+                    </p>
+
                   </div>
 
                   <div className={styles.formSectionHead}>
@@ -1205,6 +1274,7 @@ export default function CreerRepasPage() {
                       ))}
                     </div>
                   </div>
+
                 </div>
 
                 <div className={styles.formSection}>
@@ -1322,6 +1392,21 @@ export default function CreerRepasPage() {
                       </button>
                     ))}
                   </div>
+                </div>
+
+                <div className={`${styles.formSection} ${styles.totalCommissionSection}`}>
+                  <label className={`${styles.field} ${styles.totalCommissionField}`}>
+                    <span>Total reçu si toutes les places sont réservées</span>
+                    <div className={`${styles.priceField} ${styles.readonlyPriceField}`}>
+                      <input
+                        type="text"
+                        value={hostTotalRevenueIfFullLabel}
+                        readOnly
+                        aria-label="Total reçu par l'hôte si toutes les places sont réservées"
+                      />
+                      <span>EUR</span>
+                    </div>
+                  </label>
                 </div>
               </div>
             ) : null}
