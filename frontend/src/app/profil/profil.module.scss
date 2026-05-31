@@ -37,7 +37,7 @@
   min-height: 36px;
   padding: 0;
   border: 1px solid #d5c470;
-  border-radius: 50%;
+  border-radius: 50% !important;
   flex: 0 0 36px;
   background: #eef37e;
   color: #4b4418;
@@ -418,9 +418,14 @@
 
 .preferenceModalClose {
   width: 34px;
+  min-width: 34px;
+  max-width: 34px;
   height: 34px;
+  min-height: 34px !important;
+  max-height: 34px !important;
+  padding: 0;
   border: 1px solid #e6dcc1;
-  border-radius: 50%;
+  border-radius: 50% !important;
   background: #ffffff;
   color: #312914;
   display: grid;

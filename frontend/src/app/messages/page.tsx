@@ -320,12 +320,14 @@ export default function MessagesPage() {
               threads={upcomingMeals}
               currentUserId={user.id}
             />
-            <ThreadSection
-              title="Passés"
-              threads={pastMeals}
-              currentUserId={user.id}
-              muted
-            />
+            {pastMeals.length > 0 ? (
+              <ThreadSection
+                title="Passés"
+                threads={pastMeals}
+                currentUserId={user.id}
+                muted
+              />
+            ) : null}
           </>
         )}
       </div>

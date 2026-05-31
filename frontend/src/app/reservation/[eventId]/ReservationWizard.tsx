@@ -627,11 +627,6 @@ export default function ReservationWizard({
     <section className={styles.page}>
       <div className={styles.layout}>
         <aside className={styles.sidebar}>
-          <Link href={buildMealEventHref(event.id)} className={styles.backLink}>
-            <ChevronLeft />
-            Retour à l'événement
-          </Link>
-
           <div className={styles.sidebarCard}>
             <span className={styles.kicker}>Invité</span>
             <h1>Réserver une table</h1>

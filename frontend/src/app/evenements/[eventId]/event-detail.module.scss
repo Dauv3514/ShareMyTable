@@ -5,7 +5,7 @@
 }
 
 .sheet {
-  background: #fffdf7;
+  background: #FBF9F4;
   border: 1px solid #e3d8b9;
   border-radius: 8px;
   overflow: hidden;
@@ -15,7 +15,7 @@
 .hero {
   background:
     linear-gradient(90deg, rgba(255, 244, 240, 0.64) 0, rgba(255, 244, 240, 0.64) 8%, transparent 8%, transparent 16%, rgba(255, 248, 234, 0.66) 16%, rgba(255, 248, 234, 0.66) 24%, transparent 24%, transparent 32%, rgba(255, 244, 240, 0.64) 32%, rgba(255, 244, 240, 0.64) 40%, transparent 40%, transparent 48%, rgba(255, 248, 234, 0.66) 48%, rgba(255, 248, 234, 0.66) 56%, transparent 56%, transparent 64%, rgba(255, 244, 240, 0.64) 64%, rgba(255, 244, 240, 0.64) 72%, transparent 72%, transparent 80%, rgba(255, 248, 234, 0.66) 80%, rgba(255, 248, 234, 0.66) 88%, transparent 88%, transparent 96%, rgba(255, 244, 240, 0.64) 96%, rgba(255, 244, 240, 0.64) 100%),
-    #fffdf7;
+    #FBF9F4;
 }
 
 .heroPhoto {
@@ -360,10 +360,13 @@
 }
 
 .starFilled {
+  color: #7B8613;
   fill: currentColor;
+  stroke: currentColor;
 }
 
 .starEmpty {
+  color: #c7bc94;
   fill: none;
 }
 
@@ -609,7 +612,7 @@
 }
 
 .reviewMeta time {
-  color: #d0b654;
+  color: #17120d;
   font-size: 11px;
   line-height: 1.2;
   font-weight: 500;
