@@ -10,7 +10,6 @@ import {
   ChevronRight,
   Clock3,
   CookingPot,
-  MapPin,
   NotebookText,
   Plus,
   Trash2,
@@ -749,40 +748,6 @@ export default function CreerRepasPage() {
               })}
             </div>
 
-            <div className={styles.summaryCard}>
-              <h2>Apercu</h2>
-
-              <dl className={styles.summaryList}>
-                <div>
-                  <dt>
-                    <Users />
-                    Convives
-                  </dt>
-                  <dd>{seatsTotalValue > 0 ? seatsTotalValue : "À définir"}</dd>
-                </div>
-                <div>
-                  <dt>
-                    <CalendarDays />
-                    Date
-                  </dt>
-                  <dd>{selectedDateLabel}</dd>
-                </div>
-                <div>
-                  <dt>
-                    <Clock3 />
-                    Heure
-                  </dt>
-                  <dd>{form.time || "À définir"}</dd>
-                </div>
-                <div>
-                  <dt>
-                    <MapPin />
-                    Adresse
-                  </dt>
-                  <dd>{hostProfile?.city || "Profil hôte requis"}</dd>
-                </div>
-              </dl>
-            </div>
           </div>
         </aside>
 
