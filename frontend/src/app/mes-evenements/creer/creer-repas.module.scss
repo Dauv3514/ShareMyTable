@@ -538,6 +538,7 @@
 .priceField span {
   color: #5f553d;
   font-size: 1rem;
+  font-weight: 700;
 }
 
 .priceInputField {
@@ -638,6 +639,10 @@
 
 .totalCommissionField .priceField {
   width: 100%;
+}
+
+.totalCommissionField .priceField input {
+  background: transparent;
 }
 
 .chipRow {
