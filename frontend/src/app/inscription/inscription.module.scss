@@ -32,10 +32,9 @@
 .kicker {
   margin: 0;
   font-size: 12px;
-  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: #8f8448;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .title {
@@ -43,7 +42,7 @@
   font-size: clamp(30px, 3vw, 40px);
   line-height: 0.98;
   color: #292d06;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .subtitle {
@@ -99,8 +98,7 @@
   padding: 0 12px;
   border-radius: 999px;
   font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
+  font-weight: 700;
 }
 
 .sectionBadge {
@@ -159,8 +157,7 @@
   color: #7f6412;
   font-size: 11px;
   font-style: normal;
-  font-weight: 800;
-  letter-spacing: 0.01em;
+  font-weight: 700;
 }
 
 .hiddenInput {
@@ -279,7 +276,7 @@
   background: transparent;
   color: #8b4a4a;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   border-bottom: 1px solid currentColor;
 }
@@ -366,7 +363,7 @@
   background: #7B8613;
   color: #fcfbf8;
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 600;
   cursor: pointer;
   transition:
     transform 0.2s ease,
@@ -393,7 +390,6 @@
   font-size: 12px;
   color: #857b58;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
 }
 
 .oauthGroup {
@@ -438,7 +434,7 @@
 
 .link {
   color: #52590d;
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: none;
   border-bottom: 1px solid currentColor;
 }
@@ -478,9 +474,8 @@
   margin: 0;
   width: 100%;
   font-size: 28px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1;
-  letter-spacing: 0;
 }
 
 .certificationCopy {
@@ -497,7 +492,7 @@
 }
 
 .certificationCopy strong {
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .certificationActions {
@@ -517,7 +512,7 @@
   padding: 0 20px;
   border-radius: 10px;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1;
   cursor: pointer;
   transition:
@@ -613,9 +608,8 @@
   margin: 0;
   text-align: center;
   font-size: 28px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1;
-  letter-spacing: 0;
 }
 
 .termsContent {
@@ -636,7 +630,7 @@
 
 .termsSection h3 {
   font-size: 19px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1;
 }
 
@@ -697,7 +691,7 @@
 }
 
 .termsAcceptance strong {
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .termsSubmitButton {
@@ -714,7 +708,7 @@
   background: #7B8613;
   color: #fcfbf8;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1;
   cursor: pointer;
   transition:

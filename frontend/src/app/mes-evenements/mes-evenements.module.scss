@@ -51,10 +51,9 @@
 .kicker,
 .sectionKicker {
   font-size: 12px;
-  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: #8f8448;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .heroCopy h1 {
@@ -68,7 +67,6 @@
   max-width: 20ch;
   font-size: clamp(2.35rem, 3.4vw, 3.1rem);
   line-height: 1.02;
-  letter-spacing: 0;
 }
 
 .description {
@@ -91,7 +89,7 @@
 }
 
 .hero--hosting .description strong {
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .heroAside {
@@ -310,7 +308,7 @@
   color: #525a0c;
   font-family: var(--font-body), sans-serif;
   font-size: 0.96rem;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1;
 }
 
@@ -335,7 +333,7 @@
   justify-content: center;
   gap: 10px;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: none;
   transition:
     transform 0.2s ease,
@@ -474,7 +472,7 @@
   background: rgba(230, 240, 111, 0.22);
   color: #655a32;
   font-size: 1.1rem;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .hostGuardCard,
@@ -725,7 +723,7 @@
   align-items: center;
   justify-content: center;
   font-size: 0.82rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .statusBadge {
@@ -934,7 +932,7 @@
 .bookingSummaryBox span {
   color: #665d43;
   font-size: 0.88rem;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .mealMetaList {
@@ -1045,7 +1043,7 @@
   gap: 8px;
   color: #6a5f45;
   font-size: 0.82rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .reservationMetaList dt svg {

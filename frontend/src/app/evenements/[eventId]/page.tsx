@@ -255,7 +255,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                 href={`${buildHostProfileHref(hostProfile.id)}#avis`}
                 className={styles.reviewsAllLink}
               >
-                <span>Voir tous</span>
+                <span>Voir tout</span>
                 <span className={styles.detailChevron} aria-hidden="true" />
               </Link>
             </div>

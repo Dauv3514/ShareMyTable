@@ -751,8 +751,8 @@ export default function CreerRepasPage() {
             </p>
             <h1>
               {isEditingMeal
-                ? "Reprends ton événement et ajuste seulement ce qui compte."
-                : "Organiser un événement devient plus simple, étape par étape."}
+                ? "Reprends ton événement et ajuste seulement ce qui compte"
+                : "Organiser un événement devient plus simple, étape par étape"}
             </h1>
             <p className={styles.sidebarDescription}>
               Compose d&apos;abord l&apos;essentiel, puis ajoute les informations qui

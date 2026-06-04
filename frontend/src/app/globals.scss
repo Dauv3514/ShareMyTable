@@ -21,8 +21,9 @@ $white: #ffffff;
 }
 
 body {
-  --font-body: var(--font-alpino);
+  --font-body: var(--font-clash-grotesk);
   --font-heading: var(--font-clash-grotesk);
+  --font-button: var(--font-alpino);
 
   max-width: 100vw;
   overflow-x: hidden;
@@ -79,11 +80,58 @@ h6 {
   font-family: var(--font-heading), "Avenir Next", "Segoe UI", sans-serif;
 }
 
-button,
 input,
 textarea,
 select {
   font-family: inherit;
+}
+
+button,
+a[class*="Button"],
+a[class*="button"],
+a[class*="backLink"],
+a[class*="Btn"],
+a[class*="btn"] {
+  font-family: var(--font-button), "Trebuchet MS", sans-serif;
+}
+
+button[class*="primaryButton"],
+a[class*="primaryButton"],
+button[class*="PrimaryButton"],
+a[class*="PrimaryButton"],
+button[class*="btnPrimary"],
+a[class*="btnPrimary"],
+button[class*="registerButton"],
+a[class*="registerButton"],
+button[class*="newsletterButton"],
+a[class*="newsletterButton"],
+button[class*="hostEventButton"],
+a[class*="hostEventButton"],
+button[class*="discoverButton"],
+a[class*="discoverButton"],
+button[class*="secondaryButton"],
+a[class*="secondaryButton"],
+button[class*="SecondaryButton"],
+a[class*="SecondaryButton"],
+button[class*="btnGhost"],
+a[class*="btnGhost"],
+button[class*="contactButton"],
+a[class*="contactButton"],
+button[class*="reservationDetailButton"],
+a[class*="reservationDetailButton"],
+button[class*="requestsButton"],
+a[class*="requestsButton"],
+button[class*="ghostButton"],
+a[class*="ghostButton"],
+button[class*="warningButton"],
+a[class*="warningButton"],
+button[class*="dangerButton"],
+a[class*="dangerButton"],
+button[class*="DangerButton"],
+a[class*="DangerButton"],
+button[class*="rejectButton"],
+a[class*="rejectButton"] {
+  font-weight: 600;
 }
 
 // =========================

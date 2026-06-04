@@ -157,7 +157,7 @@
   gap: 12px;
   font-size: 13px;
   line-height: 1;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .radiusControlHead strong {
@@ -302,8 +302,7 @@
   box-shadow: 0 10px 24px rgba(37, 33, 14, 0.1);
 }
 
-.panelToggle svg,
-.seeMoreButton svg {
+.panelToggle svg {
   width: 22px;
   height: 22px;
   stroke-width: 2.5;
@@ -361,7 +360,7 @@
 .resultsHead h1 {
   font-size: 23px;
   line-height: 1;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .resultsHead p {
@@ -423,7 +422,7 @@
 .suggestionsHead h2 {
   font-size: 23px;
   line-height: 1;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .suggestionsHead p {
@@ -433,22 +432,28 @@
 }
 
 .seeMoreButton {
+  flex: 0 0 auto;
   min-height: 30px;
   border: none;
   border-radius: 27px;
   background: transparent;
-  color: #52590d;
+  color: #52590D;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  margin-top: 2px;
   padding: 7px 0 7px 10px;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
 }
 
-.seeMoreButton svg {
-  transform: rotate(90deg);
+.seeMoreButton span {
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 8px solid #6F632A;
 }
 
 .suggestionCards {

@@ -63,10 +63,9 @@
 
 .kicker {
   font-size: 12px;
-  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: #8f8448;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .sidebarCard h1,
@@ -407,7 +406,7 @@
   text-align: center;
   color: #17120d;
   font-size: clamp(2.2rem, 5vw, 3rem);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .helperText {
@@ -576,7 +575,7 @@
   color: #fcfbf8;
   box-shadow: none;
   font-size: 0.95rem;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   transition:
     transform 0.2s ease,
@@ -616,7 +615,7 @@
   justify-content: center;
   gap: 10px;
   font-size: 0.95rem;
-  font-weight: 700;
+  font-weight: 600;
   border: 1px solid transparent;
   text-decoration: none;
   cursor: pointer;

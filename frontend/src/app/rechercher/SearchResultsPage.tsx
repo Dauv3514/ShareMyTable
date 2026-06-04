@@ -527,7 +527,7 @@ export default function SearchResultsPage() {
             onClick={scrollSuggestions}
           >
             Voir plus
-            <ChevronUp aria-hidden="true" />
+            <span aria-hidden="true" />
           </button>
         </div>
 

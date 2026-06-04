@@ -126,7 +126,7 @@ $message-other: #292d06;
   gap: 6px;
   color: #5a4c21;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.2;
   text-decoration: none;
 
@@ -167,7 +167,6 @@ $message-other: #292d06;
     font-size: 23px;
     font-weight: 700;
     line-height: 1;
-    letter-spacing: 0;
   }
 }
 
@@ -1062,7 +1061,7 @@ $message-other: #292d06;
     gap: 4px;
     color: $text-muted;
     font-size: 14px;
-    font-weight: 700;
+    font-weight: 600;
 
     svg {
       position: relative;

@@ -30,7 +30,7 @@
   font-size: clamp(28px, 3vw, 36px);
   line-height: 1.02;
   color: #292d06;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .form {
@@ -84,7 +84,7 @@
   background: #7B8613;
   color: #fcfbf8;
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 600;
   cursor: pointer;
   transition:
     transform 0.2s ease,
@@ -113,7 +113,7 @@
 .link {
   color: #52590d;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: none;
   border-bottom: 1px solid currentColor;
 }
