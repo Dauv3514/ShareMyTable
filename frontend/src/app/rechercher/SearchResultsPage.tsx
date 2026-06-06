@@ -526,8 +526,8 @@ export default function SearchResultsPage() {
             className={styles.seeMoreButton}
             onClick={scrollSuggestions}
           >
-            Voir plus
-            <ChevronUp aria-hidden="true" />
+            Voir Tout
+            <span aria-hidden="true" />
           </button>
         </div>
 

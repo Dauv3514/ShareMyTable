@@ -398,7 +398,6 @@ function InscriptionPageContent() {
       <div className={styles.shell}>
         <section className={styles.formCard}>
           <div className={styles.formHeader}>
-            <p className={styles.kicker}>Création de compte</p>
             <h2 className={styles.title}>Créez votre compte</h2>
             <p className={styles.subtitle}>
               Commence par les informations indispensables, puis ajoute ce qui

@@ -44,8 +44,7 @@
 .kicker {
   margin: 0;
   font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
+  font-weight: 600;
   text-transform: uppercase;
   color: #8b7c47;
 }
@@ -160,7 +159,7 @@
 .requestApplicant {
   display: block;
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 700;
   color: #1d1d1d;
 }
 
@@ -178,7 +177,7 @@
   padding: 0 12px;
   border-radius: 999px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .badgeOk {
@@ -222,7 +221,7 @@
 .requestDetails dt,
 .historyDetails dt {
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   color: #8a7d57;
 }
 
@@ -269,7 +268,7 @@
 
 .reasonField span {
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 700;
   color: #292d06;
 }
 
@@ -307,7 +306,7 @@
   border-radius: 999px;
   font: inherit;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
   gap: 8px;

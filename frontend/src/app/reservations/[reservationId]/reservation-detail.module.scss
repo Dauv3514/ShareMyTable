@@ -61,7 +61,7 @@
   gap: 10px;
   text-decoration: none;
   font-size: 0.96rem;
-  font-weight: 700;
+  font-weight: 600;
   border: 1px solid transparent;
   transition:
     transform 0.2s ease,
@@ -135,7 +135,7 @@
   padding: 10px 16px;
   border-radius: 999px;
   font-size: 0.92rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .statusBadge svg {
@@ -182,9 +182,8 @@
 
 .headlineMain h1 {
   color: #18120d;
-  font-size: clamp(2.6rem, 5.4vw, 4.4rem);
+  font-size: clamp(2rem, 5.4vw, 2.8rem);
   line-height: 0.92;
-  letter-spacing: -0.04em;
 }
 
 .headlineMeta {
@@ -203,7 +202,7 @@
   background: transparent;
   border: 1px solid transparent;
   color: #5c512c;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .metaChip svg {
@@ -220,15 +219,15 @@
 
 .priceBlock strong {
   color: #18120d;
-  font-size: clamp(2.3rem, 4vw, 3.4rem);
+  font-size: clamp(1.6rem, 4vw, 2.5rem);
   line-height: 1;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .priceBlock span {
   color: #6a6148;
   font-size: 0.95rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .infoGrid,
@@ -343,7 +342,7 @@
   color: #5c512c;
   background: rgba(255, 255, 255, 0.86);
   font-size: 0.86rem;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .exactMapLoading,
@@ -361,7 +360,7 @@
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(247, 238, 219, 0.66)),
     #fffdf7;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .exactMap :global(.leaflet-container) {
@@ -384,7 +383,7 @@
   border-radius: 999px;
   color: #17120d;
   box-shadow: 0 10px 20px rgba(83, 61, 22, 0.14);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .metaList {
@@ -412,7 +411,7 @@
   gap: 8px;
   color: #6a5f45;
   font-size: 0.82rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .metaList dt svg {
@@ -423,7 +422,7 @@
 .metaList dd {
   color: #17120d;
   font-size: 1.05rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .panelActions {
@@ -440,23 +439,27 @@
 
 .noticeList li {
   position: relative;
+  min-height: 34px;
   padding: 6px 16px 6px 40px;
   border-radius: 18px;
   background: #FBF9F4;
   border: 0;
+  display: flex;
+  align-items: center;
   line-height: 1.35;
 }
 
 .noticeList li::before {
   content: "";
   position: absolute;
-  top: 20px;
+  top: 50%;
   left: 16px;
   width: 10px;
   height: 10px;
   border-radius: 50%;
   background: #7B8613;
   box-shadow: 0 0 0 4px rgba(123, 134, 19, 0.14);
+  transform: translateY(-50%);
 }
 
 .cancellationPreview {
@@ -471,10 +474,6 @@
 
 .cancellationPreview strong {
   color: #17120d;
-}
-
-.cancellationPreview span {
-  font-weight: 700;
 }
 
 .ruleList {
@@ -707,7 +706,7 @@
 .reviewPanel .secondaryButton {
   padding: 0 16px;
   font-size: 0.96rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .tipStripeForm {
@@ -737,7 +736,7 @@
 .reviewCommentBox span {
   color: #6a5f45;
   font-size: 0.86rem;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .reviewSummaryItem strong {
@@ -748,7 +747,7 @@
 
 .reviewSummaryItem small {
   color: #5a503a;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .summaryRating {
@@ -803,7 +802,7 @@
 
 .errorText {
   color: #b14646;
-  font-weight: 800;
+  font-weight: 700;
   text-align: center;
 }
 

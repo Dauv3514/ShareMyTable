@@ -17,7 +17,7 @@
   gap: 10px;
   color: #6a603d;
   text-decoration: none;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .backLink svg {
@@ -38,9 +38,8 @@
 .hero h1 {
   max-width: 560px;
   color: #24190e;
-  font-size: clamp(2rem, 4.8vw, 2.75rem);
+  font-size: clamp(2rem, 4.8vw, 2.5rem);
   line-height: 0.98;
-  letter-spacing: -0.045em;
 }
 
 .hero p,
@@ -87,11 +86,10 @@
   gap: 16px;
 }
 
-.sectionHead h2 {
+.sectionHead h4 {
   color: #24190e;
-  font-size: clamp(1.55rem, 3.2vw, 2.1rem);
+  font-size: clamp(1.55rem, 3.2vw, 1.8rem);
   line-height: 1;
-  letter-spacing: -0.035em;
 }
 
 .sectionHead span {
@@ -102,7 +100,7 @@
   justify-content: center;
   color: #17120d;
   background: transparent;
-  font-size: 1.45rem;
+  font-size: 1.15rem;
   font-weight: 400;
   line-height: 1;
 }
@@ -184,7 +182,7 @@
   gap: 8px;
   color: #24190e;
   font-size: 0.9rem;
-  font-weight: 800;
+  font-weight: 700;
   text-align: center;
 }
 
@@ -220,7 +218,6 @@
   color: #24190e;
   font-size: clamp(1.2rem, 2.8vw, 1.55rem);
   line-height: 1.1;
-  letter-spacing: -0.035em;
 }
 
 .requestHead p {
@@ -369,7 +366,7 @@
 }
 
 .reasonText {
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .emptySection {
@@ -392,11 +389,10 @@
   gap: 16px;
 }
 
-.discussionsHead h2 {
+.discussionsHead h4 {
   color: #24190e;
-  font-size: clamp(1.55rem, 3.2vw, 2.1rem);
+  font-size: clamp(1.55rem, 3.2vw, 1.8rem);
   line-height: 1;
-  letter-spacing: -0.035em;
 }
 
 .messagesShortcut {
@@ -474,7 +470,7 @@
   overflow: hidden;
   color: #292d06;
   font-size: 1.12rem;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -497,7 +493,7 @@
 }
 
 .discussionMeta {
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .discussionPreview {
@@ -607,7 +603,6 @@
   color: #17120d;
   font-size: clamp(1.85rem, 4vw, 2.45rem);
   line-height: 0.95;
-  letter-spacing: -0.065em;
 }
 
 .modalSheet--accept .modalTitle {
@@ -617,7 +612,6 @@
   font-size: 28px;
   font-weight: 900;
   line-height: 1;
-  letter-spacing: 0;
 }
 
 .modalGuest {
@@ -759,7 +753,7 @@
   padding: 0 20px;
   border-radius: 10px;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1;
 }
 

@@ -125,8 +125,7 @@
 .panelEyebrow {
   margin: 0 0 8px;
   font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-weight: 600;
   text-transform: uppercase;
   color: #8b7c47;
 }
@@ -163,7 +162,7 @@
   padding: 0 14px;
   border-radius: 999px;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .hostStatusNeutral {
@@ -188,7 +187,7 @@
 
 .hostStatusLocation {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   color: #85785b;
 }
 
@@ -233,6 +232,10 @@
   justify-content: flex-start;
 }
 
+.hostStatusActions .primaryButton {
+  font-size: 13px;
+}
+
 .statsGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -261,7 +264,7 @@
   font-size: clamp(2rem, 4vw, 3.4rem);
   line-height: 0.95;
   color: #111111;
-  font-weight: 800;
+  font-weight: 600;
   align-self: center;
   justify-self: center;
   text-align: center;
@@ -405,7 +408,7 @@
   margin: 0 0 4px;
   color: #7c7335;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
@@ -476,7 +479,7 @@
   margin: 0;
   color: #3d4210;
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.2;
 }
 
@@ -555,8 +558,7 @@
   background: #7B8613;
   color: #ffffff;
   font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0;
+  font-weight: 700;
   cursor: pointer;
 }
 
@@ -665,14 +667,14 @@
   font-family: var(--font-body), "Trebuchet MS", sans-serif;
   font-size: 15px !important;
   line-height: 1;
-  font-weight: 700;
+  font-weight: 600;
   color: #2a2716;
 }
 
 .actionValue {
   font-family: var(--font-body), "Trebuchet MS", sans-serif;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   color: #877c58;
 }
 
@@ -757,7 +759,7 @@
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .providerPill svg {
@@ -861,7 +863,7 @@
   padding: 0 16px;
   border-radius: 999px;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .primaryButton {
@@ -940,7 +942,7 @@
   background: transparent;
   color: #52590D;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   padding: 0;
 }
 

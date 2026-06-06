@@ -126,7 +126,7 @@ $message-other: #292d06;
   gap: 6px;
   color: #5a4c21;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.2;
   text-decoration: none;
 
@@ -167,7 +167,6 @@ $message-other: #292d06;
     font-size: 23px;
     font-weight: 700;
     line-height: 1;
-    letter-spacing: 0;
   }
 }
 
@@ -227,7 +226,7 @@ $message-other: #292d06;
   overflow: hidden;
   color: $text-heading;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 500;
   line-height: 1;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -245,7 +244,7 @@ $message-other: #292d06;
   margin: 0;
   color: $text-classic;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1;
   white-space: nowrap;
 }
@@ -498,29 +497,21 @@ $message-other: #292d06;
 .mealPreviewSection {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-}
-
-.mealPreviewTitle {
-  margin: 0;
-  color: $text-heading;
-  font-size: 23px;
-  font-weight: 700;
-  line-height: 1;
+  gap: 18px;
 }
 
 .sectionCard {
   overflow: hidden;
-  border-radius: 20px;
+  border-radius: 26px;
   background: $bg-secondary;
-  box-shadow: 0 2px 1px rgba(37, 33, 14, 0.25);
+  box-shadow: 0 3px 2px rgba(37, 33, 14, 0.22);
 }
 
 .mealCard {
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  padding: 10px;
+  gap: 12px;
+  padding: 16px 18px 18px;
 }
 
 .mealCardMedia {
@@ -528,7 +519,7 @@ $message-other: #292d06;
   width: 100%;
   aspect-ratio: 338 / 153;
   overflow: hidden;
-  border-radius: 10px;
+  border-radius: 14px;
 }
 
 .mealCardImage {
@@ -536,20 +527,48 @@ $message-other: #292d06;
 }
 
 .mealCardContent {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: end;
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 2px;
 }
 
-.mealCardTitle,
-.mealCardDescription,
+.mealCardInfo {
+  display: grid;
+  gap: 10px;
+}
+
+.mealCardTitle {
+  display: block;
+  margin: 0;
+  color: $text-heading;
+  font-size: 23px;
+  line-height: 1.05;
+}
+
+.mealCardDescription {
+  display: block;
+  margin: 0;
+  color: $text-classic;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
 .mealLink {
-  display: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: $text-muted;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .mealCardMeta {
-  display: contents;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
 
   span {
     display: inline-flex;
@@ -564,7 +583,7 @@ $message-other: #292d06;
 
   span:first-child {
     color: $text-classic;
-    font-weight: 700;
+    font-weight: 600;
   }
 
   svg {
@@ -1014,18 +1033,19 @@ $message-other: #292d06;
 
   .mealPreviewSection + .listSection {
     width: min(100%, 860px);
+    margin-top: 18px;
   }
 
   .mealCard {
     display: grid;
-    grid-template-columns: minmax(320px, 430px) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 0.38fr);
     align-items: stretch;
-    gap: 24px;
-    padding: 14px;
+    gap: 18px;
+    padding: 16px 18px 18px;
   }
 
   .mealCardMedia {
-    aspect-ratio: 338 / 153;
+    aspect-ratio: 2.25 / 1;
   }
 
   .mealCardContent {
@@ -1033,36 +1053,23 @@ $message-other: #292d06;
     flex-direction: column;
     align-items: start;
     justify-content: space-between;
-    gap: 14px;
+    gap: 10px;
   }
 
-  .mealCardTitle,
-  .mealCardDescription,
-  .mealLink {
-    display: block;
+  .mealCardInfo {
+    gap: 8px;
   }
 
   .mealCardTitle {
-    margin: 0;
-    color: $text-heading;
-    font-size: 28px;
-    line-height: 1.05;
+    font-size: clamp(24px, 2.4vw, 25px);
   }
 
   .mealCardDescription {
-    margin: 0;
-    color: $text-classic;
     font-size: 15px;
-    line-height: 1.45;
   }
 
   .mealLink {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    color: $text-muted;
     font-size: 14px;
-    font-weight: 700;
 
     svg {
       position: relative;
@@ -1146,19 +1153,81 @@ $message-other: #292d06;
   }
 }
 
+@media (min-width: 721px) and (max-width: 920px) {
+  .searchArea {
+    width: min(100%, 640px);
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .searchBar {
+    width: 100%;
+    flex: none;
+  }
+
+  .searchMealButton {
+    width: 100%;
+    min-width: 0;
+    white-space: nowrap;
+  }
+
+  .mealPreviewSection + .listSection {
+    margin-top: 28px;
+  }
+}
+
 @media (max-width: 720px) {
   .page {
     margin: 0 -12px;
+  }
+
+  .shell {
+    gap: 28px;
   }
 
   .chatPage {
     margin: 0;
   }
 
+  .searchArea {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .searchBar {
+    width: 100%;
+    flex: none;
+  }
+
   .searchMealButton {
-    max-width: 124px;
-    padding: 0 12px;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    padding: 0 20px;
     text-align: center;
+    white-space: nowrap;
+  }
+
+  .mealPreviewSection {
+    gap: 12px;
+  }
+
+  .mealPreviewSection + .listSection {
+    margin-top: 24px;
+  }
+
+  .mealCard {
+    gap: 14px;
+  }
+
+  .mealCardTitle {
+    font-size: 24px;
+  }
+
+  .mealLink {
+    margin-top: 2px;
   }
 
   .chatFrame {
@@ -1195,5 +1264,11 @@ $message-other: #292d06;
     left: 50%;
     bottom: 0;
     transform: translateX(-50%);
+  }
+}
+
+@media (max-width: 520px) {
+  .searchMealButton {
+    white-space: normal;
   }
 }

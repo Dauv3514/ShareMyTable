@@ -883,7 +883,7 @@ export default function MesRepasPage() {
 	            <h1>
               {activePanel === "hosting"
                 ? "Gère tes événements, et pilote leur publication"
-                : "Consulte toutes tes réservations au même endroit."}
+                : "Consulte toutes tes réservations au même endroit"}
             </h1>
             <p className={styles.description}>
               {activePanel === "hosting" ? (
