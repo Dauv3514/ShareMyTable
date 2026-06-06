@@ -526,7 +526,7 @@ export default function SearchResultsPage() {
             className={styles.seeMoreButton}
             onClick={scrollSuggestions}
           >
-            Voir plus
+            Voir Tout
             <span aria-hidden="true" />
           </button>
         </div>

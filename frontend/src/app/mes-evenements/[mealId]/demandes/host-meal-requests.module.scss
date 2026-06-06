@@ -17,7 +17,7 @@
   gap: 10px;
   color: #6a603d;
   text-decoration: none;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .backLink svg {
@@ -38,7 +38,7 @@
 .hero h1 {
   max-width: 560px;
   color: #24190e;
-  font-size: clamp(2rem, 4.8vw, 2.75rem);
+  font-size: clamp(2rem, 4.8vw, 2.5rem);
   line-height: 0.98;
 }
 
@@ -86,9 +86,9 @@
   gap: 16px;
 }
 
-.sectionHead h2 {
+.sectionHead h4 {
   color: #24190e;
-  font-size: clamp(1.55rem, 3.2vw, 2.1rem);
+  font-size: clamp(1.55rem, 3.2vw, 1.8rem);
   line-height: 1;
 }
 
@@ -389,9 +389,9 @@
   gap: 16px;
 }
 
-.discussionsHead h2 {
+.discussionsHead h4 {
   color: #24190e;
-  font-size: clamp(1.55rem, 3.2vw, 2.1rem);
+  font-size: clamp(1.55rem, 3.2vw, 1.8rem);
   line-height: 1;
 }
 

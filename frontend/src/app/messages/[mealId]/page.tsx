@@ -47,6 +47,22 @@ function getLatestMessageBody(conversation: MessagingConversationSummary) {
   return conversation.latestMessage?.body || "Aucun message pour le moment.";
 }
 
+function getOrganizerName(
+  conversations: MessagingConversationSummary[],
+  hostUserId?: number,
+  fallbackPseudo?: string | null,
+) {
+  const hostMember = conversations
+    .flatMap((conversation) => conversation.members)
+    .find((member) => member.userId === hostUserId || member.role === "host");
+  const fullName = [hostMember?.firstName, hostMember?.lastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  return fullName || fallbackPseudo?.trim() || "Organisateur";
+}
+
 function sortMealConversations(conversations: MessagingConversationSummary[]) {
   return [...conversations].sort((firstConversation, secondConversation) => {
     if (
@@ -194,13 +210,18 @@ export default function MealMessagesPage() {
   const directConversations = filteredMealConversations.filter(
     (conversation) => conversation.type !== "meal_group",
   );
+  const organizerName = getOrganizerName(
+    mealConversations,
+    mealDetails?.host.userId ?? mealConversations[0]?.meal?.hostUserId,
+    mealDetails?.host.pseudo,
+  );
 
   if (loading) {
     return (
       <section className={styles.page}>
         <div className={styles.shell}>
           <div className={styles.stateCard}>
-            <h2>Chargement de l'événement</h2>
+            <h2>Chargement de l&apos;événement</h2>
             <p>On recupere tes discussions en cours.</p>
           </div>
         </div>
@@ -264,60 +285,56 @@ export default function MealMessagesPage() {
         ) : (
           <>
             <section className={styles.mealPreviewSection}>
-              <h1 className={styles.mealPreviewTitle}>
-                {mealDetails?.title || mealConversations[0]?.meal?.title || "Nom de l'événement"}
-              </h1>
-
               <article className={styles.sectionCard}>
-              <div className={styles.mealCard}>
-                <div className={styles.mealCardMedia}>
-                  <Image
-                    src="/photoRepas.png"
-                    alt={mealDetails?.title || "Evénement"}
-                    fill
-                    className={styles.mealCardImage}
-                    sizes="(max-width: 900px) 100vw, 380px"
-                  />
-                </div>
-
-                <div className={styles.mealCardContent}>
-                  <h2 className={styles.mealCardTitle}>
-                    {mealDetails?.title || mealConversations[0]?.meal?.title || "Nom de l'événement"}
-                  </h2>
-
-                  <div className={styles.mealCardMeta}>
-                    <span>
-                      <CalendarDays size={16} />{" "}
-                      {formatConversationDate(
-                        mealDetails?.dateTime || mealConversations[0].meal!.dateTime,
-                      )}{" "}
-                      ·{" "}
-                      {formatConversationTime(
-                        mealDetails?.dateTime || mealConversations[0].meal!.dateTime,
-                      )}
-                    </span>
-                    {mealDetails?.host.city ? (
-                      <span>
-                        <MapPin size={16} /> {mealDetails.host.city}
-                      </span>
-                    ) : null}
+                <div className={styles.mealCard}>
+                  <div className={styles.mealCardMedia}>
+                    <Image
+                      src="/photoRepas.png"
+                      alt={mealDetails?.title || "Evénement"}
+                      fill
+                      className={styles.mealCardImage}
+                      sizes="(max-width: 900px) 100vw, 380px"
+                    />
                   </div>
 
-                  <p className={styles.mealCardDescription}>
-                    {mealDetails?.menuDescription ||
-                      "Retrouve ici le groupe de l'événement ainsi que les conversations individuelles ouvertes autour de cette table."}
-                  </p>
+                  <div className={styles.mealCardContent}>
+                    <div className={styles.mealCardInfo}>
+                      <h2 className={styles.mealCardTitle}>
+                        {mealDetails?.title ||
+                          mealConversations[0]?.meal?.title ||
+                          "Nom de l'événement"}
+                      </h2>
 
-                  <Link
-                    href={buildMealEventHref(mealId)}
-                    className={styles.mealLink}
-                  >
-                    Voir la fiche de l'événement
-                    <ChevronRight size={18} />
-                  </Link>
+                      <div className={styles.mealCardMeta}>
+                        <span>
+                          <CalendarDays size={16} />{" "}
+                          {formatConversationDate(
+                            mealDetails?.dateTime || mealConversations[0].meal!.dateTime,
+                          )}{" "}
+                          ·{" "}
+                          {formatConversationTime(
+                            mealDetails?.dateTime || mealConversations[0].meal!.dateTime,
+                          )}
+                        </span>
+                        {mealDetails?.host.city ? (
+                          <span>
+                            <MapPin size={16} /> {mealDetails.host.city}
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <p className={styles.mealCardDescription}>
+                        {organizerName}
+                      </p>
+                    </div>
+
+                    <Link href={buildMealEventHref(mealId)} className={styles.mealLink}>
+                      Voir la fiche de l&apos;événement
+                      <ChevronRight size={18} />
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            </article>
+              </article>
             </section>
 
             <article className={styles.listSection}>

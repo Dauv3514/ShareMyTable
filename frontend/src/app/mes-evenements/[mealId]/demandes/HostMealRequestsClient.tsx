@@ -159,7 +159,7 @@ function DiscussionsSection({
   return (
     <section className={`${styles.requestsSection} ${styles.discussionsSection}`}>
       <div className={styles.discussionsHead}>
-        <h2>Discussions</h2>
+        <h4>Discussions</h4>
         <Link
           href="/messages"
           className={styles.messagesShortcut}
@@ -322,7 +322,7 @@ function RequestSection({
   return (
     <section className={styles.requestsSection}>
       <div className={styles.sectionHead}>
-        <h2>{title}</h2>
+        <h4>{title}</h4>
         <span>{bookings.length}</span>
       </div>
 
