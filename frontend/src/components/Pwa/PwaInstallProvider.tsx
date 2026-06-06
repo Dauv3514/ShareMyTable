@@ -18,6 +18,7 @@ type PwaInstallContextValue = {
   canInstall: boolean;
   isInstalled: boolean;
   isIosInstall: boolean;
+  showProfileInstallEntry: boolean;
   openInstallPrompt: () => Promise<void>;
   dismissInstallPrompt: () => void;
   showInstallNudge: () => void;
@@ -34,6 +35,7 @@ const PwaInstallContext = createContext<PwaInstallContextValue>({
   canInstall: false,
   isInstalled: false,
   isIosInstall: false,
+  showProfileInstallEntry: false,
   openInstallPrompt: async () => undefined,
   dismissInstallPrompt: () => undefined,
   showInstallNudge: () => undefined,
@@ -96,6 +98,7 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       (Boolean(deferredPrompt) || isIosInstall),
     [deferredPrompt, hasMounted, isCoolingDown, isInstalled, isIosInstall],
   );
+  const showProfileInstallEntry = hasMounted && !isInstalled;
 
   const showInstallNudge = useCallback(() => {
     if (!canInstall) {
@@ -115,7 +118,7 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const openInstallPrompt = useCallback(async () => {
-    if (!canInstall) {
+    if (!hasMounted || isInstalled) {
       return;
     }
 
@@ -136,7 +139,7 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     }
 
     dismissInstallPrompt();
-  }, [canInstall, deferredPrompt, dismissInstallPrompt]);
+  }, [deferredPrompt, dismissInstallPrompt, hasMounted, isInstalled]);
 
   useEffect(() => {
     const initTimerId = window.setTimeout(() => {
@@ -226,6 +229,7 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       canInstall,
       isInstalled,
       isIosInstall,
+      showProfileInstallEntry,
       openInstallPrompt,
       dismissInstallPrompt,
       showInstallNudge,
@@ -236,6 +240,7 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       isInstalled,
       isIosInstall,
       openInstallPrompt,
+      showProfileInstallEntry,
       showInstallNudge,
     ],
   );
@@ -244,7 +249,7 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     <PwaInstallContext.Provider value={contextValue}>
       {children}
 
-      {isNudgeVisible && canInstall ? (
+      {isNudgeVisible && showProfileInstallEntry ? (
         <div className={styles.overlay} role="presentation">
           <section
             className={styles.sheet}
@@ -270,6 +275,8 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
               <p>
                 {isIosInstall && !deferredPrompt
                   ? "Sur iPhone, utilise le bouton de partage puis choisis Ajouter à l’écran d’accueil."
+                  : !deferredPrompt
+                    ? "Si le bouton d'installation du navigateur n'apparaît pas encore, utilise le menu de ton navigateur pour installer l'application."
                   : "Ajoute Ramène Ta Poire à ton écran d’accueil pour retrouver tes repas et messages plus vite."}
               </p>
             </div>
@@ -279,7 +286,7 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
                 type="button"
                 className={styles.primaryButton}
                 onClick={() => {
-                  if (isIosInstall && !deferredPrompt) {
+                  if (!deferredPrompt) {
                     dismissInstallPrompt();
                     return;
                   }
@@ -287,7 +294,7 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
                   void openInstallPrompt();
                 }}
               >
-                {isIosInstall && !deferredPrompt ? "J’ai compris" : "Installer"}
+                {!deferredPrompt ? "J’ai compris" : "Installer"}
               </button>
               <button
                 type="button"

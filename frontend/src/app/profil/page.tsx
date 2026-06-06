@@ -911,7 +911,7 @@ const ProfilPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isLoggedIn, loading, user } = useAuth();
-  const { canInstall, dismissInstallPrompt, openInstallPrompt } = usePwaInstall();
+  const { openInstallPrompt, showProfileInstallEntry } = usePwaInstall();
   const [expandedPanel, setExpandedPanel] = useState<ExpandablePanel>(null);
   const [hostProfile, setHostProfile] = useState<HostProfileSummary | null>(null);
   const [hostProfileLoading, setHostProfileLoading] = useState(true);
@@ -1539,7 +1539,7 @@ const ProfilPage = () => {
             </div>
           </section>
 
-          {canInstall ? (
+          {showProfileInstallEntry ? (
             <section className={`${styles.sectionCard} ${styles.pwaInstallCard}`}>
               <div className={styles.pwaInstallCopy}>
                 <span className={styles.pwaInstallIcon} aria-hidden="true">
@@ -1561,13 +1561,6 @@ const ProfilPage = () => {
                   onClick={() => void openInstallPrompt()}
                 >
                   Installer
-                </button>
-                <button
-                  type="button"
-                  className={styles.ghostButton}
-                  onClick={dismissInstallPrompt}
-                >
-                  Plus tard
                 </button>
               </div>
             </section>
