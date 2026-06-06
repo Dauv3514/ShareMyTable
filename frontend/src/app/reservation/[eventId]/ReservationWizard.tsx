@@ -503,7 +503,7 @@ export default function ReservationWizard({
         <>
           <Link href={buildMealEventHref(event.id)} className={styles.footerGhostButton}>
             <ChevronLeft />
-            Retour à l'événement
+            Retour à l&apos;événement
           </Link>
           <button
             type="button"
@@ -812,7 +812,7 @@ export default function ReservationWizard({
                     <div className={`${styles.infoCard} ${styles.infoCardHighlight}`}>
                       <h3>Infos importantes</h3>
                       <ul className={styles.noticeList}>
-                        <li>Paiement bloqué jusqu&apos;à la tenue de l'événement.</li>
+                        <li>Paiement bloqué jusqu&apos;à la tenue de l&apos;événement.</li>
                         <li>Adresse exacte partagée 24h avant.</li>
                         <li>Annulation gratuite jusqu&apos;à 48h avant, puis retenue partielle.</li>
                         <li>Tu pourras suivre le statut de tes réservations dans Mes événements</li>
@@ -902,7 +902,7 @@ export default function ReservationWizard({
                       <p>{draft.seats} place(s) pour {event.title}</p>
                       <ul className={styles.paymentNotes}>
                         <li>Autorisation immédiate du paiement</li>
-                        <li>Blocage des fonds jusqu&apos;à l'événement</li>
+                        <li>Blocage des fonds jusqu&apos;à l&apos;événement</li>
                         <li>L&apos;hôte confirme ou non votre réservation selon le mode de validation choisi</li>
                         {paymentIntent ? (
                           <li>Paiement Stripe préparé pour la réservation #{paymentIntent.bookingId}</li>

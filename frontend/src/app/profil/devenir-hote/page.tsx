@@ -26,6 +26,7 @@ type HostProfileResponse = {
   id: number;
   isActive: boolean;
   homePhotoUrl: string | null;
+  homePhotoUrls: string[];
   validationStatus: "pending" | "approved" | "rejected";
   country: string;
   city: string;
@@ -34,13 +35,23 @@ type HostProfileResponse = {
   rejectionReason: string | null;
 };
 
-const MAX_HOME_PHOTO_SIZE_MB = 5;
+type HomePhotoPreview = {
+  id: string;
+  url: string;
+  file?: File;
+  isObjectUrl: boolean;
+};
+
+const RECOMMENDED_HOME_PHOTOS = 2;
+const MAX_HOME_PHOTOS = 5;
+const MAX_HOME_PHOTO_SIZE_MB = 3;
+const HOME_PHOTO_MIME_TYPES = ["image/png", "image/jpeg", "image/webp"];
 
 export default function DevenirHotePage() {
   const router = useRouter();
   const { isLoggedIn, loading, user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const previewUrlRef = useRef<string | null>(null);
+  const previewObjectUrlsRef = useRef<string[]>([]);
   const [formData, setFormData] = useState<HostProfileFormState>({
     country: "",
     city: "",
@@ -48,8 +59,7 @@ export default function DevenirHotePage() {
     address: "",
   });
   const [hostProfile, setHostProfile] = useState<HostProfileResponse | null>(null);
-  const [homePhotoPreviewUrl, setHomePhotoPreviewUrl] = useState<string | null>(null);
-  const [selectedHomePhotoFile, setSelectedHomePhotoFile] = useState<File | null>(null);
+  const [homePhotoPreviews, setHomePhotoPreviews] = useState<HomePhotoPreview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -61,9 +71,10 @@ export default function DevenirHotePage() {
 
   useEffect(() => {
     return () => {
-      if (previewUrlRef.current) {
-        URL.revokeObjectURL(previewUrlRef.current);
-      }
+      previewObjectUrlsRef.current.forEach((previewUrl) => {
+        URL.revokeObjectURL(previewUrl);
+      });
+      previewObjectUrlsRef.current = [];
     };
   }, []);
 
@@ -111,7 +122,18 @@ export default function DevenirHotePage() {
           districtLabel: response.data.districtLabel ?? "",
           address: response.data.address ?? "",
         });
-        setHomePhotoPreviewUrl(response.data.homePhotoUrl);
+        setHomePhotoPreviews(
+          (response.data.homePhotoUrls?.length
+            ? response.data.homePhotoUrls
+            : response.data.homePhotoUrl
+              ? [response.data.homePhotoUrl]
+              : []
+          ).map((url, index) => ({
+            id: `existing-${index}-${url}`,
+            url,
+            isObjectUrl: false,
+          })),
+        );
       } catch (error: unknown) {
         if (cancelled) {
           return;
@@ -125,7 +147,7 @@ export default function DevenirHotePage() {
             districtLabel: "",
             address: "",
           });
-          setHomePhotoPreviewUrl(null);
+          setHomePhotoPreviews([]);
         } else {
           toast.error("Impossible de charger le formulaire hôte pour le moment.");
         }
@@ -193,40 +215,90 @@ export default function DevenirHotePage() {
   };
 
   const handlePhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) {
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) {
       return;
     }
 
-    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
-      toast.error("La photo du logement doit être en PNG, JPG, JPEG ou WebP.");
+    const remainingSlots = MAX_HOME_PHOTOS - homePhotoPreviews.length;
+
+    if (remainingSlots <= 0) {
+      toast.error(`Tu peux importer au maximum ${MAX_HOME_PHOTOS} photos.`);
       event.target.value = "";
       return;
     }
 
-    if (file.size > MAX_HOME_PHOTO_SIZE_MB * 1024 * 1024) {
-      toast.error(
-        `La photo du logement ne doit pas depasser ${MAX_HOME_PHOTO_SIZE_MB} Mo.`,
+    for (const file of files) {
+      if (!HOME_PHOTO_MIME_TYPES.includes(file.type)) {
+        toast.error("Les photos du logement doivent être en PNG, JPG, JPEG ou WebP.");
+        event.target.value = "";
+        return;
+      }
+
+      if (file.size > MAX_HOME_PHOTO_SIZE_MB * 1024 * 1024) {
+        toast.error(
+          `Chaque photo du logement ne doit pas dépasser ${MAX_HOME_PHOTO_SIZE_MB} Mo.`,
+        );
+        event.target.value = "";
+        return;
+      }
+    }
+
+    const filesToAdd = files.slice(0, remainingSlots);
+
+    if (files.length > remainingSlots) {
+      toast.info(
+        `Seules ${remainingSlots} photo${remainingSlots > 1 ? "s" : ""} ont été ajoutées pour rester dans la limite de ${MAX_HOME_PHOTOS}.`,
       );
-      event.target.value = "";
-      return;
     }
 
-    if (previewUrlRef.current) {
-      URL.revokeObjectURL(previewUrlRef.current);
-    }
+    const previewsToAdd = filesToAdd.map((file) => {
+      const url = URL.createObjectURL(file);
+      previewObjectUrlsRef.current.push(url);
 
-    const previewUrl = URL.createObjectURL(file);
-    previewUrlRef.current = previewUrl;
-    setSelectedHomePhotoFile(file);
-    setHomePhotoPreviewUrl(previewUrl);
+      return {
+        id: `${file.name}-${file.lastModified}-${url}`,
+        url,
+        file,
+        isObjectUrl: true,
+      };
+    });
+
+    setHomePhotoPreviews((previousPreviews) => [
+      ...previousPreviews,
+      ...previewsToAdd,
+    ]);
     event.target.value = "";
+  };
+
+  const handleRemovePhoto = (photoIndex: number) => {
+    setHomePhotoPreviews((previousPreviews) => {
+      const removedPreview = previousPreviews[photoIndex];
+
+      if (removedPreview?.isObjectUrl) {
+        URL.revokeObjectURL(removedPreview.url);
+        previewObjectUrlsRef.current = previewObjectUrlsRef.current.filter(
+          (previewUrl) => previewUrl !== removedPreview.url,
+        );
+      }
+
+      return previousPreviews.filter((_, index) => index !== photoIndex);
+    });
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (isSubmitting || hostProfile?.validationStatus === "approved") {
+      return;
+    }
+
+    if (homePhotoPreviews.length === 0) {
+      toast.error("Ajoute au moins une photo du logement pour envoyer la demande hôte.");
       return;
     }
 
@@ -248,8 +320,22 @@ export default function DevenirHotePage() {
       payload.append("districtLabel", formData.districtLabel.trim());
       payload.append("address", formData.address.trim());
 
-      if (selectedHomePhotoFile) {
-        payload.append("host_home_photo", selectedHomePhotoFile);
+      const retainedPhotoUrls = homePhotoPreviews
+        .filter((preview) => !preview.file)
+        .map((preview) => preview.url);
+      const newPhotoFiles = homePhotoPreviews
+        .map((preview) => preview.file)
+        .filter((file): file is File => Boolean(file));
+
+      retainedPhotoUrls.forEach((photoUrl) => {
+        payload.append("homePhotoUrls", photoUrl);
+      });
+      newPhotoFiles.forEach((file) => {
+        payload.append("host_home_photo", file);
+      });
+
+      if (retainedPhotoUrls.length === 0 && newPhotoFiles.length === 0) {
+        payload.append("homePhotoUrl", "");
       }
 
       if (!hostProfile) {
@@ -389,6 +475,7 @@ export default function DevenirHotePage() {
             ref={fileInputRef}
             type="file"
             accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+            multiple
             className={styles.hiddenInput}
             onChange={handlePhotoChange}
           />
@@ -457,10 +544,11 @@ export default function DevenirHotePage() {
 
           <div className={styles.uploadCard}>
             <div className={styles.uploadCopy}>
-              <h2>Photo du logement</h2>
+              <h2>Photos du logement</h2>
               <p>
-                Optionnelle. Formats acceptes : PNG, JPG, JPEG, WebP. Taille max
-                : {MAX_HOME_PHOTO_SIZE_MB} Mo.
+                Au moins 1 photo obligatoire. {RECOMMENDED_HOME_PHOTOS} photos conseillées,
+                jusqu&apos;à {MAX_HOME_PHOTOS}. Formats acceptés : PNG, JPG,
+                JPEG, WebP. Taille max : {MAX_HOME_PHOTO_SIZE_MB} Mo par photo.
               </p>
             </div>
 
@@ -471,18 +559,30 @@ export default function DevenirHotePage() {
                 onClick={handleSelectPhoto}
               >
                 <Upload />
-                {homePhotoPreviewUrl
-                  ? "Changer la photo"
-                  : "Importer une photo"}
+                {homePhotoPreviews.length > 0
+                  ? "Ajouter des photos"
+                  : "Importer des photos"}
               </button>
 
-              {homePhotoPreviewUrl ? (
-                <div className={styles.photoPreview}>
-                  <img
-                    src={homePhotoPreviewUrl}
-                    alt="Apercu du logement"
-                    className={styles.photoPreviewImage}
-                  />
+              {homePhotoPreviews.length > 0 ? (
+                <div className={styles.photoGrid}>
+                  {homePhotoPreviews.map((preview, index) => (
+                    <div key={preview.id} className={styles.photoPreview}>
+                      <span
+                        className={styles.photoPreviewImage}
+                        style={{ backgroundImage: `url("${preview.url}")` }}
+                        aria-label={`Photo du logement ${index + 1}`}
+                        role="img"
+                      />
+                      <button
+                        type="button"
+                        className={styles.photoRemoveButton}
+                        onClick={() => handleRemovePhoto(index)}
+                      >
+                        Retirer
+                      </button>
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <div className={styles.photoPlaceholder}>
@@ -503,7 +603,7 @@ export default function DevenirHotePage() {
             <button
               type="submit"
               className={styles.primaryButton}
-              disabled={isSubmitting}
+              disabled={isSubmitting || homePhotoPreviews.length === 0}
             >
               {isSubmitting ? "Envoi en cours..." : pageMeta.submitLabel}
             </button>

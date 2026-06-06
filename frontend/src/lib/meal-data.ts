@@ -62,6 +62,7 @@ type ApiPublicHostProfile = {
   id: number;
   isActive: boolean;
   homePhotoUrl: string | null;
+  homePhotoUrls?: string[];
   validationStatus: string;
   hostLevel: number;
   activatedAt: string | null;
@@ -397,8 +398,12 @@ function buildPreferenceGroups(filters: string[], fallback: MealEvent["dietaryPr
   ];
 }
 
-function mergeHomePhotos(homePhotoUrl: string | null | undefined, fallbackPhotos: string[]) {
-  const photos = [homePhotoUrl, ...fallbackPhotos]
+function mergeHomePhotos(
+  homePhotoUrl: string | null | undefined,
+  homePhotoUrls: string[] | null | undefined,
+  fallbackPhotos: string[],
+) {
+  const photos = [homePhotoUrl, ...(homePhotoUrls ?? []), ...fallbackPhotos]
     .map((photoUrl) => sanitizeNextImageSrc(photoUrl))
     .filter((photoUrl): photoUrl is string => Boolean(photoUrl));
 
@@ -486,7 +491,11 @@ function mapApiHostToProfile(apiHost: ApiPublicHostProfile): HostProfile {
     bio: apiHost.user.bio?.trim() || fallbackHost.bio,
     photoUrl: apiHost.user.profilePhotoUrl || fallbackHost.photoUrl,
     homePhotoUrl: apiHost.homePhotoUrl,
-    homePhotos: mergeHomePhotos(apiHost.homePhotoUrl, fallbackHost.homePhotos),
+    homePhotos: mergeHomePhotos(
+      apiHost.homePhotoUrl,
+      apiHost.homePhotoUrls,
+      fallbackHost.homePhotos,
+    ),
     reviewCount: fallbackHost.reviewCount,
     rating: fallbackHost.rating,
     completedEvents:

@@ -1,5 +1,7 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  IsArray,
   IsLatitude,
   IsLongitude,
   IsOptional,
@@ -11,8 +13,18 @@ import {
 // Données demandées lors de la première candidature hote.
 export class CreateHostProfileDto {
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? null : value))
   @IsUrl()
-  homePhotoUrl?: string;
+  homePhotoUrl?: string | null;
+
+  @IsOptional()
+  @Transform(({ value }) =>
+    value === undefined ? undefined : Array.isArray(value) ? value : [value],
+  )
+  @IsArray()
+  @ArrayMaxSize(5)
+  @IsUrl({}, { each: true })
+  homePhotoUrls?: string[];
 
   @IsOptional()
   @Type(() => Number)

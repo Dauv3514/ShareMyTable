@@ -238,6 +238,61 @@
   gap: 10px;
 }
 
+.homePhotosBlock {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid #eadfbe;
+  background: #fffdf7;
+}
+
+.homePhotosHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #2c2815;
+}
+
+.homePhotosHead span {
+  color: #8a7d57;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.homePhotoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.homePhotoPreview {
+  display: block;
+  border-radius: 16px;
+  border: 1px solid #e2d4aa;
+  overflow: hidden;
+  background: #fbf7ed;
+}
+
+.homePhotoPreview span {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background-position: center;
+  background-size: cover;
+  transition: transform 0.18s ease;
+}
+
+.homePhotoPreview:hover span {
+  transform: scale(1.03);
+}
+
+.homePhotoEmpty {
+  margin: 0;
+  color: #6d6246;
+}
+
 .notesBox,
 .historyReason {
   display: grid;

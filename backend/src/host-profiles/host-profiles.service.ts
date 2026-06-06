@@ -34,6 +34,7 @@ type HostProfileResponse = {
   id: number;
   isActive: boolean;
   homePhotoUrl: string | null;
+  homePhotoUrls: string[];
   validationStatus: HostValidationStatus;
   hostLevel: number;
   activatedAt: Date | null;
@@ -142,8 +143,15 @@ export class HostProfilesService {
       throw new NotFoundException('Utilisateur non trouve');
     }
 
+    const homePhotoUrls = this.normalizeHomePhotoUrls(
+      createHostProfileDto.homePhotoUrls,
+      createHostProfileDto.homePhotoUrl,
+    );
+    this.assertHomePhotosRequired(homePhotoUrls);
+
     const hostProfile = this.hostProfilesRepository.create({
-      homePhotoUrl: this.normalizeNullableString(createHostProfileDto.homePhotoUrl),
+      homePhotoUrl: homePhotoUrls[0] ?? null,
+      homePhotoUrls,
       lat: createHostProfileDto.lat ?? null,
       lng: createHostProfileDto.lng ?? null,
       country: createHostProfileDto.country.trim(),
@@ -195,6 +203,12 @@ export class HostProfilesService {
     }
 
     this.applyUpdatableFields(hostProfile, updateHostProfileDto);
+    this.assertHomePhotosRequired(
+      this.normalizeHomePhotoUrls(
+        hostProfile.homePhotoUrls,
+        hostProfile.homePhotoUrl,
+      ),
+    );
     await this.hostProfileVerificationService.runAutoReview(hostProfile);
     this.applyAutomaticAddressDecision(hostProfile);
 
@@ -211,6 +225,13 @@ export class HostProfilesService {
         'Seul un profil hote rejete peut etre resoumis',
       );
     }
+
+    this.assertHomePhotosRequired(
+      this.normalizeHomePhotoUrls(
+        hostProfile.homePhotoUrls,
+        hostProfile.homePhotoUrl,
+      ),
+    );
 
     hostProfile.validationStatus = HostValidationStatus.PENDING;
     hostProfile.isActive = false;
@@ -465,9 +486,20 @@ export class HostProfilesService {
     updateHostProfileDto: UpdateHostProfileDto,
   ): void {
     if (updateHostProfileDto.homePhotoUrl !== undefined) {
-      hostProfile.homePhotoUrl = this.normalizeNullableString(
+      const homePhotoUrl = this.normalizeNullableString(
         updateHostProfileDto.homePhotoUrl,
       );
+      hostProfile.homePhotoUrl = homePhotoUrl;
+      hostProfile.homePhotoUrls = homePhotoUrl ? [homePhotoUrl] : [];
+    }
+
+    if (updateHostProfileDto.homePhotoUrls !== undefined) {
+      const homePhotoUrls = this.normalizeHomePhotoUrls(
+        updateHostProfileDto.homePhotoUrls,
+        updateHostProfileDto.homePhotoUrl,
+      );
+      hostProfile.homePhotoUrl = homePhotoUrls[0] ?? null;
+      hostProfile.homePhotoUrls = homePhotoUrls;
     }
 
     if (updateHostProfileDto.lat !== undefined) {
@@ -513,6 +545,10 @@ export class HostProfilesService {
       id: hostProfile.id,
       isActive: hostProfile.isActive,
       homePhotoUrl: hostProfile.homePhotoUrl,
+      homePhotoUrls: this.normalizeHomePhotoUrls(
+        hostProfile.homePhotoUrls,
+        hostProfile.homePhotoUrl,
+      ),
       validationStatus: hostProfile.validationStatus,
       hostLevel: hostProfile.hostLevel,
       activatedAt: hostProfile.activatedAt,
@@ -589,5 +625,29 @@ export class HostProfilesService {
 
     const normalizedValue = value.trim();
     return normalizedValue.length > 0 ? normalizedValue : null;
+  }
+
+  private normalizeHomePhotoUrls(
+    values?: string[] | null,
+    fallbackValue?: string | null,
+  ): string[] {
+    const rawValues = Array.isArray(values) ? values : [];
+    const normalizedValues = rawValues
+      .map((value) => this.normalizeNullableString(value))
+      .filter((value): value is string => Boolean(value));
+    const fallback = this.normalizeNullableString(fallbackValue);
+    const uniqueValues = fallback
+      ? [fallback, ...normalizedValues]
+      : normalizedValues;
+
+    return Array.from(new Set(uniqueValues)).slice(0, 5);
+  }
+
+  private assertHomePhotosRequired(homePhotoUrls: string[]): void {
+    if (homePhotoUrls.length === 0) {
+      throw new BadRequestException(
+        'Au moins une photo du logement est obligatoire pour une demande hote',
+      );
+    }
   }
 }

@@ -176,19 +176,39 @@
   gap: 14px;
 }
 
+.photoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
 .photoPreview {
-  width: min(320px, 100%);
-  border-radius: 22px;
-  overflow: hidden;
-  border: 1px solid #eadfbe;
-  background: #fffef9;
+  display: grid;
+  gap: 8px;
 }
 
 .photoPreviewImage {
   display: block;
   width: 100%;
   aspect-ratio: 4 / 3;
-  object-fit: cover;
+  border: 1px solid #eadfbe;
+  border-radius: 18px;
+  background-color: #fbf7ed;
+  background-position: center;
+  background-size: cover;
+}
+
+.photoRemoveButton {
+  width: fit-content;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #8b4a4a;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  border-bottom: 1px solid currentColor;
+  cursor: pointer;
 }
 
 .photoPlaceholder {

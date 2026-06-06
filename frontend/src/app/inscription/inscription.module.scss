@@ -258,6 +258,33 @@
   padding-top: 4px;
 }
 
+.uploadPreviewList {
+  display: grid;
+  gap: 12px;
+}
+
+.uploadThumbGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+  gap: 10px;
+}
+
+.uploadThumb {
+  display: grid;
+  gap: 8px;
+}
+
+.uploadThumbImage {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border: 1px solid #eadfbe;
+  border-radius: 14px;
+  background-color: #fbf7ed;
+  background-position: center;
+  background-size: cover;
+}
+
 .uploadPreviewBadge {
   display: inline-flex;
   align-items: center;

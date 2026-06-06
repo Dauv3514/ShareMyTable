@@ -8,7 +8,6 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
-  Clock3,
   CookingPot,
   NotebookText,
   Plus,
@@ -906,7 +905,7 @@ export default function CreerRepasPage() {
 
             {step === 2 ? (
               <div className={styles.centerStage}>
-                <h2>Quand souhaitez-vous organiser l'événement ?</h2>
+                <h2>Quand souhaitez-vous organiser l&apos;événement ?</h2>
 
                 <div className={styles.dateTimeGrid}>
                   <div className={styles.datePickerWrap}>
@@ -1028,7 +1027,7 @@ export default function CreerRepasPage() {
 
                   <div className={styles.formGrid}>
                     <label className={`${styles.field} ${styles.titleField}`}>
-                      <span>Titre de l'événement</span>
+                      <span>Titre de l&apos;événement</span>
                       <input
                         type="text"
                         value={form.title}
