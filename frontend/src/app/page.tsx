@@ -172,14 +172,13 @@ export default function Home() {
       {!loading && !isLoggedIn && (
         <section className={styles.heroCard}>
           <div className={styles.heroContent}>
-            <h1>Ramène ta poire !</h1>
-            <p>On passe à table</p>
+            <h1>Ramène ta poire</h1>
             <div className={styles.heroActions}>
               <Link className={styles.btnGhost} href="/connexion">
-                Connexion
+                Se connecter
               </Link>
               <Link className={styles.btnPrimary} href="/inscription">
-                S&apos;inscrire
+                Voir plus de repas
               </Link>
             </div>
           </div>

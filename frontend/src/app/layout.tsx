@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import type { CSSProperties } from "react";
 import { ToastContainer } from "react-toastify";
 import AppChrome from "../components/AppChrome";
 import { AuthProvider } from "./providers/AuthProvider";
@@ -51,6 +52,12 @@ const alpino = localFont({
   weight: "100 900",
 });
 
+const toastStyle = {
+  "--toastify-color-success": "#948438",
+  "--toastify-icon-color-success": "#948438",
+  "--toastify-color-progress-success": "#948438",
+} as CSSProperties;
+
 export const metadata: Metadata = {
   title: "RameneTaPoire",
   description: "Le blablacar des repas",
@@ -69,7 +76,12 @@ export default function RootLayout({
           <AppChrome>
             {children}
           </AppChrome>
-          <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+          <ToastContainer
+            position="top-right"
+            autoClose={3000}
+            theme="dark"
+            style={toastStyle}
+          />
         </AuthProvider>
       </body>
     </html>

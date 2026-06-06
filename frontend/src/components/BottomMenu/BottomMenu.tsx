@@ -10,7 +10,7 @@ import UserAvatar from "../UserAvatar";
 const items = [
   { key: "home", href: "/", icon: "/home.svg", size: 26 },
   { key: "search", href: "/rechercher", icon: "/rechercher.svg", size: 26 },
-  { key: "meals", href: "/mes-evenements", icon: "/ramenetapoire.svg", size: 32 },
+  { key: "meals", href: "/mes-evenements", icon: "/rtpNavbar.svg", size: 32 },
   { key: "messages", href: "/messages", icon: "/messages.svg", size: 32 },
 ];
 
@@ -39,7 +39,12 @@ export default function BottomMenu() {
               className={`bottom-menu__item ${isActive ? "bottom-menu__item--active" : ""}`}
               href={item.href}
             >
-              <span className="bottom-menu__icon" aria-hidden="true">
+              <span
+                className={`bottom-menu__icon ${
+                  item.key === "meals" ? "bottom-menu__icon--meals" : ""
+                }`}
+                aria-hidden="true"
+              >
                 <Image src={item.icon} alt="Logos" width={item.size} height={item.size} />
               </span>
             </Link>
