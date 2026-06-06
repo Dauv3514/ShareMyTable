@@ -7,11 +7,11 @@ import {
   Patch,
   Post,
   Req,
-  UploadedFile,
+  UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '../auth/auth.guard';
 import type { IAuthInfoRequest } from '../auth/auth.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -33,23 +33,78 @@ import { HostProfilesService } from './host-profiles.service';
 export class HostProfilesController {
   constructor(private readonly hostProfilesService: HostProfilesService) {}
 
+  private normalizePhotoUrls(
+    value?: string[] | string | null,
+  ): string[] {
+    if (value === undefined || value === null) {
+      return [];
+    }
+
+    const values = Array.isArray(value) ? value : [value];
+
+    return values
+      .map((photoUrl) => photoUrl.trim())
+      .filter((photoUrl) => photoUrl.length > 0);
+  }
+
+  private buildHomePhotoPayload(
+    uploadedPhotoUrls: string[],
+    bodyPhotoUrls?: string[] | string | null,
+    bodyPhotoUrl?: string | null,
+  ) {
+    const normalizedBodyPhotoUrls = this.normalizePhotoUrls(bodyPhotoUrls);
+    const normalizedBodyPhotoUrl = this.normalizePhotoUrls(bodyPhotoUrl);
+    const homePhotoUrls = Array.from(
+      new Set([
+        ...normalizedBodyPhotoUrls,
+        ...uploadedPhotoUrls,
+        ...normalizedBodyPhotoUrl,
+      ]),
+    ).slice(0, 5);
+
+    if (homePhotoUrls.length > 0) {
+      return {
+        homePhotoUrl: homePhotoUrls[0],
+        homePhotoUrls,
+      };
+    }
+
+    if (bodyPhotoUrls !== undefined || bodyPhotoUrl !== undefined) {
+      return {
+        homePhotoUrl: null,
+        homePhotoUrls: [],
+      };
+    }
+
+    return {
+      homePhotoUrl: undefined,
+      homePhotoUrls: undefined,
+    };
+  }
+
   @UseGuards(AuthGuard)
   @UseInterceptors(
-    FileInterceptor('host_home_photo', registrationImageUploadOptions),
+    FilesInterceptor('host_home_photo', 5, registrationImageUploadOptions),
   )
   @Post('request')
   async requestHostProfile(
     @Req() req: IAuthInfoRequest,
     @Body() createHostProfileDto: CreateHostProfileDto,
-    @UploadedFile() file?: { filename: string },
+    @UploadedFiles() files?: Array<{ filename: string }>,
   ) {
+    const uploadedPhotoUrls =
+      files?.map((file) => buildHostHomePhotoUrl(file.filename)) ?? [];
+    const homePhotoPayload = this.buildHomePhotoPayload(
+      uploadedPhotoUrls,
+      createHostProfileDto.homePhotoUrls,
+      createHostProfileDto.homePhotoUrl,
+    );
+
     return this.hostProfilesService.requestHostProfile(
       Number(req.user.sub),
       {
         ...createHostProfileDto,
-        homePhotoUrl: file?.filename
-          ? buildHostHomePhotoUrl(file.filename)
-          : createHostProfileDto.homePhotoUrl,
+        ...homePhotoPayload,
       },
     );
   }
@@ -62,21 +117,27 @@ export class HostProfilesController {
 
   @UseGuards(AuthGuard)
   @UseInterceptors(
-    FileInterceptor('host_home_photo', registrationImageUploadOptions),
+    FilesInterceptor('host_home_photo', 5, registrationImageUploadOptions),
   )
   @Patch('me')
   async updateMyHostProfile(
     @Req() req: IAuthInfoRequest,
     @Body() updateHostProfileDto: UpdateHostProfileDto,
-    @UploadedFile() file?: { filename: string },
+    @UploadedFiles() files?: Array<{ filename: string }>,
   ) {
+    const uploadedPhotoUrls =
+      files?.map((file) => buildHostHomePhotoUrl(file.filename)) ?? [];
+    const homePhotoPayload = this.buildHomePhotoPayload(
+      uploadedPhotoUrls,
+      updateHostProfileDto.homePhotoUrls,
+      updateHostProfileDto.homePhotoUrl,
+    );
+
     return this.hostProfilesService.updateMine(
       Number(req.user.sub),
       {
         ...updateHostProfileDto,
-        homePhotoUrl: file?.filename
-          ? buildHostHomePhotoUrl(file.filename)
-          : updateHostProfileDto.homePhotoUrl,
+        ...homePhotoPayload,
       },
     );
   }

@@ -1541,7 +1541,7 @@ const ProfilPage = () => {
               <div>
                 <h2>Statut hôte</h2>
                 <p className={styles.sectionHint}>
-                  Suis ta candidature et avance vers la création d'événements.
+                  Suis ta candidature et avance vers la création d&apos;événements.
                 </p>
               </div>
             </div>
