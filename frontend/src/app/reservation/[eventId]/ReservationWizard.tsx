@@ -22,6 +22,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
+import { PWA_INSTALL_NUDGE_EVENT } from "@/components/Pwa";
 import { useAuth } from "@/app/providers/AuthProvider";
 import type { HostProfile, MealEvent } from "@/lib/data/types";
 import {
@@ -214,6 +215,7 @@ function StripePaymentForm({
         paymentStatus === "requires_capture"
       ) {
         clearPaymentSession(eventId);
+        window.dispatchEvent(new Event(PWA_INSTALL_NUDGE_EVENT));
         router.push(`/reservation/${eventId}/confirmation?reservationId=${reservationId}`);
         return;
       }
@@ -484,6 +486,7 @@ export default function ReservationWizard({
       });
 
       setCreatedReservation(reservation);
+      window.dispatchEvent(new Event(PWA_INSTALL_NUDGE_EVENT));
       router.push(`/reservation/${event.id}/confirmation?reservationId=${reservation.id}`);
     } catch (error) {
       const message =

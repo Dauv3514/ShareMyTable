@@ -6,6 +6,7 @@ import {
   CalendarDays,
   Camera,
   CreditCard,
+  Download,
   History,
   LockKeyhole,
   Mail,
@@ -28,6 +29,7 @@ import {
   useState,
 } from "react";
 import { toast } from "react-toastify";
+import { usePwaInstall } from "@/components/Pwa";
 import UserAvatar from "@/components/UserAvatar";
 import DatePickerField from "@/components/DatePicker";
 import {
@@ -909,6 +911,7 @@ const ProfilPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isLoggedIn, loading, user } = useAuth();
+  const { canInstall, dismissInstallPrompt, openInstallPrompt } = usePwaInstall();
   const [expandedPanel, setExpandedPanel] = useState<ExpandablePanel>(null);
   const [hostProfile, setHostProfile] = useState<HostProfileSummary | null>(null);
   const [hostProfileLoading, setHostProfileLoading] = useState(true);
@@ -1535,6 +1538,40 @@ const ProfilPage = () => {
               />
             </div>
           </section>
+
+          {canInstall ? (
+            <section className={`${styles.sectionCard} ${styles.pwaInstallCard}`}>
+              <div className={styles.pwaInstallCopy}>
+                <span className={styles.pwaInstallIcon} aria-hidden="true">
+                  <Download />
+                </span>
+                <div className={styles.pwaInstallText}>
+                  <h2>Installer l&apos;application</h2>
+                  <p>
+                    Garde Ramène Ta Poire à portée de main pour retrouver tes
+                    repas, tes réservations et tes messages plus vite.
+                  </p>
+                </div>
+              </div>
+
+              <div className={styles.pwaInstallActions}>
+                <button
+                  type="button"
+                  className={styles.primaryButton}
+                  onClick={() => void openInstallPrompt()}
+                >
+                  Installer
+                </button>
+                <button
+                  type="button"
+                  className={styles.ghostButton}
+                  onClick={dismissInstallPrompt}
+                >
+                  Plus tard
+                </button>
+              </div>
+            </section>
+          ) : null}
 
           <section className={styles.sectionCard}>
             <div className={styles.sectionHead}>

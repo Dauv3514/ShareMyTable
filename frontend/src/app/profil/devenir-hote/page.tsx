@@ -12,6 +12,7 @@ import {
   useState,
 } from "react";
 import { toast } from "react-toastify";
+import { PWA_INSTALL_NUDGE_EVENT } from "@/components/Pwa";
 import { useAuth } from "../../providers/AuthProvider";
 import styles from "./devenir-hote.module.scss";
 
@@ -374,6 +375,7 @@ export default function DevenirHotePage() {
         toast.success("Ta demande hôte a bien été mise à jour.");
       }
 
+      window.dispatchEvent(new Event(PWA_INSTALL_NUDGE_EVENT));
       router.push("/profil");
     } catch (error: unknown) {
       const message = axios.isAxiosError(error)

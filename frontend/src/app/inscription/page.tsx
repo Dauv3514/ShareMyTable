@@ -12,6 +12,7 @@ import {
   useState,
 } from "react";
 import { toast } from "react-toastify";
+import { PWA_INSTALL_NUDGE_EVENT } from "@/components/Pwa";
 import DatePickerField from "@/components/DatePicker";
 import styles from "./inscription.module.scss";
 
@@ -315,6 +316,7 @@ function InscriptionPageContent() {
         toast.success("Compte créé. Vérifie ton email pour l'activer.");
       }
 
+      window.dispatchEvent(new Event(PWA_INSTALL_NUDGE_EVENT));
       resetForm();
       setHasAcceptedTerms(false);
       setTermsCheckboxChecked(false);

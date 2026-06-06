@@ -64,6 +64,65 @@
   scroll-margin-top: 24px;
 }
 
+.pwaInstallCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 20px 22px;
+}
+
+.pwaInstallCopy {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.pwaInstallIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #e9f54b;
+  color: #252904;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  box-shadow: inset 0 0 0 1px rgba(123, 134, 19, 0.25);
+}
+
+.pwaInstallIcon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.pwaInstallText {
+  min-width: 0;
+}
+
+.pwaInstallText h2 {
+  margin: 0;
+  color: #252904;
+  font-size: 21px;
+  line-height: 1.05;
+}
+
+.pwaInstallText p {
+  margin: 6px 0 0;
+  max-width: 560px;
+  color: #5f5535;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.pwaInstallActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
 .sectionHead {
   display: flex;
   align-items: flex-start;
@@ -1022,6 +1081,21 @@
   .sectionCard {
     border-radius: 24px;
     padding: 18px;
+  }
+
+  .pwaInstallCard {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pwaInstallCopy {
+    align-items: flex-start;
+  }
+
+  .pwaInstallActions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 
