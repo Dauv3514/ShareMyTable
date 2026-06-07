@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#7B8613" />
+    <title>Connexion requise - Ramène Ta Poire</title>
+    <link rel="icon" href="/favicon.ico" />
+    <style>
+      :root {
+        color-scheme: light;
+        --page: #f8f6ed;
+        --card: #fffdf7;
+        --border: #e7d9b7;
+        --text: #252904;
+        --muted: #62583b;
+        --accent: #7b8613;
+        --accent-soft: #e9f54b;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background:
+          radial-gradient(circle at 50% 8%, rgba(233, 245, 75, 0.18), transparent 34%),
+          var(--page);
+        color: var(--text);
+        font-family:
+          "Trebuchet MS",
+          "Segoe UI",
+          system-ui,
+          -apple-system,
+          sans-serif;
+      }
+
+      main {
+        width: min(100%, 430px);
+        display: grid;
+        gap: 18px;
+        justify-items: center;
+        text-align: center;
+      }
+
+      .card {
+        width: 100%;
+        padding: 32px 24px;
+        border: 1px solid var(--border);
+        border-radius: 28px;
+        background: linear-gradient(180deg, var(--card) 0%, #fbf7ed 100%);
+        box-shadow: 0 24px 52px rgba(63, 49, 20, 0.12);
+      }
+
+      .logo {
+        width: 74px;
+        height: 74px;
+        margin: 0 auto 18px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #ffffff;
+        border: 1px solid var(--border);
+      }
+
+      .logo img {
+        width: 52px;
+        height: 52px;
+        object-fit: contain;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 28px;
+        line-height: 1.02;
+        letter-spacing: 0;
+      }
+
+      p {
+        margin: 12px auto 0;
+        max-width: 330px;
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.45;
+      }
+
+      button {
+        min-height: 42px;
+        margin-top: 24px;
+        padding: 0 22px;
+        border: 1px solid var(--accent);
+        border-radius: 999px;
+        background: var(--accent);
+        color: #fffdf7;
+        font: inherit;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .hint {
+        margin-top: 10px;
+        font-size: 13px;
+        color: #83764c;
+      }
+
+      @media (max-width: 480px) {
+        body {
+          padding: 16px;
+        }
+
+        .card {
+          padding: 28px 20px;
+          border-radius: 24px;
+        }
+
+        h1 {
+          font-size: 25px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="card" aria-labelledby="offline-title">
+        <div class="logo" aria-hidden="true">
+          <img src="/icons/icon-192.png" alt="" />
+        </div>
+        <h1 id="offline-title">Connexion Internet requise</h1>
+        <p>
+          Ramène Ta Poire a besoin d'une connexion pour afficher les repas,
+          les réservations et les messages.
+        </p>
+        <button type="button" onclick="window.location.reload()">
+          Réessayer
+        </button>
+        <p class="hint">Reconnecte-toi à Internet, puis réessaie.</p>
+      </section>
+    </main>
+  </body>
+</html>
