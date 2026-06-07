@@ -139,6 +139,23 @@ export class MessagingGateway
     };
   }
 
+  @SubscribeMessage('messaging:markRead')
+  async handleMarkRead(
+    @ConnectedSocket() client: AuthenticatedSocket,
+    @MessageBody() payload: JoinConversationPayload,
+  ) {
+    const userId = this.getAuthenticatedUserId(client);
+    const unreadCount = await this.messagingService.markConversationAsRead(
+      userId,
+      Number(payload.conversationId),
+    );
+
+    return {
+      event: 'messaging:unreadCount',
+      data: unreadCount,
+    };
+  }
+
   @SubscribeMessage('messaging:joinConversation')
   async handleJoinConversation(
     @ConnectedSocket() client: AuthenticatedSocket,

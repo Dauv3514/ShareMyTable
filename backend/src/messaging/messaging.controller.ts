@@ -34,12 +34,27 @@ export class MessagingController {
   }
 
   @UseGuards(AuthGuard)
+  @Get('unread-count')
+  async getUnreadCount(@Req() req: IAuthInfoRequest) {
+    return this.messagingService.getUnreadMessagesCount(Number(req.user.sub));
+  }
+
+  @UseGuards(AuthGuard)
   @Get('conversations/:id/messages')
   async getConversationMessages(
     @Req() req: IAuthInfoRequest,
     @Param('id', ParseIntPipe) id: number,
   ) {
     return this.messagingService.getConversationMessages(Number(req.user.sub), id);
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('conversations/:id/read')
+  async markConversationAsRead(
+    @Req() req: IAuthInfoRequest,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.messagingService.markConversationAsRead(Number(req.user.sub), id);
   }
 
   @UseGuards(AuthGuard)

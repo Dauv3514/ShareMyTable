@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { Download, Share2, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/app/providers/AuthProvider";
+import { fetchUnreadMessagesCount } from "@/lib/messaging";
 import styles from "./pwa-install.module.scss";
 
 type BeforeInstallPromptEvent = Event & {
@@ -13,6 +14,11 @@ type BeforeInstallPromptEvent = Event & {
     outcome: "accepted" | "dismissed";
     platform: string;
   }>;
+};
+
+type NavigatorWithBadges = Navigator & {
+  clearAppBadge?: () => Promise<void>;
+  setAppBadge?: (contents?: number) => Promise<void>;
 };
 
 export type PushNotificationPreferences = {
@@ -57,6 +63,7 @@ const PWA_RESERVATION_NUDGE_KEY = "ramene-ta-poire:pwa-install-reservation-nudge
 const PWA_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 
 export const PWA_INSTALL_NUDGE_EVENT = "ramene-ta-poire:pwa-install-nudge";
+export const PWA_BADGE_REFRESH_EVENT = "ramene-ta-poire:pwa-badge-refresh";
 
 const DEFAULT_PUSH_NOTIFICATION_PREFERENCES: PushNotificationPreferences = {
   messages: true,
@@ -137,6 +144,27 @@ const isPushSupported = () =>
   "serviceWorker" in navigator &&
   "PushManager" in window;
 
+const setApplicationBadge = async (count: number) => {
+  if (typeof navigator === "undefined") {
+    return;
+  }
+
+  const badgeNavigator = navigator as NavigatorWithBadges;
+
+  try {
+    if (count > 0 && badgeNavigator.setAppBadge) {
+      await badgeNavigator.setAppBadge(count);
+      return;
+    }
+
+    if (count <= 0 && badgeNavigator.clearAppBadge) {
+      await badgeNavigator.clearAppBadge();
+    }
+  } catch {
+    // La Badging API est progressive: si elle échoue, l'app reste utilisable.
+  }
+};
+
 const normalizeNotificationPreferences = (
   payload: Partial<PushNotificationPreferences>,
 ): PushNotificationPreferences => ({
@@ -212,6 +240,31 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
 
     setIsNudgeVisible(true);
   }, [canInstall]);
+
+  const refreshAppBadge = useCallback(async () => {
+    if (!hasMounted) {
+      return;
+    }
+
+    if (!isLoggedIn || !user) {
+      await setApplicationBadge(0);
+      return;
+    }
+
+    const token = window.localStorage.getItem("token");
+
+    if (!token) {
+      await setApplicationBadge(0);
+      return;
+    }
+
+    try {
+      const unreadCount = await fetchUnreadMessagesCount(token);
+      await setApplicationBadge(unreadCount);
+    } catch {
+      // Le badge ne doit jamais bloquer l'app si l'API ou le réseau répond mal.
+    }
+  }, [hasMounted, isLoggedIn, user]);
 
   const dismissInstallPrompt = useCallback(() => {
     if (typeof window !== "undefined") {
@@ -548,6 +601,35 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       window.removeEventListener(PWA_INSTALL_NUDGE_EVENT, handleActionNudge);
     };
   }, []);
+
+  useEffect(() => {
+    if (!hasMounted) {
+      return;
+    }
+
+    void refreshAppBadge();
+
+    const intervalId = window.setInterval(() => {
+      void refreshAppBadge();
+    }, 60 * 1000);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void refreshAppBadge();
+      }
+    };
+    const handleBadgeRefresh = () => {
+      void refreshAppBadge();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener(PWA_BADGE_REFRESH_EVENT, handleBadgeRefresh);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener(PWA_BADGE_REFRESH_EVENT, handleBadgeRefresh);
+    };
+  }, [hasMounted, refreshAppBadge]);
 
   useEffect(() => {
     if (
