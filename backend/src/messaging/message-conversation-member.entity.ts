@@ -43,6 +43,9 @@ export class MessageConversationMember {
   })
   role: MessageConversationMemberRole;
 
+  @Column({ name: 'last_read_at', type: 'timestamp', nullable: true })
+  lastReadAt: Date | null;
+
   @CreateDateColumn({ name: 'joined_at' })
   joinedAt: Date;
 }

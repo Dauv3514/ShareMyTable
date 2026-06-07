@@ -12,6 +12,7 @@ import {
   useState,
 } from "react";
 import { useAuth } from "@/app/providers/AuthProvider";
+import { PWA_BADGE_REFRESH_EVENT } from "@/components/Pwa";
 import { buildMealEventHref } from "@/lib/meal-data";
 import ConversationAvatar from "../ConversationAvatar";
 import {
@@ -90,6 +91,10 @@ function sortMealConversations(conversations: MessagingConversationSummary[]) {
   });
 }
 
+function refreshPwaBadge() {
+  window.dispatchEvent(new Event(PWA_BADGE_REFRESH_EVENT));
+}
+
 export default function MealMessagesPage() {
   const params = useParams<{ mealId: string }>();
   const router = useRouter();
@@ -121,6 +126,7 @@ export default function MealMessagesPage() {
 
       setConversations(nextConversations);
       setMealDetails(nextMealDetails);
+      refreshPwaBadge();
     } catch (error) {
       const fallbackMessage =
         "Impossible de charger les discussions de cet événement.";
@@ -162,10 +168,12 @@ export default function MealMessagesPage() {
     socket.on("messaging:ready", (payload: { conversations: MessagingConversationSummary[] }) => {
       setConversations(payload.conversations);
       setIsFetching(false);
+      refreshPwaBadge();
     });
 
     socket.on("messaging:newMessage", () => {
       void loadMealConversations();
+      refreshPwaBadge();
     });
 
     return () => {

@@ -12,6 +12,7 @@ import {
 } from "react";
 import { toast } from "react-toastify";
 import { useAuth } from "@/app/providers/AuthProvider";
+import { PWA_BADGE_REFRESH_EVENT } from "@/components/Pwa";
 import ConversationAvatar from "./ConversationAvatar";
 import {
   createMessagingSocket,
@@ -62,6 +63,10 @@ function getLatestSenderLabel(
 
 function getLatestMessageBody(message: MessagingMealThread["latestMessage"]) {
   return message?.body || "Aucun message pour le moment.";
+}
+
+function refreshPwaBadge() {
+  window.dispatchEvent(new Event(PWA_BADGE_REFRESH_EVENT));
 }
 
 type MealThreadRowProps = {
@@ -156,6 +161,7 @@ export default function MessagesPage() {
       setErrorMessage(null);
       const nextConversations = await fetchMessagingConversations(token);
       setConversations(nextConversations);
+      refreshPwaBadge();
     } catch (error) {
       const fallbackMessage =
         "Impossible de charger ta messagerie pour le moment.";
@@ -200,10 +206,12 @@ export default function MessagesPage() {
     socket.on("messaging:ready", (payload: { conversations: MessagingConversationSummary[] }) => {
       setConversations(payload.conversations);
       setIsFetching(false);
+      refreshPwaBadge();
     });
 
     socket.on("messaging:newMessage", () => {
       void loadConversations();
+      refreshPwaBadge();
     });
 
     socket.on("messaging:error", (payload: { message?: string }) => {

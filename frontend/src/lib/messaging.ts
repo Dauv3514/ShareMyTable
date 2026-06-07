@@ -32,6 +32,7 @@ export type MessagingConversationSummary = {
   title: string | null;
   createdAt: string;
   updatedAt: string;
+  unreadCount: number;
   meal: {
     mealId: number;
     title: string | null;
@@ -239,6 +240,41 @@ export async function fetchMessagingConversations(token: string) {
   });
 
   return response.data;
+}
+
+export async function fetchUnreadMessagesCount(token: string) {
+  const endpoint = toApiPath("/messaging/unread-count");
+
+  if (!endpoint) {
+    throw new Error("NEXT_PUBLIC_API_URL est manquante.");
+  }
+
+  const response = await axios.get<{ unreadCount: number }>(endpoint, {
+    headers: getAuthHeaders(token),
+  });
+
+  return response.data.unreadCount;
+}
+
+export async function markMessagingConversationRead(
+  token: string,
+  conversationId: number,
+) {
+  const endpoint = toApiPath(`/messaging/conversations/${conversationId}/read`);
+
+  if (!endpoint) {
+    throw new Error("NEXT_PUBLIC_API_URL est manquante.");
+  }
+
+  const response = await axios.post<{ unreadCount: number }>(
+    endpoint,
+    {},
+    {
+      headers: getAuthHeaders(token),
+    },
+  );
+
+  return response.data.unreadCount;
 }
 
 export async function fetchMessagingConversationDetail(token: string, conversationId: number) {

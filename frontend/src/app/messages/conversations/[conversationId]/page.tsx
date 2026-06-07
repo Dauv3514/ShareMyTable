@@ -12,6 +12,7 @@ import {
 } from "react";
 import UserAvatar from "@/components/UserAvatar";
 import { useAuth } from "@/app/providers/AuthProvider";
+import { PWA_BADGE_REFRESH_EVENT } from "@/components/Pwa";
 import ConversationAvatar from "../../ConversationAvatar";
 import {
   createMessagingSocket,
@@ -74,6 +75,10 @@ function getUnreadStartIndex(
   return messages.length > 0 ? 0 : null;
 }
 
+function refreshPwaBadge() {
+  window.dispatchEvent(new Event(PWA_BADGE_REFRESH_EVENT));
+}
+
 export default function ConversationPage() {
   const params = useParams<{ conversationId: string }>();
   const router = useRouter();
@@ -108,6 +113,7 @@ export default function ConversationPage() {
     try {
       const detail = await fetchMessagingConversationDetail(token, conversationId);
       setConversation(detail);
+      refreshPwaBadge();
     } catch {
       setConversation(null);
     } finally {
@@ -161,7 +167,12 @@ export default function ConversationPage() {
       }
 
       setConversation(payload);
+      refreshPwaBadge();
       setTimeout(scrollToBottom, 0);
+    });
+
+    socket.on("messaging:unreadCount", () => {
+      refreshPwaBadge();
     });
 
     socket.on(
@@ -187,6 +198,7 @@ export default function ConversationPage() {
           };
         });
 
+        socket.emit("messaging:markRead", { conversationId });
         setTimeout(scrollToBottom, 0);
       },
     );
@@ -238,6 +250,7 @@ export default function ConversationPage() {
             ),
           };
         });
+        refreshPwaBadge();
       }
 
       setDraft("");
