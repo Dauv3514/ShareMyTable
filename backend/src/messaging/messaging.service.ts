@@ -7,6 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Meal } from '../meals/meal.entity';
+import { PushNotificationsService } from '../push-notifications/push-notifications.service';
 import { Utilisateur } from '../users/users.entity';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { MessageConversationMemberRole } from './message-conversation-member.entity';
@@ -73,6 +74,7 @@ export class MessagingService {
     private readonly mealsRepository: Repository<Meal>,
     @InjectRepository(Utilisateur)
     private readonly usersRepository: Repository<Utilisateur>,
+    private readonly pushNotificationsService: PushNotificationsService,
   ) {}
 
   async listMyConversations(userId: number): Promise<ConversationSummary[]> {
@@ -164,6 +166,8 @@ export class MessagingService {
     const savedMessage = await this.messagesRepository.save(message);
     conversation.updatedAt = new Date();
     await this.conversationsRepository.save(conversation);
+
+    await this.notifyConversationMembers(conversation, savedMessage, sender);
 
     return this.toMessageSummary(savedMessage);
   }
@@ -672,6 +676,43 @@ export class MessagingService {
     }
 
     return latestMessagesByConversationId;
+  }
+
+  private async notifyConversationMembers(
+    conversation: MessageConversation,
+    message: MessageEntry,
+    sender: Utilisateur,
+  ): Promise<void> {
+    const recipientUserIds = (conversation.members ?? [])
+      .map((member) => member.user?.id)
+      .filter(
+        (memberUserId): memberUserId is number =>
+          Boolean(memberUserId) && memberUserId !== sender.id,
+      );
+
+    if (recipientUserIds.length === 0) {
+      return;
+    }
+
+    const senderName =
+      sender.pseudo ||
+      [sender.firstName, sender.lastName].filter(Boolean).join(' ').trim() ||
+      'Nouveau message';
+    const mealTitle = conversation.meal?.title;
+    const body =
+      message.body.length > 90 ? `${message.body.slice(0, 87)}...` : message.body;
+
+    await this.pushNotificationsService.notifyUsers(recipientUserIds, {
+      title: mealTitle ? `${senderName} - ${mealTitle}` : senderName,
+      body,
+      url: `/messages/conversations/${conversation.id}`,
+      tag: `conversation-${conversation.id}`,
+      data: {
+        type: 'message',
+        conversationId: conversation.id,
+        messageId: message.id,
+      },
+    });
   }
 
   private async findConversationForMember(

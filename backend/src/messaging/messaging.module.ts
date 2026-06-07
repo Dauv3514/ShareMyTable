@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
 import { Meal } from '../meals/meal.entity';
+import { PushNotificationsModule } from '../push-notifications/push-notifications.module';
 import { Utilisateur } from '../users/users.entity';
 import { MessageConversationMember } from './message-conversation-member.entity';
 import { MessageConversation } from './message-conversation.entity';
@@ -20,6 +21,7 @@ import { MessagingService } from './messaging.service';
       Utilisateur,
     ]),
     AuthModule,
+    PushNotificationsModule,
   ],
   controllers: [MessagingController],
   providers: [MessagingService, MessagingGateway],

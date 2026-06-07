@@ -123,7 +123,7 @@ type ProfileActivityStats = {
 
 type PreferenceCategory = "dietary" | "ambiance";
 
-type ExpandablePanel = "profile" | "password" | null;
+type ExpandablePanel = "profile" | "password" | "notifications" | null;
 type ProfileSection = "overview" | "preferences" | "activity" | "payments" | "notifications";
 
 const PROFILE_NAVIGATE_EVENT = "profile-menu:navigate";
@@ -911,7 +911,15 @@ const ProfilPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isLoggedIn, loading, user } = useAuth();
-  const { openInstallPrompt, showProfileInstallEntry } = usePwaInstall();
+  const {
+    disablePushNotifications,
+    enablePushNotifications,
+    notificationPermission,
+    openInstallPrompt,
+    pushNotificationsEnabled,
+    pushNotificationsSupported,
+    showProfileInstallEntry,
+  } = usePwaInstall();
   const [expandedPanel, setExpandedPanel] = useState<ExpandablePanel>(null);
   const [hostProfile, setHostProfile] = useState<HostProfileSummary | null>(null);
   const [hostProfileLoading, setHostProfileLoading] = useState(true);
@@ -960,7 +968,11 @@ const ProfilPage = () => {
   ) => {
     window.requestAnimationFrame(() => {
       const target =
-        panel === "profile" ? profilePanelRef.current : passwordPanelRef.current;
+        panel === "profile"
+          ? profilePanelRef.current
+          : panel === "password"
+            ? passwordPanelRef.current
+            : notificationsSectionRef.current;
 
       if (target) {
         target.scrollIntoView({
@@ -1133,7 +1145,7 @@ const ProfilPage = () => {
   useEffect(() => {
     const panel = searchParams.get("panel");
 
-    if (panel === "profile" || panel === "password") {
+    if (panel === "profile" || panel === "password" || panel === "notifications") {
       setExpandedPanel(panel);
       return;
     }
@@ -1147,7 +1159,7 @@ const ProfilPage = () => {
     }
 
     const panel = searchParams.get("panel");
-    if (panel === "profile" || panel === "password") {
+    if (panel === "profile" || panel === "password" || panel === "notifications") {
       return;
     }
 
@@ -1416,6 +1428,19 @@ const ProfilPage = () => {
     toast.info(`${label} sera ajouté plus tard.`);
   };
 
+  const handleEnablePushNotifications = async () => {
+    const result = pushNotificationsEnabled
+      ? await disablePushNotifications()
+      : await enablePushNotifications();
+
+    if (result.success) {
+      toast.success(result.message);
+      return;
+    }
+
+    toast.info(result.message);
+  };
+
   const handleAddPreferenceTag = (rawValue: string) => {
     const nextTag = normalizePreferenceTag(rawValue);
     const targetCategory = activePreferenceModal;
@@ -1476,6 +1501,23 @@ const ProfilPage = () => {
   const noteValue = activityStatsLoading
     ? "..."
     : formatAverageRating(activityStats.averageRating);
+  const notificationsTitle = pushNotificationsEnabled
+    ? "Notifications activées"
+    : notificationPermission === "denied"
+      ? "Notifications bloquées"
+      : "Notifications téléphone";
+  const notificationsDescription = !pushNotificationsSupported
+    ? "Ton navigateur ne permet pas les notifications Web Push."
+    : pushNotificationsEnabled
+      ? "Cet appareil recevra les nouveaux messages et les infos de réservation."
+      : notificationPermission === "denied"
+        ? "Tu peux les réactiver dans les réglages de ton navigateur."
+        : "Active les alertes pour les messages, réservations et réponses d'hôte.";
+  const notificationsActionLabel = pushNotificationsEnabled
+    ? "Désactiver"
+    : notificationPermission === "denied"
+      ? "Bloquées"
+      : "Activer";
 
   return (
     <section className={styles.page}>
@@ -1781,10 +1823,33 @@ const ProfilPage = () => {
               <div ref={notificationsSectionRef}>
                 <ActionRow
                   icon={Bell}
-                  label="Notifications"
+                  label="Notifications téléphone"
+                  expanded={expandedPanel === "notifications"}
                   showArrow={false}
-                  onClick={() => handlePlaceholderClick("Notifications")}
+                  onClick={() => handlePanelToggle("notifications")}
                 />
+
+                {expandedPanel === "notifications" ? (
+                  <div className={styles.expandedPanel}>
+                    <div className={styles.notificationCard}>
+                      <div className={styles.notificationCopy}>
+                        <strong>{notificationsTitle}</strong>
+                        <p>{notificationsDescription}</p>
+                      </div>
+                      <button
+                        type="button"
+                        className={styles.secondaryButton}
+                        onClick={() => void handleEnablePushNotifications()}
+                        disabled={
+                          !pushNotificationsSupported ||
+                          notificationPermission === "denied"
+                        }
+                      >
+                        {notificationsActionLabel}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
 
