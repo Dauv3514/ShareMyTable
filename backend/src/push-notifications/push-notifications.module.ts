@@ -4,13 +4,18 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
 import { Utilisateur } from '../users/users.entity';
 import { PushNotificationsController } from './push-notifications.controller';
+import { PushNotificationPreference } from './push-notification-preference.entity';
 import { PushSubscriptionEntity } from './push-subscription.entity';
 import { PushNotificationsService } from './push-notifications.service';
 
 @Module({
   imports: [
     ConfigModule,
-    TypeOrmModule.forFeature([PushSubscriptionEntity, Utilisateur]),
+    TypeOrmModule.forFeature([
+      PushNotificationPreference,
+      PushSubscriptionEntity,
+      Utilisateur,
+    ]),
     AuthModule,
   ],
   controllers: [PushNotificationsController],

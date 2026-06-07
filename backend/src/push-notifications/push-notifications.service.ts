@@ -5,6 +5,8 @@ import { In, Repository } from 'typeorm';
 import * as webPush from 'web-push';
 import { Utilisateur } from '../users/users.entity';
 import { SavePushSubscriptionDto } from './dto/save-push-subscription.dto';
+import { UpdatePushNotificationPreferencesDto } from './dto/update-push-notification-preferences.dto';
+import { PushNotificationPreference } from './push-notification-preference.entity';
 import { PushSubscriptionEntity } from './push-subscription.entity';
 
 export type PushNotificationPayload = {
@@ -15,6 +17,20 @@ export type PushNotificationPayload = {
   data?: Record<string, unknown>;
 };
 
+export enum PushNotificationCategory {
+  MESSAGES = 'messages',
+  RESERVATIONS = 'reservations',
+  MEAL_REMINDERS = 'mealReminders',
+  HOST_STATUS = 'hostStatus',
+}
+
+export type PushNotificationPreferencesResponse = {
+  messages: boolean;
+  reservations: boolean;
+  mealReminders: boolean;
+  hostStatus: boolean;
+};
+
 @Injectable()
 export class PushNotificationsService {
   private readonly logger = new Logger(PushNotificationsService.name);
@@ -23,6 +39,8 @@ export class PushNotificationsService {
 
   constructor(
     private readonly configService: ConfigService,
+    @InjectRepository(PushNotificationPreference)
+    private readonly preferencesRepository: Repository<PushNotificationPreference>,
     @InjectRepository(PushSubscriptionEntity)
     private readonly subscriptionsRepository: Repository<PushSubscriptionEntity>,
     @InjectRepository(Utilisateur)
@@ -105,7 +123,47 @@ export class PushNotificationsService {
     return { success: true };
   }
 
-  async notifyUsers(userIds: number[], payload: PushNotificationPayload) {
+  async getPreferences(
+    userId: number,
+  ): Promise<PushNotificationPreferencesResponse> {
+    const preferences = await this.getOrCreatePreferences(userId);
+
+    return this.toPreferencesResponse(preferences);
+  }
+
+  async updatePreferences(
+    userId: number,
+    dto: UpdatePushNotificationPreferencesDto,
+  ): Promise<PushNotificationPreferencesResponse> {
+    const preferences = await this.getOrCreatePreferences(userId);
+
+    if (typeof dto.messages === 'boolean') {
+      preferences.messagesEnabled = dto.messages;
+    }
+
+    if (typeof dto.reservations === 'boolean') {
+      preferences.reservationsEnabled = dto.reservations;
+    }
+
+    if (typeof dto.mealReminders === 'boolean') {
+      preferences.mealRemindersEnabled = dto.mealReminders;
+    }
+
+    if (typeof dto.hostStatus === 'boolean') {
+      preferences.hostStatusEnabled = dto.hostStatus;
+    }
+
+    const savedPreferences =
+      await this.preferencesRepository.save(preferences);
+
+    return this.toPreferencesResponse(savedPreferences);
+  }
+
+  async notifyUsers(
+    userIds: number[],
+    payload: PushNotificationPayload,
+    category?: PushNotificationCategory,
+  ) {
     const uniqueUserIds = Array.from(
       new Set(
         userIds
@@ -118,8 +176,17 @@ export class PushNotificationsService {
       return;
     }
 
+    const eligibleUserIds = await this.findEnabledUserIdsForCategory(
+      uniqueUserIds,
+      category,
+    );
+
+    if (eligibleUserIds.length === 0) {
+      return;
+    }
+
     const subscriptions = await this.subscriptionsRepository.find({
-      where: { user: { id: In(uniqueUserIds) } },
+      where: { user: { id: In(eligibleUserIds) } },
     });
 
     await Promise.all(
@@ -127,6 +194,87 @@ export class PushNotificationsService {
         this.sendToSubscription(subscription, payload),
       ),
     );
+  }
+
+  private async getOrCreatePreferences(
+    userId: number,
+  ): Promise<PushNotificationPreference> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('Utilisateur introuvable');
+    }
+
+    const existingPreferences = await this.preferencesRepository.findOne({
+      where: { user: { id: userId } },
+      relations: ['user'],
+    });
+
+    if (existingPreferences) {
+      return existingPreferences;
+    }
+
+    return this.preferencesRepository.save(
+      this.preferencesRepository.create({
+        user,
+        messagesEnabled: true,
+        reservationsEnabled: true,
+        mealRemindersEnabled: true,
+        hostStatusEnabled: true,
+      }),
+    );
+  }
+
+  private toPreferencesResponse(
+    preferences: PushNotificationPreference,
+  ): PushNotificationPreferencesResponse {
+    return {
+      messages: preferences.messagesEnabled,
+      reservations: preferences.reservationsEnabled,
+      mealReminders: preferences.mealRemindersEnabled,
+      hostStatus: preferences.hostStatusEnabled,
+    };
+  }
+
+  private async findEnabledUserIdsForCategory(
+    userIds: number[],
+    category?: PushNotificationCategory,
+  ): Promise<number[]> {
+    if (!category) {
+      return userIds;
+    }
+
+    const preferences = await this.preferencesRepository.find({
+      where: { user: { id: In(userIds) } },
+      relations: ['user'],
+    });
+    const disabledUserIds = new Set<number>();
+
+    for (const preference of preferences) {
+      if (!this.isCategoryEnabled(preference, category)) {
+        disabledUserIds.add(preference.user.id);
+      }
+    }
+
+    return userIds.filter((userId) => !disabledUserIds.has(userId));
+  }
+
+  private isCategoryEnabled(
+    preferences: PushNotificationPreference,
+    category: PushNotificationCategory,
+  ): boolean {
+    switch (category) {
+      case PushNotificationCategory.MESSAGES:
+        return preferences.messagesEnabled;
+      case PushNotificationCategory.RESERVATIONS:
+        return preferences.reservationsEnabled;
+      case PushNotificationCategory.MEAL_REMINDERS:
+        return preferences.mealRemindersEnabled;
+      case PushNotificationCategory.HOST_STATUS:
+        return preferences.hostStatusEnabled;
+      default:
+        return true;
+    }
   }
 
   private async sendToSubscription(

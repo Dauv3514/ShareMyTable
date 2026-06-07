@@ -7,7 +7,10 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Meal } from '../meals/meal.entity';
-import { PushNotificationsService } from '../push-notifications/push-notifications.service';
+import {
+  PushNotificationCategory,
+  PushNotificationsService,
+} from '../push-notifications/push-notifications.service';
 import { Utilisateur } from '../users/users.entity';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { MessageConversationMemberRole } from './message-conversation-member.entity';
@@ -702,17 +705,21 @@ export class MessagingService {
     const body =
       message.body.length > 90 ? `${message.body.slice(0, 87)}...` : message.body;
 
-    await this.pushNotificationsService.notifyUsers(recipientUserIds, {
-      title: mealTitle ? `${senderName} - ${mealTitle}` : senderName,
-      body,
-      url: `/messages/conversations/${conversation.id}`,
-      tag: `conversation-${conversation.id}`,
-      data: {
-        type: 'message',
-        conversationId: conversation.id,
-        messageId: message.id,
+    await this.pushNotificationsService.notifyUsers(
+      recipientUserIds,
+      {
+        title: mealTitle ? `${senderName} - ${mealTitle}` : senderName,
+        body,
+        url: `/messages/conversations/${conversation.id}`,
+        tag: `conversation-${conversation.id}`,
+        data: {
+          type: 'message',
+          conversationId: conversation.id,
+          messageId: message.id,
+        },
       },
-    });
+      PushNotificationCategory.MESSAGES,
+    );
   }
 
   private async findConversationForMember(

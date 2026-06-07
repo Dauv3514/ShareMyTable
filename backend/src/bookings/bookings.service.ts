@@ -9,7 +9,10 @@ import { HostProfile } from '../host-profiles/host-profile.entity';
 import { Meal, MealStatus } from '../meals/meal.entity';
 import { MessagingService } from '../messaging/messaging.service';
 import { PaymentsService } from '../payments/payments.service';
-import { PushNotificationsService } from '../push-notifications/push-notifications.service';
+import {
+  PushNotificationCategory,
+  PushNotificationsService,
+} from '../push-notifications/push-notifications.service';
 import { Utilisateur } from '../users/users.entity';
 import {
   Booking,
@@ -366,59 +369,75 @@ export class BookingsService {
   }
 
   private async notifyHostNewBooking(booking: Booking): Promise<void> {
-    await this.pushNotificationsService.notifyUsers([booking.meal.host.id], {
-      title: 'Nouvelle demande de réservation',
-      body: `${this.getUserDisplayName(booking.guestUser)} souhaite réserver ${booking.seats} place${booking.seats > 1 ? 's' : ''} pour ${booking.meal.title ?? 'ton repas'}.`,
-      url: '/mes-evenements',
-      tag: `booking-request-${booking.id}`,
-      data: {
-        type: 'booking_request',
-        bookingId: booking.id,
-        mealId: booking.meal.id,
+    await this.pushNotificationsService.notifyUsers(
+      [booking.meal.host.id],
+      {
+        title: 'Nouvelle demande de réservation',
+        body: `${this.getUserDisplayName(booking.guestUser)} souhaite réserver ${booking.seats} place${booking.seats > 1 ? 's' : ''} pour ${booking.meal.title ?? 'ton repas'}.`,
+        url: '/mes-evenements',
+        tag: `booking-request-${booking.id}`,
+        data: {
+          type: 'booking_request',
+          bookingId: booking.id,
+          mealId: booking.meal.id,
+        },
       },
-    });
+      PushNotificationCategory.RESERVATIONS,
+    );
   }
 
   private async notifyGuestBookingAccepted(booking: Booking): Promise<void> {
-    await this.pushNotificationsService.notifyUsers([booking.guestUser.id], {
-      title: 'Réservation acceptée',
-      body: `Ta réservation pour ${booking.meal.title ?? 'le repas'} a été acceptée.`,
-      url: `/reservation/${booking.meal.id}/confirmation?reservationId=${booking.id}`,
-      tag: `booking-${booking.id}`,
-      data: {
-        type: 'booking_accepted',
-        bookingId: booking.id,
-        mealId: booking.meal.id,
+    await this.pushNotificationsService.notifyUsers(
+      [booking.guestUser.id],
+      {
+        title: 'Réservation acceptée',
+        body: `Ta réservation pour ${booking.meal.title ?? 'le repas'} a été acceptée.`,
+        url: `/reservation/${booking.meal.id}/confirmation?reservationId=${booking.id}`,
+        tag: `booking-${booking.id}`,
+        data: {
+          type: 'booking_accepted',
+          bookingId: booking.id,
+          mealId: booking.meal.id,
+        },
       },
-    });
+      PushNotificationCategory.RESERVATIONS,
+    );
   }
 
   private async notifyGuestBookingRefused(booking: Booking): Promise<void> {
-    await this.pushNotificationsService.notifyUsers([booking.guestUser.id], {
-      title: 'Réservation refusée',
-      body: `Ta demande pour ${booking.meal.title ?? 'le repas'} n'a pas été acceptée.`,
-      url: `/reservation/${booking.meal.id}/confirmation?reservationId=${booking.id}`,
-      tag: `booking-${booking.id}`,
-      data: {
-        type: 'booking_refused',
-        bookingId: booking.id,
-        mealId: booking.meal.id,
+    await this.pushNotificationsService.notifyUsers(
+      [booking.guestUser.id],
+      {
+        title: 'Réservation refusée',
+        body: `Ta demande pour ${booking.meal.title ?? 'le repas'} n'a pas été acceptée.`,
+        url: `/reservation/${booking.meal.id}/confirmation?reservationId=${booking.id}`,
+        tag: `booking-${booking.id}`,
+        data: {
+          type: 'booking_refused',
+          bookingId: booking.id,
+          mealId: booking.meal.id,
+        },
       },
-    });
+      PushNotificationCategory.RESERVATIONS,
+    );
   }
 
   private async notifyHostBookingCancelled(booking: Booking): Promise<void> {
-    await this.pushNotificationsService.notifyUsers([booking.meal.host.id], {
-      title: 'Réservation annulée',
-      body: `${this.getUserDisplayName(booking.guestUser)} a annulé sa réservation pour ${booking.meal.title ?? 'ton repas'}.`,
-      url: '/mes-evenements',
-      tag: `booking-${booking.id}`,
-      data: {
-        type: 'booking_cancelled',
-        bookingId: booking.id,
-        mealId: booking.meal.id,
+    await this.pushNotificationsService.notifyUsers(
+      [booking.meal.host.id],
+      {
+        title: 'Réservation annulée',
+        body: `${this.getUserDisplayName(booking.guestUser)} a annulé sa réservation pour ${booking.meal.title ?? 'ton repas'}.`,
+        url: '/mes-evenements',
+        tag: `booking-${booking.id}`,
+        data: {
+          type: 'booking_cancelled',
+          bookingId: booking.id,
+          mealId: booking.meal.id,
+        },
       },
-    });
+      PushNotificationCategory.RESERVATIONS,
+    );
   }
 
   private getUserDisplayName(user: Utilisateur): string {
