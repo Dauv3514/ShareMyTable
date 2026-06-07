@@ -29,7 +29,7 @@ import {
   useState,
 } from "react";
 import { toast } from "react-toastify";
-import { usePwaInstall } from "@/components/Pwa";
+import { usePwaInstall, type PushNotificationPreferences } from "@/components/Pwa";
 import UserAvatar from "@/components/UserAvatar";
 import DatePickerField from "@/components/DatePicker";
 import {
@@ -122,11 +122,39 @@ type ProfileActivityStats = {
 };
 
 type PreferenceCategory = "dietary" | "ambiance";
+type NotificationPreferenceKey = keyof PushNotificationPreferences;
 
 type ExpandablePanel = "profile" | "password" | "notifications" | null;
 type ProfileSection = "overview" | "preferences" | "activity" | "payments" | "notifications";
 
 const PROFILE_NAVIGATE_EVENT = "profile-menu:navigate";
+
+const NOTIFICATION_PREFERENCE_ITEMS: Array<{
+  key: NotificationPreferenceKey;
+  title: string;
+  description: string;
+}> = [
+  {
+    key: "messages",
+    title: "Messages",
+    description: "Nouveaux messages dans les conversations individuelles et de groupe.",
+  },
+  {
+    key: "reservations",
+    title: "Réservations",
+    description: "Demandes, acceptations, refus et annulations de réservation.",
+  },
+  {
+    key: "mealReminders",
+    title: "Rappels repas",
+    description: "Rappels avant un repas auquel tu participes ou que tu organises.",
+  },
+  {
+    key: "hostStatus",
+    title: "Statut hôte",
+    description: "Mises à jour sur ta demande hôte et sa validation.",
+  },
+];
 
 const toDateInputValue = (value: string | null | undefined) => {
   if (!value) {
@@ -915,10 +943,13 @@ const ProfilPage = () => {
     disablePushNotifications,
     enablePushNotifications,
     notificationPermission,
+    notificationPreferences,
+    notificationPreferencesLoading,
     openInstallPrompt,
     pushNotificationsEnabled,
     pushNotificationsSupported,
     showProfileInstallEntry,
+    updateNotificationPreferences,
   } = usePwaInstall();
   const [expandedPanel, setExpandedPanel] = useState<ExpandablePanel>(null);
   const [hostProfile, setHostProfile] = useState<HostProfileSummary | null>(null);
@@ -1441,6 +1472,20 @@ const ProfilPage = () => {
     toast.info(result.message);
   };
 
+  const handleNotificationPreferenceChange = async (
+    key: NotificationPreferenceKey,
+    enabled: boolean
+  ) => {
+    const result = await updateNotificationPreferences({ [key]: enabled });
+
+    if (result.success) {
+      toast.success(result.message);
+      return;
+    }
+
+    toast.error(result.message);
+  };
+
   const handleAddPreferenceTag = (rawValue: string) => {
     const nextTag = normalizePreferenceTag(rawValue);
     const targetCategory = activePreferenceModal;
@@ -1847,6 +1892,44 @@ const ProfilPage = () => {
                       >
                         {notificationsActionLabel}
                       </button>
+                    </div>
+
+                    <div className={styles.notificationPreferences}>
+                      <div className={styles.notificationPreferencesHeader}>
+                        <strong>Préférences de notifications</strong>
+                        <p>Choisis les alertes que tu veux recevoir sur cet appareil.</p>
+                      </div>
+
+                      <div className={styles.notificationPreferenceList}>
+                        {NOTIFICATION_PREFERENCE_ITEMS.map((item) => (
+                          <label
+                            key={item.key}
+                            className={styles.notificationPreferenceRow}
+                          >
+                            <span className={styles.notificationPreferenceText}>
+                              <strong>{item.title}</strong>
+                              <small>{item.description}</small>
+                            </span>
+
+                            <input
+                              type="checkbox"
+                              className={styles.notificationToggleInput}
+                              checked={notificationPreferences[item.key]}
+                              disabled={notificationPreferencesLoading}
+                              onChange={(event) =>
+                                void handleNotificationPreferenceChange(
+                                  item.key,
+                                  event.target.checked,
+                                )
+                              }
+                            />
+                            <span
+                              className={styles.notificationToggle}
+                              aria-hidden="true"
+                            />
+                          </label>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 ) : null}

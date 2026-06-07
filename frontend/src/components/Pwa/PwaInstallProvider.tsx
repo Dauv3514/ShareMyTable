@@ -15,11 +15,20 @@ type BeforeInstallPromptEvent = Event & {
   }>;
 };
 
+export type PushNotificationPreferences = {
+  messages: boolean;
+  reservations: boolean;
+  mealReminders: boolean;
+  hostStatus: boolean;
+};
+
 type PwaInstallContextValue = {
   canInstall: boolean;
   isInstalled: boolean;
   isIosInstall: boolean;
   notificationPermission: NotificationPermission | "unsupported";
+  notificationPreferences: PushNotificationPreferences;
+  notificationPreferencesLoading: boolean;
   pushNotificationsEnabled: boolean;
   pushNotificationsSupported: boolean;
   showProfileInstallEntry: boolean;
@@ -28,6 +37,12 @@ type PwaInstallContextValue = {
     message: string;
   }>;
   enablePushNotifications: () => Promise<{
+    success: boolean;
+    message: string;
+  }>;
+  updateNotificationPreferences: (
+    preferences: Partial<PushNotificationPreferences>,
+  ) => Promise<{
     success: boolean;
     message: string;
   }>;
@@ -43,11 +58,20 @@ const PWA_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 
 export const PWA_INSTALL_NUDGE_EVENT = "ramene-ta-poire:pwa-install-nudge";
 
+const DEFAULT_PUSH_NOTIFICATION_PREFERENCES: PushNotificationPreferences = {
+  messages: true,
+  reservations: true,
+  mealReminders: true,
+  hostStatus: true,
+};
+
 const PwaInstallContext = createContext<PwaInstallContextValue>({
   canInstall: false,
   isInstalled: false,
   isIosInstall: false,
   notificationPermission: "unsupported",
+  notificationPreferences: DEFAULT_PUSH_NOTIFICATION_PREFERENCES,
+  notificationPreferencesLoading: false,
   pushNotificationsEnabled: false,
   pushNotificationsSupported: false,
   showProfileInstallEntry: false,
@@ -58,6 +82,10 @@ const PwaInstallContext = createContext<PwaInstallContextValue>({
   enablePushNotifications: async () => ({
     success: false,
     message: "Notifications indisponibles.",
+  }),
+  updateNotificationPreferences: async () => ({
+    success: false,
+    message: "Préférences indisponibles.",
   }),
   openInstallPrompt: async () => undefined,
   dismissInstallPrompt: () => undefined,
@@ -109,6 +137,27 @@ const isPushSupported = () =>
   "serviceWorker" in navigator &&
   "PushManager" in window;
 
+const normalizeNotificationPreferences = (
+  payload: Partial<PushNotificationPreferences>,
+): PushNotificationPreferences => ({
+  messages:
+    typeof payload.messages === "boolean"
+      ? payload.messages
+      : DEFAULT_PUSH_NOTIFICATION_PREFERENCES.messages,
+  reservations:
+    typeof payload.reservations === "boolean"
+      ? payload.reservations
+      : DEFAULT_PUSH_NOTIFICATION_PREFERENCES.reservations,
+  mealReminders:
+    typeof payload.mealReminders === "boolean"
+      ? payload.mealReminders
+      : DEFAULT_PUSH_NOTIFICATION_PREFERENCES.mealReminders,
+  hostStatus:
+    typeof payload.hostStatus === "boolean"
+      ? payload.hostStatus
+      : DEFAULT_PUSH_NOTIFICATION_PREFERENCES.hostStatus,
+});
+
 const urlBase64ToUint8Array = (base64String: string) => {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = `${base64String}${padding}`.replace(/-/g, "+").replace(/_/g, "/");
@@ -135,6 +184,10 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
   const [notificationPermission, setNotificationPermission] = useState<
     NotificationPermission | "unsupported"
   >("unsupported");
+  const [notificationPreferences, setNotificationPreferences] =
+    useState<PushNotificationPreferences>(DEFAULT_PUSH_NOTIFICATION_PREFERENCES);
+  const [notificationPreferencesLoading, setNotificationPreferencesLoading] =
+    useState(false);
   const [pushNotificationsSupported, setPushNotificationsSupported] = useState(false);
   const [hasPushSubscription, setHasPushSubscription] = useState(false);
 
@@ -303,6 +356,102 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     [syncPushSubscription],
   );
 
+  const loadNotificationPreferences = useCallback(async () => {
+    if (!isLoggedIn || !user) {
+      setNotificationPreferences(DEFAULT_PUSH_NOTIFICATION_PREFERENCES);
+      return;
+    }
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const token = window.localStorage.getItem("token");
+
+    if (!apiUrl || !token) {
+      setNotificationPreferences(DEFAULT_PUSH_NOTIFICATION_PREFERENCES);
+      return;
+    }
+
+    setNotificationPreferencesLoading(true);
+
+    try {
+      const response = await fetch(`${apiUrl}/push-notifications/preferences`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        setNotificationPreferences(DEFAULT_PUSH_NOTIFICATION_PREFERENCES);
+        return;
+      }
+
+      const payload = (await response.json()) as Partial<PushNotificationPreferences>;
+      setNotificationPreferences(normalizeNotificationPreferences(payload));
+    } finally {
+      setNotificationPreferencesLoading(false);
+    }
+  }, [isLoggedIn, user]);
+
+  const updateNotificationPreferences = useCallback(
+    async (preferences: Partial<PushNotificationPreferences>) => {
+      if (!isLoggedIn || !user) {
+        return {
+          success: false,
+          message: "Connecte-toi pour modifier tes préférences.",
+        };
+      }
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const token = window.localStorage.getItem("token");
+
+      if (!apiUrl || !token) {
+        return {
+          success: false,
+          message: "Configuration API manquante pour les préférences.",
+        };
+      }
+
+      const previousPreferences = notificationPreferences;
+      setNotificationPreferences((currentPreferences) => ({
+        ...currentPreferences,
+        ...preferences,
+      }));
+
+      try {
+        const response = await fetch(`${apiUrl}/push-notifications/preferences`, {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(preferences),
+        });
+
+        if (!response.ok) {
+          setNotificationPreferences(previousPreferences);
+          return {
+            success: false,
+            message: "Impossible d'enregistrer tes préférences.",
+          };
+        }
+
+        const payload = (await response.json()) as Partial<PushNotificationPreferences>;
+        setNotificationPreferences(normalizeNotificationPreferences(payload));
+
+        return {
+          success: true,
+          message: "Préférences enregistrées.",
+        };
+      } catch {
+        setNotificationPreferences(previousPreferences);
+        return {
+          success: false,
+          message: "Impossible d'enregistrer tes préférences.",
+        };
+      }
+    },
+    [isLoggedIn, notificationPreferences, user],
+  );
+
   const disablePushNotifications = useCallback(async () => {
     if (!pushNotificationsSupported) {
       return {
@@ -343,6 +492,10 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       message: "Notifications désactivées sur cet appareil.",
     };
   }, [pushNotificationsSupported]);
+
+  useEffect(() => {
+    void loadNotificationPreferences();
+  }, [loadNotificationPreferences]);
 
   useEffect(() => {
     const initTimerId = window.setTimeout(() => {
@@ -466,12 +619,15 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       isInstalled,
       isIosInstall,
       notificationPermission,
+      notificationPreferences,
+      notificationPreferencesLoading,
       pushNotificationsEnabled,
       pushNotificationsSupported,
       showProfileInstallEntry,
       openInstallPrompt,
       dismissInstallPrompt,
       showInstallNudge,
+      updateNotificationPreferences,
     }),
     [
       canInstall,
@@ -481,11 +637,14 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       isInstalled,
       isIosInstall,
       notificationPermission,
+      notificationPreferences,
+      notificationPreferencesLoading,
       openInstallPrompt,
       pushNotificationsEnabled,
       pushNotificationsSupported,
       showProfileInstallEntry,
       showInstallNudge,
+      updateNotificationPreferences,
     ],
   );
 

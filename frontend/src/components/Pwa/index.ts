@@ -3,3 +3,4 @@ export {
   PwaInstallProvider,
   usePwaInstall,
 } from "./PwaInstallProvider";
+export type { PushNotificationPreferences } from "./PwaInstallProvider";
