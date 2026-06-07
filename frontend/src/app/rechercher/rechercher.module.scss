@@ -29,7 +29,7 @@
 .searchOverlay {
   position: absolute;
   z-index: 20;
-  top: 16px;
+  top: 6px;
   left: 15px;
   right: 15px;
   display: grid;
@@ -50,7 +50,7 @@
 
 .page :global(.search-bar) {
   min-height: 40px;
-  padding: 0;
+  padding: 0 16px;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 0.85fr) auto;
   gap: 0;
   border-color: #E3DBB5;
@@ -60,7 +60,7 @@
 
 .page :global(.search-bar__field input) {
   height: 38px;
-  padding: 0 14px;
+  padding: 0 8px;
   color: #948438;
   font-size: 14px;
 }
@@ -71,9 +71,13 @@
   font-size: 14px;
 }
 
+.page :global(.search-bar__field--date .date-picker__trigger) {
+  padding-left: 16px;
+}
+
 .page :global(.search-bar__divider) {
   height: 20px;
-  background: #d5c990;
+  background: #948438;
 }
 
 .page :global(.search-bar__button) {
@@ -82,12 +86,12 @@
 }
 
 .page :global(.search-bar-shell__filters) {
-  width: 34px;
-  height: 34px;
-  border: 1px solid #d5c990;
-  background: #fbf9f4;
-  color: #52590d;
-  box-shadow: none;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #E3DBB5;
+  background: #FCFBF8;
+  color: #948438;
+  box-shadow: 0 1px 3px rgba(74, 66, 28, 0.25);
 }
 
 .filters {
@@ -97,6 +101,10 @@
   overflow-x: auto;
   padding: 0 2px 2px;
   scrollbar-width: none;
+}
+
+.filters:not(:empty) {
+  margin-bottom: 12px;
 }
 
 .filters::-webkit-scrollbar {
@@ -140,6 +148,7 @@
 
 .radiusControl {
   width: min(100%, 260px);
+  margin-top: -12px;
   display: grid;
   gap: 8px;
   padding: 10px 14px 12px;
@@ -259,7 +268,7 @@
   padding: 7px 14px;
   font-size: 16px;
   line-height: 1;
-  font-weight: 700;
+  font-weight: 600;
   box-shadow: 0 1px 3px rgba(74, 66, 28, 0.16);
   cursor: pointer;
 }
@@ -501,7 +510,7 @@
   .searchOverlay {
     left: 24px;
     right: 24px;
-    top: 24px;
+    top: 14px;
     max-width: 640px;
     margin: 0 auto;
   }
@@ -558,7 +567,7 @@
   }
 
   .searchOverlay {
-    top: 28px;
+    top: 18px;
     left: 22px;
     right: 22px;
     z-index: 500;

@@ -40,6 +40,7 @@
   width: 100%;
   border: none;
   outline: none;
+  font-family: var(--font-clash-grotesk), "Trebuchet MS", sans-serif;
   font-size: 12px;
   padding: 6px 8px;
   background: transparent;
@@ -115,10 +116,14 @@
   border: none;
 }
 
+.search-bar__field--date .date-picker__trigger {
+  padding-left: 10px;
+}
+
 .search-bar__divider {
   width: 1px;
   height: 20px;
-  background: #d9cbb1;
+  background: #948438;
 }
 
 .search-bar__button {
@@ -136,21 +141,21 @@
 .search-bar-shell__filters {
   position: relative;
   z-index: 2;
-  width: 34px;
-  height: 34px;
-  border: none;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #E3DBB5;
   border-radius: 50%;
-  background: #ffffff;
-  color: #5c5f18;
+  background: #FCFBF8;
+  color: #948438;
   display: grid;
   place-items: center;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.14);
+  box-shadow: 0 1px 3px rgba(74, 66, 28, 0.25);
   cursor: pointer;
 }
 
 .search-bar-shell__filters svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   stroke-width: 2.8;
 }
 
