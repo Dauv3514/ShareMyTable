@@ -151,29 +151,32 @@
 
 .sectionNavButton {
   display: none;
-  width: 38px !important;
-  height: 38px !important;
-  min-height: 38px !important;
-  max-height: 38px !important;
-  border-radius: 50% !important;
-  border: 1px solid rgba(184, 165, 71, 0.65);
-  background: #ffffff;
+  width: 40px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  flex: 0 0 40px;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  border-radius: 999px !important;
+  border: none;
+  background: #FBF9F4;
   color: #52590D;
-  box-shadow: 0 8px 20px rgba(89, 70, 24, 0.1);
+  box-shadow: 0 1px 3px rgba(74, 66, 28, 0.25);
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease;
 
   span {
-    font-size: 24px;
+    font-size: 28px;
     line-height: 1;
     transform: translateY(-1px);
   }
 
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 12px 24px rgba(89, 70, 24, 0.14);
+    box-shadow: 0 1px 3px rgba(74, 66, 28, 0.25);
   }
 }
 
@@ -219,6 +222,12 @@
 
   :global(.event-card) {
     scroll-snap-align: start;
+  }
+
+  :global(.event-card--featured) {
+    width: min(58vw, 250px);
+    min-width: min(58vw, 250px);
+    flex-basis: min(58vw, 250px);
   }
 }
 
@@ -493,6 +502,12 @@
     min-width: calc((100% - 16px) / 2);
     flex-basis: calc((100% - 16px) / 2);
   }
+
+  .cardsRow :global(.event-card--featured) {
+    width: min(64%, 320px);
+    min-width: min(64%, 320px);
+    flex-basis: min(64%, 320px);
+  }
 }
 
 @media (max-width: 560px) {
@@ -579,7 +594,7 @@
 
   .cardsRail {
     display: grid;
-    grid-template-columns: 38px minmax(0, 1fr) 38px;
+    grid-template-columns: 40px minmax(0, 1fr) 40px;
     align-items: center;
     gap: 14px;
   }
@@ -590,7 +605,7 @@
 
   .cardsRow {
     gap: 18px;
-    padding: 0 0 6px;
+    padding: 4px 0 8px;
     margin-right: 0;
     overflow-x: hidden;
   }
@@ -599,6 +614,12 @@
     width: calc((100% - 54px) / 4);
     min-width: calc((100% - 54px) / 4);
     flex-basis: calc((100% - 54px) / 4);
+  }
+
+  .cardsRow :global(.event-card--featured) {
+    width: calc((100% - 54px) / 3.35);
+    min-width: calc((100% - 54px) / 3.35);
+    flex-basis: calc((100% - 54px) / 3.35);
   }
 }
 

@@ -11,6 +11,8 @@ type EventCardProps = {
   host: string;
   variant?: "default" | "veggie" | "nearby";
   layout?: "tile" | "wide";
+  featured?: boolean;
+  showHost?: boolean;
   href?: string;
 };
 
@@ -19,6 +21,7 @@ function EventCardContent({
   city,
   dateLabel,
   host,
+  showHost = false,
 }: Omit<EventCardProps, "variant" | "layout" | "href">) {
   return (
     <>
@@ -35,10 +38,10 @@ function EventCardContent({
       </div>
 
       <div className="event-card__body">
+        <h3 className="event-card__title">{title}</h3>
+        {showHost ? <p className="event-card__host">{host}</p> : null}
         <p className="event-card__city">{city}</p>
         <p className="event-card__date">{dateLabel}</p>
-        <h3 className="event-card__title">{title}</h3>
-        <p className="event-card__host">{host}</p>
       </div>
     </>
   );
@@ -51,11 +54,13 @@ export default function EventCard({
   host,
   variant = "default",
   layout = "tile",
+  featured = false,
+  showHost = false,
   href,
 }: EventCardProps) {
   const className = `event-card event-card--${variant} event-card--${layout} ${
     href ? "event-card--link" : ""
-  }`;
+  } ${featured ? "event-card--featured" : ""}`;
 
   if (href) {
     return (
@@ -65,6 +70,7 @@ export default function EventCard({
           city={city}
           dateLabel={dateLabel}
           host={host}
+          showHost={showHost}
         />
       </Link>
     );
@@ -77,6 +83,7 @@ export default function EventCard({
         city={city}
         dateLabel={dateLabel}
         host={host}
+        showHost={showHost}
       />
     </article>
   );

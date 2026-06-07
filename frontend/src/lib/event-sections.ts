@@ -24,7 +24,7 @@ const EVENT_SECTIONS: EventSection[] = [
   },
   {
     slug: "en-exterieur",
-    title: "En exterieur",
+    title: "En extérieur",
     description: "Parfait pour profiter des beaux jours",
     emptyTitle: "Aucun événement en extérieur pour le moment",
     emptyDescription: "Les prochains événements en terrasse ou au jardin apparaîtront ici.",

@@ -226,6 +226,8 @@ export default function Home() {
                     dateLabel={card.dateLabel}
                     host={card.host}
                     variant={card.variant}
+                    featured={section.slug === "prochainement"}
+                    showHost={section.slug === "prochainement"}
                     href={buildMealEventHref(card.id)}
                   />
                 ))}
