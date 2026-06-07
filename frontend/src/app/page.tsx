@@ -243,15 +243,21 @@ export default function Home() {
 
             {section.slug === "autour-de-moi" ? (
               <div className={styles.newsletterBlock}>
+                <div className={styles.newsletterCopy}>
+                  <h2>Newsletter Ramène ta poire</h2>
+                  <p>Soyez au courant des derniers repas près de chez vous</p>
+                </div>
                 <button
                   type="button"
                   className={styles.newsletterButton}
                   onClick={() => setNewsletterModalOpen(true)}
                 >
-                  S&apos;inscrire à notre newsletter
+                  Je m&apos;abonne
                 </button>
                 {newsletterConfirmed ? (
-                  <p>Votre demande d&apos;inscription a bien été prise en compte.</p>
+                  <p className={styles.newsletterConfirmation}>
+                    Votre demande d&apos;inscription a bien été prise en compte.
+                  </p>
                 ) : null}
               </div>
             ) : null}

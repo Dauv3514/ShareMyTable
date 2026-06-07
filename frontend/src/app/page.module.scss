@@ -223,33 +223,60 @@
 }
 
 .newsletterBlock {
-  margin: 42px auto 0;
+  margin: 54px auto 0;
   width: 100%;
-  max-width: 520px;
+  max-width: 760px;
   display: grid;
-  gap: 8px;
+  justify-items: center;
+  gap: 22px;
+  text-align: center;
+}
+
+.newsletterCopy {
+  display: grid;
+  gap: 10px;
+}
+
+.newsletterCopy h2 {
+  margin: 0;
+  color: #000000;
+  font-family: var(--font-clash-grotesk), "Trebuchet MS", sans-serif;
+  font-size: clamp(23px, 3vw, 30px);
+  line-height: 1.05;
+  font-weight: 700;
+}
+
+.newsletterCopy p {
+  margin: 0 auto;
+  max-width: 560px;
+  color: #000000;
+  font-family: var(--font-clash-grotesk), "Trebuchet MS", sans-serif;
+  font-size: clamp(18px, 2.1vw, 20px);
+  line-height: 1.12;
+  font-weight: 400;
 }
 
 .newsletterButton {
-  width: fit-content;
+  width: min(100%, 280px);
   min-height: 30px;
   height: 30px;
   max-height: 30px;
   min-width: 0;
-  border: 1px solid #7B8613;
-  border-radius: 27px;
-  background: #7B8613;
-  color: #fcfbf8;
-  padding: 0 18px;
+  border: 1px solid #525A0C;
+  border-radius: 20px;
+  background: #ffffff;
+  color: #525A0C;
+  padding: 0 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   justify-self: center;
-  font-size: 14px;
+  font-family: var(--font-alpino), "Trebuchet MS", sans-serif;
+  font-size: 18px;
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
-  box-shadow: none;
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.12);
   transition:
     transform 0.2s ease,
     background 0.2s ease;
@@ -257,12 +284,12 @@
   &:hover,
   &:focus-visible {
     transform: translateY(-1px);
-    background: #7B8613;
+    background: #ffffff;
     outline: none;
   }
 }
 
-.newsletterBlock p {
+.newsletterConfirmation {
   margin: 0;
   color: #52590d;
   font-size: 12px;
@@ -470,16 +497,34 @@
 
 @media (max-width: 560px) {
   .newsletterBlock {
-    margin-top: 30px;
-    max-width: 100%;
+    margin-top: 46px;
+    max-width: 320px;
+    gap: 24px;
+    padding: 0 8px;
+  }
+
+  .newsletterCopy {
+    gap: 12px;
+  }
+
+  .newsletterCopy h2 {
+    font-size: 18px;
+    line-height: 1.08;
+  }
+
+  .newsletterCopy p {
+    max-width: 280px;
+    font-size: 16px;
+    line-height: 1.12;
   }
 
   .newsletterButton {
+    width: min(100%, 220px);
     min-height: 30px;
     height: 30px;
     max-height: 30px;
-    border-radius: 14px;
-    font-size: 13px;
+    border-radius: 20px;
+    font-size: 14px;
   }
 
   .modal {
