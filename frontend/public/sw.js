@@ -1,14 +1,58 @@
-self.addEventListener("install", () => {
-  self.skipWaiting();
+const OFFLINE_CACHE_NAME = "ramene-ta-poire-offline-v2";
+const OFFLINE_URL = "/offline.html";
+const OFFLINE_ASSETS = [OFFLINE_URL, "/icons/icon-192.png", "/favicon.ico"];
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches
+      .open(OFFLINE_CACHE_NAME)
+      .then((cache) =>
+        Promise.all(
+          OFFLINE_ASSETS.map((assetUrl) =>
+            cache.add(assetUrl).catch(() => undefined),
+          ),
+        ),
+      )
+      .then(() => self.skipWaiting()),
+  );
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches
+      .keys()
+      .then((cacheNames) =>
+        Promise.all(
+          cacheNames
+            .filter(
+              (cacheName) =>
+                cacheName.startsWith("ramene-ta-poire-offline-") &&
+                cacheName !== OFFLINE_CACHE_NAME,
+            )
+            .map((cacheName) => caches.delete(cacheName)),
+        ),
+      )
+      .then(() => self.clients.claim()),
+  );
 });
 
-self.addEventListener("fetch", () => {
-  // Le service worker reste volontairement neutre pour ne pas mettre en cache
-  // des pages dynamiques pendant le développement.
+self.addEventListener("fetch", (event) => {
+  if (event.request.mode !== "navigate") {
+    return;
+  }
+
+  event.respondWith(
+    fetch(event.request).catch(() =>
+      caches.match(OFFLINE_URL).then(
+        (response) =>
+          response ??
+          new Response("Connexion Internet requise.", {
+            status: 503,
+            headers: { "Content-Type": "text/plain; charset=utf-8" },
+          }),
+      ),
+    ),
+  );
 });
 
 self.addEventListener("push", (event) => {
