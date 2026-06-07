@@ -23,18 +23,18 @@ const EVENT_SECTIONS: EventSection[] = [
     emptyDescription: "Les prochains événements apparaîtront ici.",
   },
   {
-    slug: "veggie",
-    title: "Veggie",
-    description: "Découvrez la cuisine végétarienne",
-    emptyTitle: "Aucun événement veggie pour le moment",
-    emptyDescription: "Les prochains événements végétariens et végétaliens apparaîtront ici.",
-  },
-  {
     slug: "en-exterieur",
     title: "En exterieur",
     description: "Parfait pour profiter des beaux jours",
     emptyTitle: "Aucun événement en extérieur pour le moment",
     emptyDescription: "Les prochains événements en terrasse ou au jardin apparaîtront ici.",
+  },
+  {
+    slug: "veggie",
+    title: "Veggie",
+    description: "Découvrez la cuisine végétarienne",
+    emptyTitle: "Aucun événement veggie pour le moment",
+    emptyDescription: "Les prochains événements végétariens et végétaliens apparaîtront ici.",
   },
   {
     slug: "autour-de-moi",
