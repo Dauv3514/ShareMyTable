@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { Download, Share2, X } from "lucide-react";
+import { Download, RefreshCw, Share2, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { fetchUnreadMessagesCount } from "@/lib/messaging";
@@ -207,7 +207,10 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
   const [isIosInstall, setIsIosInstall] = useState(false);
   const [isCoolingDown, setIsCoolingDown] = useState(true);
   const [isNudgeVisible, setIsNudgeVisible] = useState(false);
+  const [isUpdatePromptVisible, setIsUpdatePromptVisible] = useState(false);
   const [pendingActionNudge, setPendingActionNudge] = useState(false);
+  const [waitingServiceWorker, setWaitingServiceWorker] =
+    useState<ServiceWorker | null>(null);
   const [hasMounted, setHasMounted] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<
     NotificationPermission | "unsupported"
@@ -274,6 +277,25 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     setIsCoolingDown(true);
     setIsNudgeVisible(false);
   }, []);
+
+  const showUpdatePrompt = useCallback((serviceWorker: ServiceWorker) => {
+    setWaitingServiceWorker(serviceWorker);
+    setIsNudgeVisible(false);
+    setIsUpdatePromptVisible(true);
+  }, []);
+
+  const dismissUpdatePrompt = useCallback(() => {
+    setIsUpdatePromptVisible(false);
+  }, []);
+
+  const applyServiceWorkerUpdate = useCallback(() => {
+    if (!waitingServiceWorker) {
+      setIsUpdatePromptVisible(false);
+      return;
+    }
+
+    waitingServiceWorker.postMessage({ type: "SKIP_WAITING" });
+  }, [waitingServiceWorker]);
 
   const openInstallPrompt = useCallback(async () => {
     if (!hasMounted || isInstalled) {
@@ -562,14 +584,6 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       );
     }, 0);
 
-    if ("serviceWorker" in navigator) {
-      void navigator.serviceWorker
-        .register("/sw.js")
-        .then((registration) => registration.pushManager.getSubscription())
-        .then((subscription) => setHasPushSubscription(Boolean(subscription)))
-        .catch(() => undefined);
-    }
-
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       setDeferredPrompt(event as BeforeInstallPromptEvent);
@@ -585,12 +599,66 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     window.addEventListener("appinstalled", handleAppInstalled);
 
+    let isReloadingForUpdate = false;
+    const handleControllerChange = () => {
+      if (isReloadingForUpdate) {
+        return;
+      }
+
+      isReloadingForUpdate = true;
+      window.location.reload();
+    };
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.addEventListener(
+        "controllerchange",
+        handleControllerChange,
+      );
+
+      void navigator.serviceWorker
+        .register("/sw.js")
+        .then((registration) => {
+          if (registration.waiting && navigator.serviceWorker.controller) {
+            showUpdatePrompt(registration.waiting);
+          }
+
+          registration.addEventListener("updatefound", () => {
+            const installingWorker = registration.installing;
+
+            if (!installingWorker) {
+              return;
+            }
+
+            installingWorker.addEventListener("statechange", () => {
+              if (
+                installingWorker.state === "installed" &&
+                navigator.serviceWorker.controller
+              ) {
+                showUpdatePrompt(installingWorker);
+              }
+            });
+          });
+
+          void registration.update().catch(() => undefined);
+
+          return registration.pushManager.getSubscription();
+        })
+        .then((subscription) => setHasPushSubscription(Boolean(subscription)))
+        .catch(() => undefined);
+    }
+
     return () => {
       window.clearTimeout(initTimerId);
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.removeEventListener(
+          "controllerchange",
+          handleControllerChange,
+        );
+      }
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
       window.removeEventListener("appinstalled", handleAppInstalled);
     };
-  }, []);
+  }, [showUpdatePrompt]);
 
   useEffect(() => {
     const handleActionNudge = () => setPendingActionNudge(true);
@@ -734,7 +802,54 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     <PwaInstallContext.Provider value={contextValue}>
       {children}
 
-      {isNudgeVisible && showProfileInstallEntry ? (
+      {isUpdatePromptVisible ? (
+        <div className={styles.overlay} role="presentation">
+          <section
+            className={styles.sheet}
+            role="dialog"
+            aria-modal="false"
+            aria-labelledby="pwa-update-title"
+          >
+            <button
+              type="button"
+              className={styles.closeButton}
+              aria-label="Fermer la proposition de mise à jour"
+              onClick={dismissUpdatePrompt}
+            >
+              <X />
+            </button>
+
+            <span className={styles.icon} aria-hidden="true">
+              <RefreshCw />
+            </span>
+
+            <div className={styles.copy}>
+              <h2 id="pwa-update-title">Nouvelle version disponible</h2>
+              <p>
+                Une mise à jour de Ramène Ta Poire est prête. Recharge
+                l&apos;application pour profiter de la dernière version.
+              </p>
+            </div>
+
+            <div className={styles.actions}>
+              <button
+                type="button"
+                className={styles.primaryButton}
+                onClick={applyServiceWorkerUpdate}
+              >
+                Mettre à jour
+              </button>
+              <button
+                type="button"
+                className={styles.secondaryButton}
+                onClick={dismissUpdatePrompt}
+              >
+                Plus tard
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : isNudgeVisible && showProfileInstallEntry ? (
         <div className={styles.overlay} role="presentation">
           <section
             className={styles.sheet}
