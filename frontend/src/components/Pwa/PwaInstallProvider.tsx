@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { ReactNode } from "react";
 import { Download, Share2, X } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/app/providers/AuthProvider";
 import styles from "./pwa-install.module.scss";
 
 type BeforeInstallPromptEvent = Event & {
@@ -18,7 +19,18 @@ type PwaInstallContextValue = {
   canInstall: boolean;
   isInstalled: boolean;
   isIosInstall: boolean;
+  notificationPermission: NotificationPermission | "unsupported";
+  pushNotificationsEnabled: boolean;
+  pushNotificationsSupported: boolean;
   showProfileInstallEntry: boolean;
+  disablePushNotifications: () => Promise<{
+    success: boolean;
+    message: string;
+  }>;
+  enablePushNotifications: () => Promise<{
+    success: boolean;
+    message: string;
+  }>;
   openInstallPrompt: () => Promise<void>;
   dismissInstallPrompt: () => void;
   showInstallNudge: () => void;
@@ -35,7 +47,18 @@ const PwaInstallContext = createContext<PwaInstallContextValue>({
   canInstall: false,
   isInstalled: false,
   isIosInstall: false,
+  notificationPermission: "unsupported",
+  pushNotificationsEnabled: false,
+  pushNotificationsSupported: false,
   showProfileInstallEntry: false,
+  disablePushNotifications: async () => ({
+    success: false,
+    message: "Notifications indisponibles.",
+  }),
+  enablePushNotifications: async () => ({
+    success: false,
+    message: "Notifications indisponibles.",
+  }),
   openInstallPrompt: async () => undefined,
   dismissInstallPrompt: () => undefined,
   showInstallNudge: () => undefined,
@@ -80,8 +103,28 @@ const isIosDevice = () => {
   return isClassicIos || isIpadDesktopMode;
 };
 
+const isPushSupported = () =>
+  typeof window !== "undefined" &&
+  "Notification" in window &&
+  "serviceWorker" in navigator &&
+  "PushManager" in window;
+
+const urlBase64ToUint8Array = (base64String: string) => {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = `${base64String}${padding}`.replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let index = 0; index < rawData.length; index += 1) {
+    outputArray[index] = rawData.charCodeAt(index);
+  }
+
+  return outputArray;
+};
+
 export function PwaInstallProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const { isLoggedIn, user } = useAuth();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isIosInstall, setIsIosInstall] = useState(false);
@@ -89,6 +132,11 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
   const [isNudgeVisible, setIsNudgeVisible] = useState(false);
   const [pendingActionNudge, setPendingActionNudge] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState<
+    NotificationPermission | "unsupported"
+  >("unsupported");
+  const [pushNotificationsSupported, setPushNotificationsSupported] = useState(false);
+  const [hasPushSubscription, setHasPushSubscription] = useState(false);
 
   const canInstall = useMemo(
     () =>
@@ -99,6 +147,10 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     [deferredPrompt, hasMounted, isCoolingDown, isInstalled, isIosInstall],
   );
   const showProfileInstallEntry = hasMounted && !isInstalled;
+  const pushNotificationsEnabled =
+    pushNotificationsSupported &&
+    notificationPermission === "granted" &&
+    hasPushSubscription;
 
   const showInstallNudge = useCallback(() => {
     if (!canInstall) {
@@ -141,16 +193,175 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     dismissInstallPrompt();
   }, [deferredPrompt, dismissInstallPrompt, hasMounted, isInstalled]);
 
+  const syncPushSubscription = useCallback(
+    async ({ requestPermission }: { requestPermission: boolean }) => {
+      if (!pushNotificationsSupported) {
+        return {
+          success: false,
+          message: "Les notifications ne sont pas disponibles sur ce navigateur.",
+        };
+      }
+
+      if (!isLoggedIn || !user) {
+        return {
+          success: false,
+          message: "Connecte-toi pour activer les notifications.",
+        };
+      }
+
+      const nextPermission = requestPermission
+        ? await Notification.requestPermission()
+        : Notification.permission;
+      setNotificationPermission(nextPermission);
+
+      if (nextPermission !== "granted") {
+        setHasPushSubscription(false);
+        return {
+          success: false,
+          message:
+            nextPermission === "denied"
+              ? "Les notifications sont bloquées dans ton navigateur."
+              : "Autorise les notifications pour les recevoir sur ton appareil.",
+        };
+      }
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const token = window.localStorage.getItem("token");
+
+      if (!apiUrl || !token) {
+        return {
+          success: false,
+          message: "Configuration API manquante pour les notifications.",
+        };
+      }
+
+      const publicKeyResponse = await fetch(
+        `${apiUrl}/push-notifications/public-key`,
+      );
+
+      if (!publicKeyResponse.ok) {
+        return {
+          success: false,
+          message: "Impossible de préparer les notifications.",
+        };
+      }
+
+      const publicKeyPayload = (await publicKeyResponse.json()) as {
+        configured?: boolean;
+        publicKey?: string | null;
+      };
+
+      if (!publicKeyPayload.configured || !publicKeyPayload.publicKey) {
+        return {
+          success: false,
+          message:
+            "Les clés Web Push ne sont pas encore configurées côté serveur.",
+        };
+      }
+
+      const registration = await navigator.serviceWorker.ready;
+      let subscription = await registration.pushManager.getSubscription();
+
+      if (!subscription) {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicKeyPayload.publicKey),
+        });
+      }
+
+      const subscriptionResponse = await fetch(
+        `${apiUrl}/push-notifications/subscriptions`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(subscription.toJSON()),
+        },
+      );
+
+      if (!subscriptionResponse.ok) {
+        return {
+          success: false,
+          message: "Impossible d'enregistrer cet appareil.",
+        };
+      }
+
+      setHasPushSubscription(true);
+
+      return {
+        success: true,
+        message: "Notifications activées sur cet appareil.",
+      };
+    },
+    [isLoggedIn, pushNotificationsSupported, user],
+  );
+
+  const enablePushNotifications = useCallback(
+    () => syncPushSubscription({ requestPermission: true }),
+    [syncPushSubscription],
+  );
+
+  const disablePushNotifications = useCallback(async () => {
+    if (!pushNotificationsSupported) {
+      return {
+        success: false,
+        message: "Les notifications ne sont pas disponibles sur ce navigateur.",
+      };
+    }
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const token = window.localStorage.getItem("token");
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+
+    if (!subscription) {
+      setHasPushSubscription(false);
+      return {
+        success: true,
+        message: "Notifications désactivées sur cet appareil.",
+      };
+    }
+
+    if (apiUrl && token) {
+      await fetch(`${apiUrl}/push-notifications/subscriptions`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ endpoint: subscription.endpoint }),
+      }).catch(() => undefined);
+    }
+
+    await subscription.unsubscribe();
+    setHasPushSubscription(false);
+
+    return {
+      success: true,
+      message: "Notifications désactivées sur cet appareil.",
+    };
+  }, [pushNotificationsSupported]);
+
   useEffect(() => {
     const initTimerId = window.setTimeout(() => {
       setHasMounted(true);
       setIsInstalled(isStandaloneDisplay());
       setIsIosInstall(isIosDevice());
       setIsCoolingDown(isDismissedRecently());
+      setPushNotificationsSupported(isPushSupported());
+      setNotificationPermission(
+        "Notification" in window ? Notification.permission : "unsupported",
+      );
     }, 0);
 
     if ("serviceWorker" in navigator) {
-      void navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+      void navigator.serviceWorker
+        .register("/sw.js")
+        .then((registration) => registration.pushManager.getSubscription())
+        .then((subscription) => setHasPushSubscription(Boolean(subscription)))
+        .catch(() => undefined);
     }
 
     const handleBeforeInstallPrompt = (event: Event) => {
@@ -184,6 +395,29 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       window.removeEventListener(PWA_INSTALL_NUDGE_EVENT, handleActionNudge);
     };
   }, []);
+
+  useEffect(() => {
+    if (
+      !isLoggedIn ||
+      !user ||
+      !pushNotificationsSupported ||
+      notificationPermission !== "granted"
+    ) {
+      return;
+    }
+
+    const timerId = window.setTimeout(() => {
+      void syncPushSubscription({ requestPermission: false });
+    }, 0);
+
+    return () => window.clearTimeout(timerId);
+  }, [
+    isLoggedIn,
+    notificationPermission,
+    pushNotificationsSupported,
+    syncPushSubscription,
+    user,
+  ]);
 
   useEffect(() => {
     if (!pendingActionNudge || !canInstall) {
@@ -227,8 +461,13 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
   const contextValue = useMemo<PwaInstallContextValue>(
     () => ({
       canInstall,
+      disablePushNotifications,
+      enablePushNotifications,
       isInstalled,
       isIosInstall,
+      notificationPermission,
+      pushNotificationsEnabled,
+      pushNotificationsSupported,
       showProfileInstallEntry,
       openInstallPrompt,
       dismissInstallPrompt,
@@ -237,9 +476,14 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     [
       canInstall,
       dismissInstallPrompt,
+      disablePushNotifications,
+      enablePushNotifications,
       isInstalled,
       isIosInstall,
+      notificationPermission,
       openInstallPrompt,
+      pushNotificationsEnabled,
+      pushNotificationsSupported,
       showProfileInstallEntry,
       showInstallNudge,
     ],

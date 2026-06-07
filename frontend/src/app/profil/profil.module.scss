@@ -123,6 +123,52 @@
   flex: 0 0 auto;
 }
 
+.notificationCard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid #ece1c2;
+  border-radius: 18px;
+  background: #fffdf7;
+}
+
+.notificationIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #f6f1df;
+  color: #7b8613;
+}
+
+.notificationIcon svg {
+  width: 19px;
+  height: 19px;
+}
+
+.notificationCopy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.notificationCopy strong {
+  color: #252904;
+  font-size: 16px;
+  line-height: 1.15;
+}
+
+.notificationCopy p {
+  margin: 0;
+  color: #5f5535;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
 .sectionHead {
   display: flex;
   align-items: flex-start;
@@ -1096,6 +1142,16 @@
     width: 100%;
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .notificationCard {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: flex-start;
+  }
+
+  .notificationCard .secondaryButton {
+    grid-column: 1 / -1;
+    width: 100%;
   }
 }
 

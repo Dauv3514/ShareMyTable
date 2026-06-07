@@ -14,6 +14,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { MessagingModule } from './messaging/messaging.module';
 import { NewsletterSubscriptionsModule } from './newsletter-subscriptions/newsletter-subscriptions.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { PushNotificationsModule } from './push-notifications/push-notifications.module';
 import { UsersModule } from './users/users.module';
 
 dotenv.config();
@@ -38,6 +39,7 @@ dotenv.config();
     MessagingModule,
     NewsletterSubscriptionsModule,
     ReviewsModule,
+    PushNotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
