@@ -7,6 +7,7 @@ import {
   Bell,
   ChevronRight,
   Download,
+  Flag,
   LockKeyhole,
   LogOut,
   ShieldCheck,
@@ -121,10 +122,19 @@ function ProfileMenuContent({
       ? [
           {
             key: "admin",
-            label: "Administration",
+            label: "Demandes hôte",
             icon: ShieldCheck,
             onClick: () => {
               router.push("/admin");
+              onClose();
+            },
+          } satisfies ProfileAction,
+          {
+            key: "admin-reports",
+            label: "Signalements",
+            icon: Flag,
+            onClick: () => {
+              router.push("/admin/signalements");
               onClose();
             },
           } satisfies ProfileAction,
