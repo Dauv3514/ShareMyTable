@@ -30,6 +30,52 @@ type ReportResponse = {
   updatedAt: Date;
 };
 
+type ReportUserSummary = {
+  userId: number;
+  pseudo: string | null;
+  email: string;
+  firstName: string;
+  lastName: string;
+  profilePhotoUrl: string | null;
+  displayName: string;
+};
+
+type AdminReportTargetResponse = {
+  label: string;
+  detail: string | null;
+  href: string | null;
+  user: ReportUserSummary | null;
+  meal: {
+    id: number;
+    title: string | null;
+    status: string;
+    dateTime: Date;
+    host: ReportUserSummary | null;
+  } | null;
+  booking: {
+    id: number;
+    status: string;
+    seats: number;
+    guest: ReportUserSummary | null;
+    mealTitle: string | null;
+  } | null;
+  conversation: {
+    id: number;
+    title: string | null;
+    type: string;
+    mealTitle: string | null;
+    members: ReportUserSummary[];
+  } | null;
+};
+
+type AdminReportResponse = ReportResponse & {
+  reporter: ReportUserSummary | null;
+  target: AdminReportTargetResponse;
+  adminNote: string | null;
+  reviewedBy: ReportUserSummary | null;
+  reviewedAt: Date | null;
+};
+
 @Injectable()
 export class ReportsService {
   constructor(
@@ -108,6 +154,32 @@ export class ReportsService {
     });
 
     return reports.map((report) => this.toReportResponse(report));
+  }
+
+  async findAllForAdmin(): Promise<AdminReportResponse[]> {
+    const reports = await this.reportsRepository.find({
+      relations: [
+        'reporter',
+        'reportedUser',
+        'reportedMeal',
+        'reportedMeal.host',
+        'reportedBooking',
+        'reportedBooking.guestUser',
+        'reportedBooking.meal',
+        'reportedBooking.meal.host',
+        'reportedConversation',
+        'reportedConversation.meal',
+        'reportedConversation.members',
+        'reportedConversation.members.user',
+        'reviewedBy',
+      ],
+      order: {
+        createdAt: 'DESC',
+      },
+      take: 250,
+    });
+
+    return reports.map((report) => this.toAdminReportResponse(report));
   }
 
   private async attachReportTarget(report: Report, reporterUserId: number) {
@@ -246,6 +318,142 @@ export class ReportsService {
       status: report.status,
       createdAt: report.createdAt,
       updatedAt: report.updatedAt,
+    };
+  }
+
+  private toAdminReportResponse(report: Report): AdminReportResponse {
+    return {
+      ...this.toReportResponse(report),
+      reporter: this.toUserSummary(report.reporter),
+      target: this.toAdminTargetResponse(report),
+      adminNote: report.adminNote,
+      reviewedBy: this.toUserSummary(report.reviewedBy),
+      reviewedAt: report.reviewedAt,
+    };
+  }
+
+  private toAdminTargetResponse(report: Report): AdminReportTargetResponse {
+    if (report.targetType === ReportTargetType.USER) {
+      const user = this.toUserSummary(report.reportedUser);
+
+      return {
+        label: user?.displayName ?? `Utilisateur #${report.targetId}`,
+        detail: user?.email ?? null,
+        href: user ? `/profil/${user.userId}` : null,
+        user,
+        meal: null,
+        booking: null,
+        conversation: null,
+      };
+    }
+
+    if (report.targetType === ReportTargetType.MEAL) {
+      const meal = report.reportedMeal;
+      const host = this.toUserSummary(meal?.host);
+
+      return {
+        label: meal?.title ?? `Repas #${report.targetId}`,
+        detail: host ? `Hôte : ${host.displayName}` : null,
+        href: meal ? `/evenements/${meal.id}` : null,
+        user: null,
+        meal: meal
+          ? {
+              id: meal.id,
+              title: meal.title,
+              status: meal.status,
+              dateTime: meal.dateTime,
+              host,
+            }
+          : null,
+        booking: null,
+        conversation: null,
+      };
+    }
+
+    if (report.targetType === ReportTargetType.BOOKING) {
+      const booking = report.reportedBooking;
+      const guest = this.toUserSummary(booking?.guestUser);
+      const mealTitle = booking?.meal?.title ?? null;
+
+      return {
+        label: booking ? `Réservation #${booking.id}` : `Réservation #${report.targetId}`,
+        detail: [guest?.displayName, mealTitle].filter(Boolean).join(' - ') || null,
+        href: booking ? `/reservations/${booking.id}` : null,
+        user: null,
+        meal: null,
+        booking: booking
+          ? {
+              id: booking.id,
+              status: booking.bookingStatus,
+              seats: booking.seats,
+              guest,
+              mealTitle,
+            }
+          : null,
+        conversation: null,
+      };
+    }
+
+    if (report.targetType === ReportTargetType.CONVERSATION) {
+      const conversation = report.reportedConversation;
+      const members =
+        conversation?.members
+          ?.map((member) => this.toUserSummary(member.user))
+          .filter((member): member is ReportUserSummary => Boolean(member)) ?? [];
+
+      return {
+        label:
+          conversation?.title ??
+          conversation?.meal?.title ??
+          `Conversation #${report.targetId}`,
+        detail: conversation?.meal?.title
+          ? `Repas : ${conversation.meal.title}`
+          : `${members.length} membre${members.length > 1 ? 's' : ''}`,
+        href: conversation ? `/messages/conversations/${conversation.id}` : null,
+        user: null,
+        meal: null,
+        booking: null,
+        conversation: conversation
+          ? {
+              id: conversation.id,
+              title: conversation.title,
+              type: conversation.type,
+              mealTitle: conversation.meal?.title ?? null,
+              members,
+            }
+          : null,
+      };
+    }
+
+    return {
+      label: `Cible #${report.targetId}`,
+      detail: null,
+      href: null,
+      user: null,
+      meal: null,
+      booking: null,
+      conversation: null,
+    };
+  }
+
+  private toUserSummary(user?: Utilisateur | null): ReportUserSummary | null {
+    if (!user) {
+      return null;
+    }
+
+    const fullName = [user.firstName, user.lastName]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+
+    return {
+      userId: user.id,
+      pseudo: user.pseudo,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      profilePhotoUrl: user.profilePhotoUrl,
+      displayName: user.pseudo || fullName || user.email,
     };
   }
 }

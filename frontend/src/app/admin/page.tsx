@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import { Check, Clock3, ShieldCheck, XCircle } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
@@ -244,6 +245,11 @@ export default function AdminPage() {
               Valide ou refuse les candidatures en attente, puis retrouve tout
               l&apos;historique des decisions et l&apos;admin qui les a prises.
             </p>
+
+            <div className={styles.adminLinks}>
+              <span aria-current="page">Demandes hôte</span>
+              <Link href="/admin/signalements">Signalements</Link>
+            </div>
           </div>
 
           <div className={styles.heroStats}>
