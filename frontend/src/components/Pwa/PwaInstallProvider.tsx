@@ -144,6 +144,18 @@ const isPushSupported = () =>
   "serviceWorker" in navigator &&
   "PushManager" in window;
 
+const isPushServiceUnavailableError = (error: unknown) => {
+  if (error instanceof DOMException) {
+    return error.name === "AbortError" || error.name === "NotAllowedError";
+  }
+
+  if (error instanceof Error) {
+    return /push service not available|registration failed/i.test(error.message);
+  }
+
+  return false;
+};
+
 const setApplicationBadge = async (count: number) => {
   if (typeof navigator === "undefined") {
     return;
@@ -387,14 +399,45 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
         };
       }
 
-      const registration = await navigator.serviceWorker.ready;
-      let subscription = await registration.pushManager.getSubscription();
+      let subscription: PushSubscription | null = null;
 
-      if (!subscription) {
-        subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(publicKeyPayload.publicKey),
-        });
+      try {
+        const registration = await navigator.serviceWorker.ready;
+
+        if (!registration.pushManager) {
+          setPushNotificationsSupported(false);
+          setHasPushSubscription(false);
+          return {
+            success: false,
+            message:
+              "Les notifications push ne sont pas disponibles sur ce navigateur.",
+          };
+        }
+
+        subscription = await registration.pushManager.getSubscription();
+
+        if (!subscription) {
+          subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(publicKeyPayload.publicKey),
+          });
+        }
+      } catch (error) {
+        setHasPushSubscription(false);
+
+        if (isPushServiceUnavailableError(error)) {
+          setPushNotificationsSupported(false);
+          return {
+            success: false,
+            message:
+              "Les notifications push ne sont pas disponibles dans cet environnement.",
+          };
+        }
+
+        return {
+          success: false,
+          message: "Impossible d'activer les notifications sur cet appareil.",
+        };
       }
 
       const subscriptionResponse = await fetch(
@@ -537,8 +580,37 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     const token = window.localStorage.getItem("token");
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.getSubscription();
+    let subscription: PushSubscription | null = null;
+
+    try {
+      const registration = await navigator.serviceWorker.ready;
+
+      if (!registration.pushManager) {
+        setPushNotificationsSupported(false);
+        setHasPushSubscription(false);
+        return {
+          success: true,
+          message: "Notifications désactivées sur cet appareil.",
+        };
+      }
+
+      subscription = await registration.pushManager.getSubscription();
+    } catch (error) {
+      setHasPushSubscription(false);
+
+      if (isPushServiceUnavailableError(error)) {
+        setPushNotificationsSupported(false);
+        return {
+          success: true,
+          message: "Notifications désactivées sur cet appareil.",
+        };
+      }
+
+      return {
+        success: false,
+        message: "Impossible de désactiver les notifications pour le moment.",
+      };
+    }
 
     if (!subscription) {
       setHasPushSubscription(false);
