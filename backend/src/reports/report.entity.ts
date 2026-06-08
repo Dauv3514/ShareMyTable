@@ -54,7 +54,7 @@ export class Report {
     name: 'target_type',
     type: 'enum',
     enum: ReportTargetType,
-    enumName: 'report_target_type_enum',
+    enumName: 'reports_target_type_enum',
   })
   targetType!: ReportTargetType;
 
@@ -83,7 +83,7 @@ export class Report {
   @Column({
     type: 'enum',
     enum: ReportReason,
-    enumName: 'report_reason_enum',
+    enumName: 'reports_reason_enum',
   })
   reason!: ReportReason;
 
@@ -93,7 +93,7 @@ export class Report {
   @Column({
     type: 'enum',
     enum: ReportStatus,
-    enumName: 'report_status_enum',
+    enumName: 'reports_status_enum',
     default: ReportStatus.PENDING,
   })
   status!: ReportStatus;

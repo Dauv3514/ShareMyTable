@@ -8,6 +8,7 @@ import {
   getMealEventsByHostId,
   getHostProfileById,
 } from "@/lib/meal-data";
+import ReportProfileButton from "./ReportProfileButton";
 import styles from "./public-profile.module.scss";
 
 type PublicProfilePageProps = {
@@ -72,13 +73,17 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
             </div>
           </div>
 
-          {latestEvent && (
-            <Link href={buildMealEventHref(latestEvent.id)} className={styles.eventLink}>
-              <CalendarDays aria-hidden="true" />
-              <span>Voir l&apos;événement</span>
-              <ChevronRight aria-hidden="true" />
-            </Link>
-          )}
+          <div className={styles.profileActions}>
+            {latestEvent && (
+              <Link href={buildMealEventHref(latestEvent.id)} className={styles.eventLink}>
+                <CalendarDays aria-hidden="true" />
+                <span>Voir l&apos;événement</span>
+                <ChevronRight aria-hidden="true" />
+              </Link>
+            )}
+
+            <ReportProfileButton targetUserId={host.id} profileName={host.name} />
+          </div>
         </div>
 
         <div className={styles.stats}>
