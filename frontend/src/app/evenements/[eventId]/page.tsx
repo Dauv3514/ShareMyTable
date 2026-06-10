@@ -115,9 +115,9 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                 <span>Participants</span>
                 {participantProfiles.length > 0 ? (
                   <div className={styles.participantAvatarList} aria-label="Participants au repas">
-                    {participantProfiles.map((participant) => (
+                    {participantProfiles.map((participant, index) => (
                       <Link
-                        key={participant.id}
+                        key={`${participant.id}-${index}`}
                         href={buildHostProfileHref(participant.id)}
                         className={styles.participantAvatarLink}
                         aria-label={`Voir le profil de ${participant.name}`}

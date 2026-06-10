@@ -800,6 +800,178 @@
   outline: none;
 }
 
+.afterMealReportPanel {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.afterMealReportPanel p {
+  margin: 6px 0 0;
+  max-width: 68ch;
+  color: #5a503a;
+  line-height: 1.55;
+}
+
+.reportButton {
+  min-height: 30px;
+  height: 30px;
+  min-width: 180px;
+  padding: 0 16px;
+  border-radius: 27px;
+  border: 1px solid #d9b7b0;
+  background: #fff7f5;
+  color: #8d4338;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font: inherit;
+  font-size: 0.96rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.reportButton:hover {
+  transform: translateY(-1px);
+}
+
+.reportButton svg {
+  width: 16px;
+  height: 16px;
+}
+
+.reportBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: rgba(20, 18, 12, 0.42);
+}
+
+.reportModal {
+  width: min(100%, 560px);
+  max-height: min(720px, calc(100vh - 44px));
+  overflow: auto;
+  border-radius: 28px;
+  border: 1px solid rgba(217, 203, 165, 0.94);
+  background: #fffdf7;
+  box-shadow: 0 24px 60px rgba(34, 25, 8, 0.24);
+}
+
+.reportModalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px 22px 18px;
+  border-bottom: 1px solid rgba(217, 203, 165, 0.72);
+}
+
+.reportModalHeader span {
+  color: #8b7c47;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.reportModalHeader h2 {
+  margin: 4px 0 0;
+  color: #17120d;
+  font-size: 1.45rem;
+  line-height: 1.08;
+}
+
+.reportCloseButton {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  border: 1px solid #dfd3b1;
+  background: #fffef9;
+  color: #5c512c;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.reportCloseButton svg {
+  width: 18px;
+  height: 18px;
+}
+
+.reportModalBody {
+  display: grid;
+  gap: 16px;
+  padding: 20px 22px;
+}
+
+.reportField {
+  display: grid;
+  gap: 8px;
+}
+
+.reportField span {
+  color: #17120d;
+  font-weight: 800;
+}
+
+.reportField select,
+.reportField textarea {
+  width: 100%;
+  border: 1px solid rgba(217, 203, 165, 0.9);
+  border-radius: 18px;
+  background: #fffef9;
+  color: #17120d;
+  font: inherit;
+  line-height: 1.45;
+  outline: none;
+}
+
+.reportField select {
+  min-height: 48px;
+  padding: 0 56px 0 14px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%235c512c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-position: right 22px center;
+  background-repeat: no-repeat;
+  background-size: 18px 18px;
+}
+
+.reportField textarea {
+  min-height: 136px;
+  padding: 14px 16px;
+  resize: vertical;
+}
+
+.reportField select:focus,
+.reportField textarea:focus {
+  border-color: #cab35a;
+  box-shadow: 0 0 0 4px rgba(225, 236, 121, 0.24);
+}
+
+.reportHint {
+  margin: 0;
+  color: #6a6148;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.reportModalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 18px 22px 22px;
+  border-top: 1px solid rgba(217, 203, 165, 0.72);
+}
+
 .errorText {
   color: #b14646;
   font-weight: 700;
@@ -917,6 +1089,34 @@
 
   .reviewActions {
     flex-direction: column;
+  }
+
+  .afterMealReportPanel {
+    grid-template-columns: 1fr;
+  }
+
+  .reportButton {
+    width: 100%;
+  }
+
+  .reportBackdrop {
+    align-items: end;
+    padding: 14px;
+  }
+
+  .reportModal {
+    width: 100%;
+    max-height: calc(100vh - 28px);
+    border-radius: 24px;
+  }
+
+  .reportModalFooter {
+    flex-direction: column-reverse;
+  }
+
+  .reportModalFooter .secondaryButton,
+  .reportModalFooter .primaryButton {
+    width: 100%;
   }
 
   .exactMapHeader {
