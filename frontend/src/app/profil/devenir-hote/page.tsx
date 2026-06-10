@@ -43,7 +43,7 @@ type HomePhotoPreview = {
   isObjectUrl: boolean;
 };
 
-const RECOMMENDED_HOME_PHOTOS = 2;
+const MIN_HOME_PHOTOS = 2;
 const MAX_HOME_PHOTOS = 5;
 const MAX_HOME_PHOTO_SIZE_MB = 3;
 const HOME_PHOTO_MIME_TYPES = ["image/png", "image/jpeg", "image/webp"];
@@ -198,7 +198,7 @@ export default function DevenirHotePage() {
     return {
       title: "Profil hôte déjà valide",
       description:
-        "Ton profil hôte est déjà approuvé. Tu peux désormais créer des événements.",
+        "Ton profil hôte est déjà approuvé. Tu peux créer des événements et modifier tes photos de logement depuis ton profil.",
       submitLabel: "Créer un événement",
     };
   }, [hostProfile]);
@@ -298,8 +298,10 @@ export default function DevenirHotePage() {
       return;
     }
 
-    if (homePhotoPreviews.length === 0) {
-      toast.error("Ajoute au moins une photo du logement pour envoyer la demande hôte.");
+    if (homePhotoPreviews.length < MIN_HOME_PHOTOS) {
+      toast.error(
+        `Ajoute au moins ${MIN_HOME_PHOTOS} photos du logement pour envoyer la demande hôte.`,
+      );
       return;
     }
 
@@ -548,9 +550,11 @@ export default function DevenirHotePage() {
             <div className={styles.uploadCopy}>
               <h2>Photos du logement</h2>
               <p>
-                Au moins 1 photo obligatoire. {RECOMMENDED_HOME_PHOTOS} photos conseillées,
-                jusqu&apos;à {MAX_HOME_PHOTOS}. Formats acceptés : PNG, JPG,
-                JPEG, WebP. Taille max : {MAX_HOME_PHOTO_SIZE_MB} Mo par photo.
+                Ajoute entre {MIN_HOME_PHOTOS} et {MAX_HOME_PHOTOS} photos du logement.
+                Elles serviront par défaut dans la section Chez l&apos;hôte de ton profil
+                si ta demande est acceptée. Tu pourras les changer plus tard depuis ton profil.
+                Formats acceptés : PNG, JPG, JPEG, WebP. Taille max :
+                {" "}{MAX_HOME_PHOTO_SIZE_MB} Mo par photo.
               </p>
             </div>
 
@@ -605,7 +609,7 @@ export default function DevenirHotePage() {
             <button
               type="submit"
               className={styles.primaryButton}
-              disabled={isSubmitting || homePhotoPreviews.length === 0}
+              disabled={isSubmitting || homePhotoPreviews.length < MIN_HOME_PHOTOS}
             >
               {isSubmitting ? "Envoi en cours..." : pageMeta.submitLabel}
             </button>

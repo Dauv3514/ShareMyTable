@@ -23,6 +23,7 @@ import {
   ChangeEvent,
   FormEvent,
   ReactNode,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -99,11 +100,20 @@ type HostProfileSummary = {
   id: number;
   isActive: boolean;
   validationStatus: "pending" | "approved" | "rejected";
+  homePhotoUrl: string | null;
+  homePhotoUrls: string[];
   country: string;
   city: string;
   districtLabel: string;
   address: string;
   rejectionReason: string | null;
+};
+
+type HomePhotoPreview = {
+  id: string;
+  url: string;
+  file?: File;
+  isObjectUrl: boolean;
 };
 
 type PublicHostReview = {
@@ -128,6 +138,10 @@ type ExpandablePanel = "profile" | "password" | "notifications" | null;
 type ProfileSection = "overview" | "preferences" | "activity" | "payments" | "notifications";
 
 const PROFILE_NAVIGATE_EVENT = "profile-menu:navigate";
+const MIN_HOST_HOME_PHOTOS = 2;
+const MAX_HOST_HOME_PHOTOS = 5;
+const MAX_HOST_HOME_PHOTO_SIZE_MB = 3;
+const HOST_HOME_PHOTO_MIME_TYPES = ["image/png", "image/jpeg", "image/webp"];
 
 const NOTIFICATION_PREFERENCE_ITEMS: Array<{
   key: NotificationPreferenceKey;
@@ -935,6 +949,332 @@ const PasswordEditForm = ({
   );
 };
 
+const getHostHomePhotoUrls = (hostProfile: HostProfileSummary) => {
+  const photos = [hostProfile.homePhotoUrl, ...(hostProfile.homePhotoUrls ?? [])]
+    .map((photoUrl) => photoUrl?.trim())
+    .filter((photoUrl): photoUrl is string => Boolean(photoUrl));
+
+  return Array.from(new Set(photos)).slice(0, MAX_HOST_HOME_PHOTOS);
+};
+
+const HostHomePhotosEditor = ({
+  hostProfile,
+  onUpdated,
+}: {
+  hostProfile: HostProfileSummary;
+  onUpdated: (hostProfile: HostProfileSummary) => void;
+}) => {
+  const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const objectUrlsRef = useRef<string[]>([]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const initialPhotoUrls = useMemo(
+    () => getHostHomePhotoUrls(hostProfile),
+    [hostProfile],
+  );
+  const [photoPreviews, setPhotoPreviews] = useState<HomePhotoPreview[]>(
+    () =>
+      initialPhotoUrls.map((url, index) => ({
+        id: `existing-${index}-${url}`,
+        url,
+        isObjectUrl: false,
+      })),
+  );
+
+  useEffect(() => {
+    if (isEditing) {
+      return;
+    }
+
+    setPhotoPreviews(
+      initialPhotoUrls.map((url, index) => ({
+        id: `existing-${index}-${url}`,
+        url,
+        isObjectUrl: false,
+      })),
+    );
+  }, [initialPhotoUrls, isEditing]);
+
+  useEffect(() => {
+    return () => {
+      objectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+      objectUrlsRef.current = [];
+    };
+  }, []);
+
+  const displayedPhotos = isEditing
+    ? photoPreviews.map((preview) => preview.url)
+    : initialPhotoUrls;
+
+  const resetEditor = () => {
+    objectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    objectUrlsRef.current = [];
+    setPhotoPreviews(
+      initialPhotoUrls.map((url, index) => ({
+        id: `existing-${index}-${url}`,
+        url,
+        isObjectUrl: false,
+      })),
+    );
+    setIsEditing(false);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleSelectPhotos = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handlePhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+
+    if (files.length === 0) {
+      return;
+    }
+
+    const remainingSlots = MAX_HOST_HOME_PHOTOS - photoPreviews.length;
+
+    if (remainingSlots <= 0) {
+      toast.error(`Tu peux importer au maximum ${MAX_HOST_HOME_PHOTOS} photos.`);
+      event.target.value = "";
+      return;
+    }
+
+    for (const file of files) {
+      if (!HOST_HOME_PHOTO_MIME_TYPES.includes(file.type)) {
+        toast.error("Les photos du logement doivent être en PNG, JPG, JPEG ou WebP.");
+        event.target.value = "";
+        return;
+      }
+
+      if (file.size > MAX_HOST_HOME_PHOTO_SIZE_MB * 1024 * 1024) {
+        toast.error(
+          `Chaque photo du logement ne doit pas dépasser ${MAX_HOST_HOME_PHOTO_SIZE_MB} Mo.`,
+        );
+        event.target.value = "";
+        return;
+      }
+    }
+
+    const filesToAdd = files.slice(0, remainingSlots);
+
+    if (files.length > remainingSlots) {
+      toast.info(
+        `Seules ${remainingSlots} photo${remainingSlots > 1 ? "s" : ""} ont été ajoutées pour rester dans la limite de ${MAX_HOST_HOME_PHOTOS}.`,
+      );
+    }
+
+    const previewsToAdd = filesToAdd.map((file) => {
+      const url = URL.createObjectURL(file);
+      objectUrlsRef.current.push(url);
+
+      return {
+        id: `${file.name}-${file.lastModified}-${url}`,
+        url,
+        file,
+        isObjectUrl: true,
+      };
+    });
+
+    setPhotoPreviews((previousPreviews) => [
+      ...previousPreviews,
+      ...previewsToAdd,
+    ]);
+    event.target.value = "";
+  };
+
+  const handleRemovePhoto = (photoIndex: number) => {
+    setPhotoPreviews((previousPreviews) => {
+      const removedPreview = previousPreviews[photoIndex];
+
+      if (removedPreview?.isObjectUrl) {
+        URL.revokeObjectURL(removedPreview.url);
+        objectUrlsRef.current = objectUrlsRef.current.filter(
+          (url) => url !== removedPreview.url,
+        );
+      }
+
+      return previousPreviews.filter((_, index) => index !== photoIndex);
+    });
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (photoPreviews.length < MIN_HOST_HOME_PHOTOS) {
+      toast.error(
+        `Garde au moins ${MIN_HOST_HOME_PHOTOS} photos du logement sur ton profil.`,
+      );
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+    if (!token || !apiUrl) {
+      toast.error("Session invalide. Reconnecte-toi.");
+      router.push("/connexion");
+      return;
+    }
+
+    const retainedPhotoUrls = photoPreviews
+      .filter((preview) => !preview.file)
+      .map((preview) => preview.url);
+    const newPhotoFiles = photoPreviews
+      .map((preview) => preview.file)
+      .filter((file): file is File => Boolean(file));
+    const payload = new FormData();
+
+    retainedPhotoUrls.forEach((photoUrl) => {
+      payload.append("homePhotoUrls", photoUrl);
+    });
+    newPhotoFiles.forEach((file) => {
+      payload.append("host_home_photo", file);
+    });
+
+    try {
+      setSaving(true);
+
+      const response = await axios.patch<HostProfileSummary>(
+        `${apiUrl}/host-profiles/me`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      onUpdated({
+        ...hostProfile,
+        ...response.data,
+        homePhotoUrl: response.data.homePhotoUrl ?? null,
+        homePhotoUrls: Array.isArray(response.data.homePhotoUrls)
+          ? response.data.homePhotoUrls
+          : [],
+      });
+      objectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+      objectUrlsRef.current = [];
+      setIsEditing(false);
+      toast.success("Photos du logement mises à jour.");
+    } catch (error: unknown) {
+      const message = axios.isAxiosError(error)
+        ? error.response?.data?.message ?? "Impossible de mettre à jour les photos."
+        : "Impossible de mettre à jour les photos.";
+      toast.error(Array.isArray(message) ? message.join(", ") : message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className={styles.hostHomePhotosBlock}>
+      <div className={styles.hostHomePhotosHead}>
+        <div>
+          <strong>Photos Chez l&apos;hôte</strong>
+          <span>
+            Ces photos sont visibles sur ton profil public. Elles viennent de ta
+            demande hôte par défaut.
+          </span>
+        </div>
+
+        <span>{displayedPhotos.length}/{MAX_HOST_HOME_PHOTOS}</span>
+      </div>
+
+      {displayedPhotos.length > 0 ? (
+        <div className={styles.hostHomePhotoGrid}>
+          {displayedPhotos.map((photoUrl, index) => (
+            <article key={`${photoUrl}-${index}`} className={styles.hostHomePhotoCard}>
+              <span
+                className={styles.hostHomePhotoImage}
+                style={{ backgroundImage: `url("${photoUrl}")` }}
+                role="img"
+                aria-label={`Photo du logement ${index + 1}`}
+              />
+
+              {isEditing ? (
+                <button
+                  type="button"
+                  className={styles.hostHomePhotoRemove}
+                  onClick={() => handleRemovePhoto(index)}
+                  disabled={saving}
+                >
+                  Retirer
+                </button>
+              ) : null}
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className={styles.hostHomePhotosEmpty}>
+          Aucune photo de logement n&apos;est encore disponible.
+        </p>
+      )}
+
+      {isEditing ? (
+        <form className={styles.hostHomePhotoEditor} onSubmit={handleSubmit}>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+            multiple
+            className={styles.hiddenInput}
+            onChange={handlePhotoChange}
+          />
+
+          <p>
+            Garde entre {MIN_HOST_HOME_PHOTOS} et {MAX_HOST_HOME_PHOTOS} photos.
+            Formats acceptés : PNG, JPG, JPEG, WebP. Taille max :
+            {" "}{MAX_HOST_HOME_PHOTO_SIZE_MB} Mo par photo.
+          </p>
+
+          <div className={styles.formActions}>
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              onClick={handleSelectPhotos}
+              disabled={saving || photoPreviews.length >= MAX_HOST_HOME_PHOTOS}
+            >
+              Ajouter des photos
+            </button>
+
+            <div className={styles.formButtons}>
+              <button
+                type="button"
+                className={`${styles.ghostButton} ${styles.closeButton}`}
+                onClick={resetEditor}
+                disabled={saving}
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                className={styles.primaryButton}
+                disabled={saving || photoPreviews.length < MIN_HOST_HOME_PHOTOS}
+              >
+                {saving ? "Enregistrement..." : "Enregistrer"}
+              </button>
+            </div>
+          </div>
+        </form>
+      ) : (
+        <div className={styles.hostStatusActions}>
+          <button
+            type="button"
+            className={styles.secondaryButton}
+            onClick={() => setIsEditing(true)}
+          >
+            Modifier les photos
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ProfilPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -976,7 +1316,7 @@ const ProfilPage = () => {
   const passwordPanelRef = useRef<HTMLDivElement | null>(null);
   const skipPreferenceSyncRef = useRef(true);
 
-  const getSectionTarget = (section: string | null) => {
+  const getSectionTarget = useCallback((section: string | null) => {
     switch (section) {
       case "overview":
         return overviewSectionRef.current;
@@ -991,13 +1331,13 @@ const ProfilPage = () => {
       default:
         return null;
     }
-  };
+  }, []);
 
-  const scrollToPanel = (
+  const scrollToPanel = useCallback((
     panel: Exclude<ExpandablePanel, null>,
     attempt = 0
   ) => {
-    window.requestAnimationFrame(() => {
+    const scroll = (currentAttempt: number) => {
       const target =
         panel === "profile"
           ? profilePanelRef.current
@@ -1013,11 +1353,15 @@ const ProfilPage = () => {
         return;
       }
 
-      if (attempt < 8) {
-        scrollToPanel(panel, attempt + 1);
+      if (currentAttempt < 8) {
+        window.requestAnimationFrame(() => scroll(currentAttempt + 1));
       }
+    };
+
+    window.requestAnimationFrame(() => {
+      scroll(attempt);
     });
-  };
+  }, []);
 
   useEffect(() => {
     if (!loading && !isLoggedIn) {
@@ -1065,6 +1409,10 @@ const ProfilPage = () => {
           id: response.data.id,
           isActive: Boolean(response.data.isActive),
           validationStatus: response.data.validationStatus,
+          homePhotoUrl: response.data.homePhotoUrl ?? null,
+          homePhotoUrls: Array.isArray(response.data.homePhotoUrls)
+            ? response.data.homePhotoUrls
+            : [],
           country: response.data.country ?? "",
           city: response.data.city ?? "",
           districtLabel: response.data.districtLabel ?? "",
@@ -1209,7 +1557,7 @@ const ProfilPage = () => {
     });
 
     return () => window.cancelAnimationFrame(frameId);
-  }, [searchParams, user]);
+  }, [getSectionTarget, searchParams, user]);
 
   useEffect(() => {
     if (!expandedPanel || !user) {
@@ -1217,7 +1565,7 @@ const ProfilPage = () => {
     }
 
     scrollToPanel(expandedPanel);
-  }, [expandedPanel, user]);
+  }, [expandedPanel, scrollToPanel, user]);
 
   useEffect(() => {
     const handleProfileNavigate = (event: Event) => {
@@ -1252,7 +1600,7 @@ const ProfilPage = () => {
     return () => {
       window.removeEventListener(PROFILE_NAVIGATE_EVENT, handleProfileNavigate);
     };
-  }, []);
+  }, [getSectionTarget, scrollToPanel]);
 
   const displayName = useMemo(() => {
     if (!user) {
@@ -1696,6 +2044,13 @@ const ProfilPage = () => {
                       <dd>{hostProfile.address || "-"}</dd>
                     </div>
                   </dl>
+                ) : null}
+
+                {hostProfile?.validationStatus === "approved" ? (
+                  <HostHomePhotosEditor
+                    hostProfile={hostProfile}
+                    onUpdated={setHostProfile}
+                  />
                 ) : null}
 
                 <div className={styles.hostStatusActions}>

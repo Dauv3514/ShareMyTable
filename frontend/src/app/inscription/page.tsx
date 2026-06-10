@@ -59,7 +59,7 @@ const BIRTH_DATE_START_MONTH = new Date(1920, 0, 1);
 const BIRTH_DATE_END_MONTH = new Date();
 const MAX_PROFILE_PHOTO_SIZE_MB = 3;
 const PROFILE_PHOTO_MIME_TYPES = ["image/png", "image/jpeg", "image/webp"];
-const RECOMMENDED_HOST_HOME_PHOTOS = 2;
+const MIN_HOST_HOME_PHOTOS = 2;
 const MAX_HOST_HOME_PHOTOS = 5;
 const MAX_HOST_HOME_PHOTO_SIZE_MB = 3;
 const HOST_HOME_PHOTO_MIME_TYPES = ["image/png", "image/jpeg", "image/webp"];
@@ -118,7 +118,7 @@ function InscriptionPageContent() {
     return Boolean(
       formData.host_district_label.trim() &&
         formData.host_address.trim() &&
-        selectedHostPhotoFiles.length > 0,
+        selectedHostPhotoFiles.length >= MIN_HOST_HOME_PHOTOS,
     );
   }, [
     formData.host_address,
@@ -391,7 +391,7 @@ function InscriptionPageContent() {
 
     if (formData.request_host && !isHostRequestReady) {
       toast.error(
-        "Renseigne le quartier, l'adresse et au moins une photo du logement pour envoyer la demande hôte.",
+        `Renseigne le quartier, l'adresse et au moins ${MIN_HOST_HOME_PHOTOS} photos du logement pour envoyer la demande hôte.`,
       );
       return;
     }
@@ -750,10 +750,11 @@ function InscriptionPageContent() {
                         </button>
 
                         <p className={styles.uploadHint}>
-                          Au moins 1 photo obligatoire. {RECOMMENDED_HOST_HOME_PHOTOS} photos
-                          conseillées, jusqu&apos;à {MAX_HOST_HOME_PHOTOS}.
-                          Formats acceptés : PNG, JPG, JPEG, WebP. Taille max :
-                          {" "}{MAX_HOST_HOME_PHOTO_SIZE_MB} Mo par photo.
+                          Ajoute entre {MIN_HOST_HOME_PHOTOS} et {MAX_HOST_HOME_PHOTOS}
+                          {" "}photos du logement. Elles serviront par défaut dans la section
+                          Chez l&apos;hôte de ton profil si ta demande est acceptée. Tu pourras
+                          les changer plus tard depuis ton profil. Formats acceptés : PNG, JPG,
+                          JPEG, WebP. Taille max : {MAX_HOST_HOME_PHOTO_SIZE_MB} Mo par photo.
                         </p>
                       </div>
 
@@ -788,7 +789,7 @@ function InscriptionPageContent() {
                   </label>
 
                   <p className={styles.hostHelp}>
-                    Une photo du logement, le quartier et l&apos;adresse sont
+                    Deux photos du logement, le quartier et l&apos;adresse sont
                     obligatoires si la demande hôte est active.
                   </p>
                 </div>

@@ -453,9 +453,110 @@
   color: #2d2817;
 }
 
+.hostHomePhotosBlock {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid #ede3ca;
+  background: #fffdf7;
+}
+
+.hostHomePhotosHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.hostHomePhotosHead div {
+  display: grid;
+  gap: 4px;
+}
+
+.hostHomePhotosHead strong {
+  color: #292d06;
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.hostHomePhotosHead span {
+  color: #8a7d57;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.hostHomePhotosHead > span {
+  flex: 0 0 auto;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid #e2d6b8;
+  background: #ffffff;
+  color: #6f632a;
+  display: inline-flex;
+  align-items: center;
+}
+
+.hostHomePhotoGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.hostHomePhotoCard {
+  display: grid;
+  gap: 8px;
+}
+
+.hostHomePhotoImage {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 16px;
+  border: 1px solid #eadfbe;
+  background-color: #fbf7ed;
+  background-position: center;
+  background-size: cover;
+}
+
+.hostHomePhotoRemove {
+  width: fit-content;
+  padding: 0;
+  border: none;
+  border-bottom: 1px solid currentColor;
+  background: transparent;
+  color: #8b4a4a;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hostHomePhotoRemove:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.hostHomePhotosEmpty,
+.hostHomePhotoEditor p {
+  margin: 0;
+  color: #766c4d;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.hostHomePhotoEditor {
+  display: grid;
+  gap: 14px;
+}
+
 .hostStatusActions {
   display: flex;
   justify-content: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .hostStatusActions .primaryButton {
@@ -1221,6 +1322,20 @@
   .statsGrid,
   .hostStatusDetails {
     grid-template-columns: 1fr;
+  }
+
+  .hostHomePhotosHead,
+  .hostHomePhotoEditor .formActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hostHomePhotosHead > span {
+    width: fit-content;
+  }
+
+  .hostHomePhotoGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .statCard {
