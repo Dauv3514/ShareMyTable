@@ -386,6 +386,21 @@
   font-weight: 700;
 }
 
+.exactMap :global(.reservation-exact-map__pin-wrapper) {
+  width: 58px;
+  height: 64px;
+  border: none;
+  background: transparent;
+}
+
+.exactMap :global(.reservation-exact-map__meal-pin) {
+  display: block;
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
 .metaList {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
