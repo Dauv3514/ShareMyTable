@@ -97,6 +97,11 @@ export class AuthController {
     );
 
     if (requestHost) {
+      const submittedHostHomePhotos = [
+        ...hostHomePhotoUrls,
+        userDto.host_home_photo_url?.trim(),
+      ].filter((photoUrl): photoUrl is string => Boolean(photoUrl));
+
       if (!userDto.host_district_label?.trim()) {
         throw new BadRequestException(
           'Le quartier est obligatoire pour envoyer une demande hote',
@@ -109,12 +114,9 @@ export class AuthController {
         );
       }
 
-      if (
-        hostHomePhotoUrls.length === 0 &&
-        !userDto.host_home_photo_url?.trim()
-      ) {
+      if (submittedHostHomePhotos.length < 2) {
         throw new BadRequestException(
-          'Au moins une photo du logement est obligatoire pour envoyer une demande hote',
+          'Au moins 2 photos du logement sont obligatoires pour envoyer une demande hote',
         );
       }
     }

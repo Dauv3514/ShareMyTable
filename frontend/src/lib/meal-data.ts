@@ -403,7 +403,15 @@ function mergeHomePhotos(
   homePhotoUrls: string[] | null | undefined,
   fallbackPhotos: string[],
 ) {
-  const photos = [homePhotoUrl, ...(homePhotoUrls ?? []), ...fallbackPhotos]
+  const uploadedPhotos = [homePhotoUrl, ...(homePhotoUrls ?? [])]
+    .map((photoUrl) => sanitizeNextImageSrc(photoUrl))
+    .filter((photoUrl): photoUrl is string => Boolean(photoUrl));
+
+  if (uploadedPhotos.length > 0) {
+    return Array.from(new Set(uploadedPhotos)).slice(0, 5);
+  }
+
+  const photos = fallbackPhotos
     .map((photoUrl) => sanitizeNextImageSrc(photoUrl))
     .filter((photoUrl): photoUrl is string => Boolean(photoUrl));
 
