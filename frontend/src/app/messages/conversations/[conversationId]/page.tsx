@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowUp, ChevronRight } from "lucide-react";
+import { ArrowUp, ChevronRight, Flag, X } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -10,22 +10,48 @@ import {
   useRef,
   useState,
 } from "react";
+import { toast } from "react-toastify";
 import UserAvatar from "@/components/UserAvatar";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { PWA_BADGE_REFRESH_EVENT } from "@/components/Pwa";
 import ConversationAvatar from "../../ConversationAvatar";
 import {
+  getReportErrorMessage,
+  REPORT_REASON_LABELS,
+  type ReportReason,
+  type ReportTargetType,
+  submitReport,
+} from "@/lib/reports";
+import {
   createMessagingSocket,
   fetchMessagingConversationDetail,
   formatConversationDate,
   formatConversationTime,
+  getConversationCounterpart,
   getConversationSubtitle,
   getConversationTitle,
   postMessagingMessage,
   type MessagingConversationDetail,
   type MessagingMessageSummary,
+  type MessagingUserSummary,
 } from "@/lib/messaging";
 import styles from "../../messaging-ui.module.scss";
+
+const MESSAGING_REPORT_REASON_OPTIONS: ReportReason[] = [
+  "harassment",
+  "inappropriate_behavior",
+  "spam",
+  "safety",
+  "fraud",
+  "other",
+];
+
+type MessagingReportTarget = {
+  targetType: Extract<ReportTargetType, "user" | "conversation">;
+  targetId: number;
+  title: string;
+  subtitle: string;
+};
 
 function appendMessageIfMissing(
   currentMessages: MessagingMessageSummary[],
@@ -79,6 +105,12 @@ function refreshPwaBadge() {
   window.dispatchEvent(new Event(PWA_BADGE_REFRESH_EVENT));
 }
 
+function getMessagingMemberDisplayName(user: MessagingUserSummary) {
+  const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
+
+  return fullName || user.pseudo || `Utilisateur ${user.userId}`;
+}
+
 export default function ConversationPage() {
   const params = useParams<{ conversationId: string }>();
   const router = useRouter();
@@ -91,6 +123,10 @@ export default function ConversationPage() {
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [reportTarget, setReportTarget] = useState<MessagingReportTarget | null>(null);
+  const [reportReason, setReportReason] = useState<ReportReason>("harassment");
+  const [reportDescription, setReportDescription] = useState("");
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
   const socketRef = useRef<ReturnType<typeof createMessagingSocket>>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
 
@@ -261,6 +297,55 @@ export default function ConversationPage() {
     }
   };
 
+  const openReportModal = (target: MessagingReportTarget | null) => {
+    if (!target) {
+      return;
+    }
+
+    setReportTarget(target);
+    setReportReason("harassment");
+    setReportDescription("");
+  };
+
+  const closeReportModal = () => {
+    if (isSubmittingReport) {
+      return;
+    }
+
+    setReportTarget(null);
+  };
+
+  const handleSubmitReport = async () => {
+    if (!reportTarget) {
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Session invalide.");
+      return;
+    }
+
+    try {
+      setIsSubmittingReport(true);
+      await submitReport(token, {
+        targetType: reportTarget.targetType,
+        targetId: reportTarget.targetId,
+        reason: reportReason,
+        description: reportDescription,
+      });
+
+      setReportTarget(null);
+      setReportDescription("");
+      setReportReason("harassment");
+      toast.success("Signalement envoyé. L'équipe admin va le consulter.");
+    } catch (error) {
+      toast.error(getReportErrorMessage(error));
+    } finally {
+      setIsSubmittingReport(false);
+    }
+  };
+
   const messageGroups = useMemo(() => {
     if (!conversation) {
       return [];
@@ -358,6 +443,34 @@ export default function ConversationPage() {
     (member) => member.userId !== user.id,
   ).length;
   const mealHref = conversation.meal ? `/messages/${conversation.meal.mealId}` : "/messages";
+  const conversationReportTarget: MessagingReportTarget = {
+    targetType: "conversation",
+    targetId: conversation.id,
+    title:
+      conversation.type === "meal_group"
+        ? "Signaler la conversation de groupe"
+        : "Signaler cette conversation",
+    subtitle:
+      conversation.meal?.title?.trim() ||
+      getConversationTitle(conversation, user.id),
+  };
+  const counterpart = getConversationCounterpart(conversation, user.id);
+  const directReportTarget: MessagingReportTarget | null =
+    counterpart && counterpart.userId !== user.id
+      ? {
+          targetType: "user",
+          targetId: counterpart.userId,
+          title: `Signaler ${getMessagingMemberDisplayName(counterpart)}`,
+          subtitle:
+            conversation.type === "booking_direct"
+              ? "Discussion avant validation"
+              : "Discussion individuelle",
+        }
+      : null;
+  const headerReportTarget =
+    conversation.type === "meal_group"
+      ? conversationReportTarget
+      : directReportTarget ?? conversationReportTarget;
 
   return (
     <section className={`${styles.page} ${styles.chatPage}`}>
@@ -374,6 +487,14 @@ export default function ConversationPage() {
                 currentUserId={user.id}
                 alt={getConversationTitle(conversation, user.id)}
                 includeCurrentUser={conversation.type === "meal_group"}
+                onReportMember={(member) =>
+                  openReportModal({
+                    targetType: "user",
+                    targetId: member.userId,
+                    title: `Signaler ${getMessagingMemberDisplayName(member)}`,
+                    subtitle: "Participant de la conversation",
+                  })
+                }
               />
 
               <div className={styles.chatHeaderCopy}>
@@ -391,6 +512,19 @@ export default function ConversationPage() {
                 {conversation.meal.title?.trim() || "Voir l'événement"}
               </Link>
             ) : null}
+
+            <button
+              type="button"
+              className={styles.chatReportButton}
+              onClick={() => openReportModal(headerReportTarget)}
+              aria-label={
+                conversation.type === "meal_group"
+                  ? "Signaler la conversation"
+                  : "Signaler cette personne"
+              }
+            >
+              <Flag aria-hidden="true" />
+            </button>
           </header>
 
           <div className={styles.messagesViewport} ref={viewportRef}>
@@ -512,6 +646,82 @@ export default function ConversationPage() {
           </div>
         ) : null}
       </div>
+
+      {reportTarget ? (
+        <div className={styles.reportBackdrop} role="presentation">
+          <div
+            className={styles.reportModal}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="messaging-report-title"
+          >
+            <div className={styles.reportModalHeader}>
+              <div>
+                <span>Signalement</span>
+                <h2 id="messaging-report-title">{reportTarget.title}</h2>
+                <p>{reportTarget.subtitle}</p>
+              </div>
+              <button
+                type="button"
+                className={styles.reportCloseButton}
+                onClick={closeReportModal}
+                aria-label="Fermer la fenêtre de signalement"
+              >
+                <X aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className={styles.reportModalBody}>
+              <label className={styles.reportField}>
+                <span>Motif</span>
+                <select
+                  value={reportReason}
+                  onChange={(event) => setReportReason(event.target.value as ReportReason)}
+                >
+                  {MESSAGING_REPORT_REASON_OPTIONS.map((reason) => (
+                    <option key={reason} value={reason}>
+                      {REPORT_REASON_LABELS[reason]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className={styles.reportField}>
+                <span>Détails</span>
+                <textarea
+                  value={reportDescription}
+                  onChange={(event) => setReportDescription(event.target.value)}
+                  maxLength={2000}
+                  rows={5}
+                />
+              </label>
+
+              <p className={styles.reportHint}>
+                Ce signalement sera visible uniquement par l&apos;équipe admin.
+              </p>
+            </div>
+
+            <div className={styles.reportModalFooter}>
+              <button
+                type="button"
+                className={styles.reportSecondaryButton}
+                onClick={closeReportModal}
+                disabled={isSubmittingReport}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                className={styles.reportSubmitButton}
+                onClick={() => void handleSubmitReport()}
+                disabled={isSubmittingReport}
+              >
+                {isSubmittingReport ? "Envoi..." : "Envoyer le signalement"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

@@ -11,6 +11,7 @@ type ConversationAvatarProps = {
   alt: string;
   size?: "sm" | "md";
   includeCurrentUser?: boolean;
+  onReportMember?: (user: MessagingUserSummary) => void;
 };
 
 function getDisplayUsers(
@@ -51,6 +52,7 @@ export default function ConversationAvatar({
   alt,
   size = "md",
   includeCurrentUser = false,
+  onReportMember,
 }: ConversationAvatarProps) {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const panelId = useId();
@@ -183,6 +185,20 @@ export default function ConversationAvatar({
                   />
                 </span>
                 <span>{getMemberName(user, currentUserId)}</span>
+                {onReportMember && user.userId !== currentUserId ? (
+                  <button
+                    type="button"
+                    className={styles.membersPanelReportButton}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      onReportMember(user);
+                      setIsPanelOpen(false);
+                    }}
+                  >
+                    Signaler
+                  </button>
+                ) : null}
               </div>
             ))}
           </div>
