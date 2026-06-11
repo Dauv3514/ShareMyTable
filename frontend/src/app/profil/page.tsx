@@ -5,6 +5,8 @@ import {
   Bell,
   CalendarDays,
   Camera,
+  ChevronLeft,
+  ChevronRight,
   CreditCard,
   Download,
   History,
@@ -969,6 +971,7 @@ const HostHomePhotosEditor = ({
   const objectUrlsRef = useRef<string[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [activePhotoIndex, setActivePhotoIndex] = useState<number | null>(null);
   const initialPhotoUrls = useMemo(
     () => getHostHomePhotoUrls(hostProfile),
     [hostProfile],
@@ -1006,6 +1009,82 @@ const HostHomePhotosEditor = ({
   const displayedPhotos = isEditing
     ? photoPreviews.map((preview) => preview.url)
     : initialPhotoUrls;
+  const activePhotoUrl =
+    activePhotoIndex === null ? null : displayedPhotos[activePhotoIndex] ?? null;
+  const hasMultipleDisplayedPhotos = displayedPhotos.length > 1;
+
+  const closePhotoLightbox = () => {
+    setActivePhotoIndex(null);
+  };
+
+  const showPreviousHomePhoto = () => {
+    setActivePhotoIndex((currentIndex) => {
+      if (currentIndex === null || displayedPhotos.length === 0) {
+        return currentIndex;
+      }
+
+      return currentIndex === 0 ? displayedPhotos.length - 1 : currentIndex - 1;
+    });
+  };
+
+  const showNextHomePhoto = () => {
+    setActivePhotoIndex((currentIndex) => {
+      if (currentIndex === null || displayedPhotos.length === 0) {
+        return currentIndex;
+      }
+
+      return currentIndex === displayedPhotos.length - 1 ? 0 : currentIndex + 1;
+    });
+  };
+
+  useEffect(() => {
+    if (
+      activePhotoIndex !== null &&
+      (displayedPhotos.length === 0 || activePhotoIndex >= displayedPhotos.length)
+    ) {
+      setActivePhotoIndex(null);
+    }
+  }, [activePhotoIndex, displayedPhotos.length]);
+
+  useEffect(() => {
+    if (activePhotoIndex === null) {
+      return;
+    }
+
+    const photoCount = displayedPhotos.length;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setActivePhotoIndex(null);
+      }
+
+      if (event.key === "ArrowLeft") {
+        setActivePhotoIndex((currentIndex) => {
+          if (currentIndex === null || photoCount === 0) {
+            return currentIndex;
+          }
+
+          return currentIndex === 0 ? photoCount - 1 : currentIndex - 1;
+        });
+      }
+
+      if (event.key === "ArrowRight") {
+        setActivePhotoIndex((currentIndex) => {
+          if (currentIndex === null || photoCount === 0) {
+            return currentIndex;
+          }
+
+          return currentIndex === photoCount - 1 ? 0 : currentIndex + 1;
+        });
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [activePhotoIndex, displayedPhotos.length]);
 
   const resetEditor = () => {
     objectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
@@ -1018,6 +1097,7 @@ const HostHomePhotosEditor = ({
       })),
     );
     setIsEditing(false);
+    setActivePhotoIndex(null);
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -1191,8 +1271,16 @@ const HostHomePhotosEditor = ({
               <span
                 className={styles.hostHomePhotoImage}
                 style={{ backgroundImage: `url("${photoUrl}")` }}
-                role="img"
-                aria-label={`Photo du logement ${index + 1}`}
+                role="button"
+                tabIndex={0}
+                aria-label={`Ouvrir la photo du logement ${index + 1} en grand`}
+                onClick={() => setActivePhotoIndex(index)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setActivePhotoIndex(index);
+                  }
+                }}
               />
 
               {isEditing ? (
@@ -1271,6 +1359,67 @@ const HostHomePhotosEditor = ({
           </button>
         </div>
       )}
+
+      {activePhotoUrl ? (
+        <div
+          className={styles.hostHomePhotoLightbox}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Photo du logement en grand"
+        >
+          <button
+            type="button"
+            className={styles.hostHomePhotoLightboxBackdropButton}
+            aria-label="Fermer l'image"
+            onClick={closePhotoLightbox}
+          />
+
+          <div className={styles.hostHomePhotoLightboxContent}>
+            <button
+              type="button"
+              className={styles.hostHomePhotoLightboxCloseButton}
+              onClick={closePhotoLightbox}
+              aria-label="Fermer"
+            >
+              <X aria-hidden="true" />
+            </button>
+
+            {hasMultipleDisplayedPhotos ? (
+              <button
+                type="button"
+                className={`${styles.hostHomePhotoLightboxNavButton} ${styles.hostHomePhotoLightboxPrev}`}
+                onClick={showPreviousHomePhoto}
+                aria-label="Photo précédente"
+              >
+                <ChevronLeft aria-hidden="true" />
+              </button>
+            ) : null}
+
+            <figure className={styles.hostHomePhotoLightboxFigure}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={activePhotoUrl}
+                alt={`Photo du logement ${(activePhotoIndex ?? 0) + 1}`}
+                className={styles.hostHomePhotoLightboxImage}
+              />
+              <figcaption>
+                {(activePhotoIndex ?? 0) + 1}/{displayedPhotos.length}
+              </figcaption>
+            </figure>
+
+            {hasMultipleDisplayedPhotos ? (
+              <button
+                type="button"
+                className={`${styles.hostHomePhotoLightboxNavButton} ${styles.hostHomePhotoLightboxNext}`}
+                onClick={showNextHomePhoto}
+                aria-label="Photo suivante"
+              >
+                <ChevronRight aria-hidden="true" />
+              </button>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

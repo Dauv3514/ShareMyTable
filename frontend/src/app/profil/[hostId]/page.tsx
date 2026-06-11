@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, ChevronRight, MapPin, Star } from "lucide-react";
@@ -8,6 +7,7 @@ import {
   getMealEventsByHostId,
   getHostProfileById,
 } from "@/lib/meal-data";
+import HomePhotoGallery from "./HomePhotoGallery";
 import ReportProfileButton from "./ReportProfileButton";
 import styles from "./public-profile.module.scss";
 
@@ -153,19 +153,7 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
           </div>
         </div>
 
-        <div className={styles.homeGallery} aria-label={homeTitle}>
-          {host.homePhotos.map((photoSrc, index) => (
-            <article key={`${host.id}-home-${index}`} className={styles.homePhotoCard}>
-              <Image
-                src={photoSrc}
-                alt={`${homeTitle} ${index + 1}`}
-                fill
-                className={styles.homePhoto}
-                sizes="(max-width: 719px) 180px, 240px"
-              />
-            </article>
-          ))}
-        </div>
+        <HomePhotoGallery homeTitle={homeTitle} photos={host.homePhotos} />
       </section>
     </div>
   );
