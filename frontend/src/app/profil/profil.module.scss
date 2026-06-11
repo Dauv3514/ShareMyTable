@@ -519,6 +519,19 @@
   background-color: #fbf7ed;
   background-position: center;
   background-size: cover;
+  cursor: zoom-in;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.hostHomePhotoImage:hover,
+.hostHomePhotoImage:focus-visible {
+  border-color: #cab35a;
+  box-shadow: 0 14px 28px rgba(77, 62, 25, 0.16);
+  outline: none;
+  transform: translateY(-1px);
 }
 
 .hostHomePhotoRemove {
@@ -537,6 +550,122 @@
 .hostHomePhotoRemove:disabled {
   opacity: 0.65;
   cursor: wait;
+}
+
+.hostHomePhotoLightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 220;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+}
+
+.hostHomePhotoLightboxBackdropButton {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: rgba(21, 18, 13, 0.78);
+  cursor: zoom-out;
+}
+
+.hostHomePhotoLightboxContent {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 980px);
+  height: min(82vh, 680px);
+  display: grid;
+  place-items: center;
+}
+
+.hostHomePhotoLightboxFigure {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 10px;
+  justify-items: center;
+}
+
+.hostHomePhotoLightboxImage {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 22px;
+  border: 1px solid rgba(236, 227, 206, 0.68);
+  background: #fffdf7;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.34);
+  object-fit: contain;
+}
+
+.hostHomePhotoLightboxFigure figcaption {
+  min-height: 28px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 253, 247, 0.92);
+  color: #5a4c21;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.hostHomePhotoLightboxCloseButton,
+.hostHomePhotoLightboxNavButton {
+  position: absolute;
+  z-index: 2;
+  border: 1px solid #e6dcc1;
+  border-radius: 50%;
+  background: #fffdf7;
+  color: #5a4c21;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.hostHomePhotoLightboxCloseButton:hover,
+.hostHomePhotoLightboxNavButton:hover,
+.hostHomePhotoLightboxCloseButton:focus-visible,
+.hostHomePhotoLightboxNavButton:focus-visible {
+  background: #e7f16f;
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.hostHomePhotoLightboxCloseButton {
+  top: 0;
+  right: 0;
+  width: 42px;
+  height: 42px;
+}
+
+.hostHomePhotoLightboxNavButton {
+  top: 50%;
+  width: 46px;
+  height: 46px;
+  transform: translateY(-50%);
+}
+
+.hostHomePhotoLightboxNavButton:hover,
+.hostHomePhotoLightboxNavButton:focus-visible {
+  transform: translateY(calc(-50% - 1px));
+}
+
+.hostHomePhotoLightboxPrev {
+  left: 0;
+}
+
+.hostHomePhotoLightboxNext {
+  right: 0;
+}
+
+.hostHomePhotoLightboxCloseButton svg,
+.hostHomePhotoLightboxNavButton svg {
+  width: 20px;
+  height: 20px;
 }
 
 .hostHomePhotosEmpty,
@@ -1336,6 +1465,23 @@
 
   .hostHomePhotoGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hostHomePhotoLightbox {
+    padding: 58px 48px 42px;
+  }
+
+  .hostHomePhotoLightboxCloseButton {
+    top: -46px;
+    right: -22px;
+  }
+
+  .hostHomePhotoLightboxPrev {
+    left: -42px;
+  }
+
+  .hostHomePhotoLightboxNext {
+    right: -42px;
   }
 
   .statCard {
