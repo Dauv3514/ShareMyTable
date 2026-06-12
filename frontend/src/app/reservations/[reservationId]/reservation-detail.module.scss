@@ -540,8 +540,7 @@
 }
 
 .reviewStep:hover:not(:disabled) span {
-  background: #7B8613;
-  color: #ffffff;
+  background: rgba(205, 224, 31, 0.18);
 }
 
 .reviewStep:disabled {
@@ -563,9 +562,15 @@
   font-weight: 700;
 }
 
-.reviewStep span svg {
-  width: 16px;
-  height: 16px;
+.reviewStep span img {
+  width: 14px;
+  height: 17px;
+  object-fit: contain;
+}
+
+.reviewStepIcon--done img {
+  width: 18px;
+  height: 22px;
 }
 
 .reviewStep--active {
@@ -580,8 +585,7 @@
 
 .reviewStep--active span,
 .reviewStep--done span {
-  background: #7b8613;
-  color: #ffffff;
+  background: rgba(205, 224, 31, 0.18);
 }
 
 .reviewStage {

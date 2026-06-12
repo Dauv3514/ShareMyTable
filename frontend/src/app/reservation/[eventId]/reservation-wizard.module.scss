@@ -144,8 +144,7 @@
 }
 
 .progressItem:not(:disabled):hover .progressIndex {
-  background: #7B8613;
-  color: #ffffff;
+  background: rgba(205, 224, 31, 0.18);
 }
 
 .progressItem:disabled.progressItem--current,
@@ -180,13 +179,18 @@
 
 .progressItem--current .progressIndex,
 .progressItem--done .progressIndex {
-  background: #7b8613;
-  color: #ffffff;
+  background: rgba(205, 224, 31, 0.18);
 }
 
-.progressIndex svg {
-  width: 16px;
-  height: 16px;
+.progressIndex img {
+  width: 14px;
+  height: 17px;
+  object-fit: contain;
+}
+
+.progressIndex--done img {
+  width: 18px;
+  height: 22px;
 }
 
 .summaryCard {
@@ -292,6 +296,20 @@
   color: #645938;
   font-weight: 700;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobileStepButton img {
+  width: 14px;
+  height: 17px;
+  object-fit: contain;
+}
+
+.mobileStepButton--done img {
+  width: 18px;
+  height: 22px;
 }
 
 .mobileStepButton:disabled {
@@ -300,9 +318,8 @@
 }
 
 .mobileStepButton--active {
-  background: #7b8613;
-  border-color: #7b8613;
-  color: #ffffff;
+  background: rgba(205, 224, 31, 0.18);
+  border-color: #d9c86b;
 }
 
 .stage {

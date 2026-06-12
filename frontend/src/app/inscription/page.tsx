@@ -638,7 +638,8 @@ function InscriptionPageContent() {
                       request_host: !previousForm.request_host,
                     }))
                   }
-                  aria-pressed={formData.request_host}
+                  role="switch"
+                  aria-checked={formData.request_host}
                 >
                   <span className={styles.hostToggleThumb} />
                 </button>

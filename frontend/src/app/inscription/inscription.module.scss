@@ -309,13 +309,15 @@
 }
 
 .hostToggleButton {
-  width: 72px;
-  height: 30px;
+  width: 74px;
+  min-height: 36px !important;
+  height: 36px !important;
+  max-height: 36px !important;
   flex: 0 0 auto;
-  border: 1px solid #ccb956;
-  border-radius: 999px;
-  background: #ffffff;
-  padding: 4px;
+  border: 1px solid $color-strokes-classic;
+  border-radius: 20px !important;
+  background: $color-toggle-surface;
+  padding: 3px;
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
@@ -327,18 +329,26 @@
 }
 
 .hostToggleButton--active {
-  background: #fff3bf;
-  border-color: #fff3bf;
-  justify-content: flex-end;
-  box-shadow: 0 10px 18px rgba(184, 165, 71, 0.18);
+  border-color: $color-strokes-classic;
 }
 
 .hostToggleThumb {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 999px;
-  background: #2b2b2b;
+  border: 1px solid $color-strokes-classic;
+  background: #ffffff;
   display: inline-block;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.hostToggleButton--active .hostToggleThumb {
+  border-color: $color-strokes-classic;
+  background: $color-icons-mute;
+  transform: translateX(38px);
 }
 
 .hostRequestBlock {
@@ -646,7 +656,7 @@
 
 .termsAcceptance {
   display: grid;
-  grid-template-columns: 22px minmax(0, 1fr);
+  grid-template-columns: 24px minmax(0, 1fr);
   align-items: center;
   gap: 16px;
   cursor: pointer;
@@ -664,11 +674,12 @@
 }
 
 .termsCheckbox {
-  width: 22px;
-  height: 22px;
-  border: 1px solid #e1ec79;
-  border-radius: 6px;
-  background: #ffffff;
+  position: relative;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #e1ec79;
+  border-radius: 8px;
+  background: $color-toggle-surface;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -678,16 +689,32 @@
     box-shadow 0.2s ease;
 }
 
+.termsCheckbox::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 8px;
+  width: 7px;
+  height: 13px;
+  border: solid #a08f2e;
+  border-width: 0 6px 6px 0;
+  border-radius: 3px;
+  opacity: 0;
+  transform: rotate(42deg);
+  transition: opacity 0.2s ease;
+}
+
 .termsAcceptance input:checked + .termsCheckbox {
-  border-color: #b8a547;
-  background: #e1ec79;
-  box-shadow: inset 0 0 0 4px #ffffff;
+  border-color: #e1ec79;
+  background: $color-toggle-surface;
+}
+
+.termsAcceptance input:checked + .termsCheckbox::before {
+  opacity: 1;
 }
 
 .termsAcceptance input:focus-visible + .termsCheckbox {
-  box-shadow:
-    0 0 0 3px rgba(225, 236, 121, 0.35),
-    inset 0 0 0 4px #ffffff;
+  box-shadow: 0 0 0 3px rgba(225, 236, 121, 0.35);
 }
 
 .termsAcceptance strong {

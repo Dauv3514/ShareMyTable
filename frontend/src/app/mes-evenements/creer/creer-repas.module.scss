@@ -100,8 +100,7 @@
 }
 
 .progressItem:hover:not(:disabled) .progressIndex {
-  background: #7B8613;
-  color: #ffffff;
+  background: rgba(205, 224, 31, 0.18);
 }
 
 .progressItem:disabled {
@@ -135,13 +134,18 @@
 
 .progressItem--current .progressIndex,
 .progressItem--done .progressIndex {
-  background: #7b8613;
-  color: #ffffff;
+  background: rgba(205, 224, 31, 0.18);
 }
 
-.progressIndex svg {
-  width: 16px;
-  height: 16px;
+.progressIndex img {
+  width: 14px;
+  height: 17px;
+  object-fit: contain;
+}
+
+.progressIndex--done img {
+  width: 18px;
+  height: 22px;
 }
 
 .stageCard {
@@ -169,6 +173,20 @@
   color: #645938;
   font-weight: 700;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobileStepButton img {
+  width: 14px;
+  height: 17px;
+  object-fit: contain;
+}
+
+.mobileStepButton--done img {
+  width: 18px;
+  height: 22px;
 }
 
 .mobileStepButton:disabled {
@@ -177,9 +195,8 @@
 }
 
 .mobileStepButton--active {
-  background: #7b8613;
-  border-color: #7b8613;
-  color: #ffffff;
+  background: rgba(205, 224, 31, 0.18);
+  border-color: #d9c86b;
 }
 
 .stageBody {
@@ -470,7 +487,7 @@
 .fieldSubtitle {
   color: #8c7f56;
   font-size: 0.78rem;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.2;
   text-align: left;
 }
@@ -563,7 +580,7 @@
 .commissionPreview > span {
   color: #5f553d;
   font-size: 0.9rem;
-  font-weight: 700;
+  font-weight: 600;
   text-align: left;
 }
 
@@ -585,7 +602,7 @@
 .commissionField small {
   color: #8c7f56;
   font-size: 0.78rem;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.2;
 }
 
@@ -615,7 +632,7 @@
   grid-column: 1 / -1;
   color: #8c7f56;
   font-size: 0.78rem;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.2;
   text-align: left;
 }

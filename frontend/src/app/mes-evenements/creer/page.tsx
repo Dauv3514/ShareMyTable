@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
@@ -783,8 +784,18 @@ export default function CreerRepasPage() {
                     onClick={() => goToStep(index as WizardStep)}
                     disabled={isLocked}
                   >
-                    <span className={styles.progressIndex}>
-                      {isDone ? <Check /> : index + 1}
+                    <span
+                      className={`${styles.progressIndex} ${
+                        isDone ? styles["progressIndex--done"] : ""
+                      }`}
+                    >
+                      <Image
+                        src={isDone ? "/poire1.svg" : "/poire2.svg"}
+                        alt=""
+                        width={18}
+                        height={22}
+                        aria-hidden="true"
+                      />
                     </span>
                     <span>{label}</span>
                   </button>
@@ -804,19 +815,29 @@ export default function CreerRepasPage() {
               Etape {step + 1} sur {STEP_LABELS.length}
             </p>
             <div className={styles.mobileSteps}>
-              {STEP_LABELS.map((label, index) => (
-                <button
-                  key={label}
-                  type="button"
-                  className={`${styles.mobileStepButton} ${
-                    step === index ? styles["mobileStepButton--active"] : ""
-                  }`}
-                  onClick={() => goToStep(index as WizardStep)}
-                  disabled={!isEditingMeal && index > maxUnlockedStep}
-                >
-                  {index + 1}
-                </button>
-              ))}
+              {STEP_LABELS.map((label, index) => {
+                const isDone = index < step;
+
+                return (
+                  <button
+                    key={label}
+                    type="button"
+                    className={`${styles.mobileStepButton} ${
+                      step === index ? styles["mobileStepButton--active"] : ""
+                    } ${isDone ? styles["mobileStepButton--done"] : ""}`}
+                    onClick={() => goToStep(index as WizardStep)}
+                    disabled={!isEditingMeal && index > maxUnlockedStep}
+                  >
+                    <Image
+                      src={isDone ? "/poire1.svg" : "/poire2.svg"}
+                      alt=""
+                      width={18}
+                      height={22}
+                      aria-hidden="true"
+                    />
+                  </button>
+                );
+              })}
             </div>
           </div>
 

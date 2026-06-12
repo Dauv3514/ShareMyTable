@@ -658,8 +658,18 @@ export default function ReservationWizard({
                     onClick={() => goToStep(index)}
                     disabled={isLocked}
                   >
-                    <span className={styles.progressIndex}>
-                      {isDone ? <Check /> : index + 1}
+                    <span
+                      className={`${styles.progressIndex} ${
+                        isDone ? styles["progressIndex--done"] : ""
+                      }`}
+                    >
+                      <Image
+                        src={isDone ? "/poire1.svg" : "/poire2.svg"}
+                        alt=""
+                        width={18}
+                        height={22}
+                        aria-hidden="true"
+                      />
                     </span>
                     <span>{label}</span>
                   </button>
@@ -718,19 +728,29 @@ export default function ReservationWizard({
                 Étape {currentStep + 1} sur {STEP_LABELS.length}
               </p>
               <div className={styles.mobileSteps}>
-                {STEP_LABELS.map((label, index) => (
-                  <button
-                    key={label}
-                    type="button"
-                    className={`${styles.mobileStepButton} ${
-                      currentStep === index ? styles["mobileStepButton--active"] : ""
-                    }`}
-                    onClick={() => goToStep(index)}
-                    disabled={isStepLocked(index)}
-                  >
-                    {index + 1}
-                  </button>
-                ))}
+                {STEP_LABELS.map((label, index) => {
+                  const isDone = index < currentStep;
+
+                  return (
+                    <button
+                      key={label}
+                      type="button"
+                      className={`${styles.mobileStepButton} ${
+                        currentStep === index ? styles["mobileStepButton--active"] : ""
+                      } ${isDone ? styles["mobileStepButton--done"] : ""}`}
+                      onClick={() => goToStep(index)}
+                      disabled={isStepLocked(index)}
+                    >
+                      <Image
+                        src={isDone ? "/poire1.svg" : "/poire2.svg"}
+                        alt=""
+                        width={18}
+                        height={22}
+                        aria-hidden="true"
+                      />
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
