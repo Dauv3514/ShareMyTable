@@ -69,6 +69,7 @@ export function validateEnvConfig(config: Record<string, unknown>) {
   validateOptionalUrl(env, 'NOMINATIM_BASE_URL');
 
   validateOptionalBoolean(env, 'GOOGLE_VISION_ENABLED');
+  validateOptionalBoolean(env, 'TYPEORM_SYNCHRONIZE');
 
   const googleVisionEnabled =
     env.GOOGLE_VISION_ENABLED?.trim().toLowerCase() === 'true';

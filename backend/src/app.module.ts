@@ -20,6 +20,12 @@ import { UsersModule } from './users/users.module';
 
 dotenv.config();
 
+const isProduction = process.env.NODE_ENV === 'production';
+const synchronizeDatabase =
+  process.env.TYPEORM_SYNCHRONIZE !== undefined
+    ? process.env.TYPEORM_SYNCHRONIZE === 'true'
+    : !isProduction;
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnvConfig }),
@@ -29,7 +35,7 @@ dotenv.config();
       url: process.env.DATABASE_URL,
       autoLoadEntities: true,
       entities: [],
-      synchronize: true,
+      synchronize: synchronizeDatabase,
     }),
     AuthModule,
     UsersModule,

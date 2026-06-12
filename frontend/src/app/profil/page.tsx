@@ -25,6 +25,7 @@ import {
   ChangeEvent,
   FormEvent,
   ReactNode,
+  Suspense,
   useCallback,
   useEffect,
   useMemo,
@@ -1424,7 +1425,7 @@ const HostHomePhotosEditor = ({
   );
 };
 
-const ProfilPage = () => {
+const ProfilPageContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isLoggedIn, loading, user } = useAuth();
@@ -2484,5 +2485,11 @@ const ProfilPage = () => {
     </section>
   );
 };
+
+const ProfilPage = () => (
+  <Suspense fallback={null}>
+    <ProfilPageContent />
+  </Suspense>
+);
 
 export default ProfilPage;
