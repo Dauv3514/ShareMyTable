@@ -22,6 +22,7 @@ import {
   ChangeEvent,
   FormEvent,
   ReactNode,
+  Suspense,
   useEffect,
   useMemo,
   useRef,
@@ -905,7 +906,7 @@ const PasswordEditForm = ({
   );
 };
 
-const ProfilPage = () => {
+const ProfilContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isLoggedIn, loading, user } = useAuth();
@@ -1803,4 +1804,10 @@ const ProfilPage = () => {
   );
 };
 
-export default ProfilPage;
+export default function ProfilPage() {
+  return (
+    <Suspense fallback={null}>
+      <ProfilContent />
+    </Suspense>
+  );
+}

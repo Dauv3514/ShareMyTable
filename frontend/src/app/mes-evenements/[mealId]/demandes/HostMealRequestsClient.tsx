@@ -253,7 +253,6 @@ function GuestRequestCard({
               }`}
             >
               {booking.bookingStatus === "confirmed" ? <BadgeCheck /> : null}
-              {booking.bookingStatus === "refused" ? <X /> : null}
               {getStatusLabel(booking)}
             </span>
           )}
