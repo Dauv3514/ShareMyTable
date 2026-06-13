@@ -12,6 +12,7 @@ import {
   useState,
 } from "react";
 import { toast } from "react-toastify";
+import { PWA_INSTALL_NUDGE_EVENT } from "@/components/Pwa";
 import DatePickerField from "@/components/DatePicker";
 import styles from "./inscription.module.scss";
 
@@ -56,20 +57,25 @@ const INITIAL_FORM_STATE: RegistrationFormState = {
 
 const BIRTH_DATE_START_MONTH = new Date(1920, 0, 1);
 const BIRTH_DATE_END_MONTH = new Date();
-const MAX_HOST_HOME_PHOTO_SIZE_MB = 5;
+const MAX_PROFILE_PHOTO_SIZE_MB = 3;
+const PROFILE_PHOTO_MIME_TYPES = ["image/png", "image/jpeg", "image/webp"];
+const MIN_HOST_HOME_PHOTOS = 2;
+const MAX_HOST_HOME_PHOTOS = 5;
+const MAX_HOST_HOME_PHOTO_SIZE_MB = 3;
+const HOST_HOME_PHOTO_MIME_TYPES = ["image/png", "image/jpeg", "image/webp"];
 
 function InscriptionPageContent() {
   const searchParams = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const hostPhotoInputRef = useRef<HTMLInputElement | null>(null);
   const objectUrlRef = useRef<string | null>(null);
-  const hostPhotoObjectUrlRef = useRef<string | null>(null);
+  const hostPhotoObjectUrlsRef = useRef<string[]>([]);
   const hostRequestSectionRef = useRef<HTMLElement | null>(null);
   const [formData, setFormData] = useState<RegistrationFormState>(INITIAL_FORM_STATE);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState("");
   const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
-  const [hostPhotoPreviewUrl, setHostPhotoPreviewUrl] = useState("");
-  const [selectedHostPhotoFile, setSelectedHostPhotoFile] = useState<File | null>(null);
+  const [hostPhotoPreviewUrls, setHostPhotoPreviewUrls] = useState<string[]>([]);
+  const [selectedHostPhotoFiles, setSelectedHostPhotoFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
@@ -97,9 +103,10 @@ function InscriptionPageContent() {
         URL.revokeObjectURL(objectUrlRef.current);
       }
 
-      if (hostPhotoObjectUrlRef.current) {
-        URL.revokeObjectURL(hostPhotoObjectUrlRef.current);
-      }
+      hostPhotoObjectUrlsRef.current.forEach((previewUrl) => {
+        URL.revokeObjectURL(previewUrl);
+      });
+      hostPhotoObjectUrlsRef.current = [];
     };
   }, []);
 
@@ -109,12 +116,15 @@ function InscriptionPageContent() {
     }
 
     return Boolean(
-      formData.host_district_label.trim() && formData.host_address.trim(),
+      formData.host_district_label.trim() &&
+        formData.host_address.trim() &&
+        selectedHostPhotoFiles.length >= MIN_HOST_HOME_PHOTOS,
     );
   }, [
     formData.host_address,
     formData.host_district_label,
     formData.request_host,
+    selectedHostPhotoFiles.length,
   ]);
 
   const handleChange = (
@@ -136,8 +146,16 @@ function InscriptionPageContent() {
       return;
     }
 
-    if (!file.type.startsWith("image/")) {
-      toast.error("Choisis une image valide.");
+    if (!PROFILE_PHOTO_MIME_TYPES.includes(file.type)) {
+      toast.error("La photo de profil doit être en PNG, JPG, JPEG ou WebP.");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_PROFILE_PHOTO_SIZE_MB * 1024 * 1024) {
+      toast.error(
+        `La photo de profil ne doit pas dépasser ${MAX_PROFILE_PHOTO_SIZE_MB} Mo.`,
+      );
       event.target.value = "";
       return;
     }
@@ -158,35 +176,58 @@ function InscriptionPageContent() {
   };
 
   const handleHostPhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) {
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) {
       return;
     }
 
-    if (
-      !["image/png", "image/jpeg", "image/webp"].includes(file.type)
-    ) {
-      toast.error("La photo du logement doit être en PNG, JPG, JPEG ou WebP.");
-      event.target.value = "";
-      return;
-    }
+    const remainingSlots = MAX_HOST_HOME_PHOTOS - selectedHostPhotoFiles.length;
 
-    if (file.size > MAX_HOST_HOME_PHOTO_SIZE_MB * 1024 * 1024) {
+    if (remainingSlots <= 0) {
       toast.error(
-        `La photo du logement ne doit pas depasser ${MAX_HOST_HOME_PHOTO_SIZE_MB} Mo.`,
+        `Tu peux importer au maximum ${MAX_HOST_HOME_PHOTOS} photos du logement.`,
       );
       event.target.value = "";
       return;
     }
 
-    if (hostPhotoObjectUrlRef.current) {
-      URL.revokeObjectURL(hostPhotoObjectUrlRef.current);
+    for (const file of files) {
+      if (!HOST_HOME_PHOTO_MIME_TYPES.includes(file.type)) {
+        toast.error("Les photos du logement doivent être en PNG, JPG, JPEG ou WebP.");
+        event.target.value = "";
+        return;
+      }
+
+      if (file.size > MAX_HOST_HOME_PHOTO_SIZE_MB * 1024 * 1024) {
+        toast.error(
+          `Chaque photo du logement ne doit pas dépasser ${MAX_HOST_HOME_PHOTO_SIZE_MB} Mo.`,
+        );
+        event.target.value = "";
+        return;
+      }
     }
 
-    const previewUrl = URL.createObjectURL(file);
-    hostPhotoObjectUrlRef.current = previewUrl;
-    setSelectedHostPhotoFile(file);
-    setHostPhotoPreviewUrl(previewUrl);
+    const filesToAdd = files.slice(0, remainingSlots);
+
+    if (files.length > remainingSlots) {
+      toast.info(
+        `Seules ${remainingSlots} photo${remainingSlots > 1 ? "s" : ""} ont été ajoutées pour rester dans la limite de ${MAX_HOST_HOME_PHOTOS}.`,
+      );
+    }
+
+    const previewUrls = filesToAdd.map((file) => URL.createObjectURL(file));
+    hostPhotoObjectUrlsRef.current = [
+      ...hostPhotoObjectUrlsRef.current,
+      ...previewUrls,
+    ];
+    setSelectedHostPhotoFiles((previousFiles) => [
+      ...previousFiles,
+      ...filesToAdd,
+    ]);
+    setHostPhotoPreviewUrls((previousUrls) => [
+      ...previousUrls,
+      ...previewUrls,
+    ]);
     event.target.value = "";
   };
 
@@ -204,14 +245,23 @@ function InscriptionPageContent() {
     }
   };
 
-  const handleRemoveHostPhoto = () => {
-    if (hostPhotoObjectUrlRef.current) {
-      URL.revokeObjectURL(hostPhotoObjectUrlRef.current);
-      hostPhotoObjectUrlRef.current = null;
-    }
+  const handleRemoveHostPhoto = (photoIndex: number) => {
+    setSelectedHostPhotoFiles((previousFiles) =>
+      previousFiles.filter((_, index) => index !== photoIndex),
+    );
 
-    setSelectedHostPhotoFile(null);
-    setHostPhotoPreviewUrl("");
+    setHostPhotoPreviewUrls((previousUrls) => {
+      const removedPreviewUrl = previousUrls[photoIndex];
+
+      if (removedPreviewUrl) {
+        URL.revokeObjectURL(removedPreviewUrl);
+        hostPhotoObjectUrlsRef.current = hostPhotoObjectUrlsRef.current.filter(
+          (previewUrl) => previewUrl !== removedPreviewUrl,
+        );
+      }
+
+      return previousUrls.filter((_, index) => index !== photoIndex);
+    });
 
     if (hostPhotoInputRef.current) {
       hostPhotoInputRef.current.value = "";
@@ -243,9 +293,9 @@ function InscriptionPageContent() {
         payload.append("profile_photo", selectedPhotoFile);
       }
 
-      if (selectedHostPhotoFile) {
-        payload.append("host_home_photo", selectedHostPhotoFile);
-      }
+      selectedHostPhotoFiles.forEach((file) => {
+        payload.append("host_home_photo", file);
+      });
 
       const response = await axios.post<RegistrationResponse>(
         `${apiUrl}/auth/inscription`,
@@ -266,6 +316,7 @@ function InscriptionPageContent() {
         toast.success("Compte créé. Vérifie ton email pour l'activer.");
       }
 
+      window.dispatchEvent(new Event(PWA_INSTALL_NUDGE_EVENT));
       resetForm();
       setHasAcceptedTerms(false);
       setTermsCheckboxChecked(false);
@@ -295,15 +346,15 @@ function InscriptionPageContent() {
       objectUrlRef.current = null;
     }
 
-    if (hostPhotoObjectUrlRef.current) {
-      URL.revokeObjectURL(hostPhotoObjectUrlRef.current);
-      hostPhotoObjectUrlRef.current = null;
-    }
+    hostPhotoObjectUrlsRef.current.forEach((previewUrl) => {
+      URL.revokeObjectURL(previewUrl);
+    });
+    hostPhotoObjectUrlsRef.current = [];
 
     setSelectedPhotoFile(null);
     setPhotoPreviewUrl("");
-    setSelectedHostPhotoFile(null);
-    setHostPhotoPreviewUrl("");
+    setSelectedHostPhotoFiles([]);
+    setHostPhotoPreviewUrls([]);
     setShowTermsModal(false);
     setShowCertificationPrompt(false);
   };
@@ -340,7 +391,7 @@ function InscriptionPageContent() {
 
     if (formData.request_host && !isHostRequestReady) {
       toast.error(
-        "Renseigne le quartier et l'adresse pour envoyer la demande hôte.",
+        `Renseigne le quartier, l'adresse et au moins ${MIN_HOST_HOME_PHOTOS} photos du logement pour envoyer la demande hôte.`,
       );
       return;
     }
@@ -418,6 +469,7 @@ function InscriptionPageContent() {
               ref={hostPhotoInputRef}
               type="file"
               accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+              multiple
               className={styles.hiddenInput}
               onChange={handleHostPhotoChange}
             />
@@ -573,7 +625,7 @@ function InscriptionPageContent() {
                       <p className={styles.uploadHint}>
                         {photoPreviewUrl
                           ? "Une photo est prête à être envoyée avec l'inscription."
-                          : "PNG, JPG ou WebP depuis votre ordinateur."}
+                          : `PNG, JPG ou WebP. Taille max : ${MAX_PROFILE_PHOTO_SIZE_MB} Mo.`}
                       </p>
                     </div>
 
@@ -682,7 +734,10 @@ function InscriptionPageContent() {
                   </div>
 
                   <label className={`${styles.field} ${styles.uploadField}`}>
-                    <span>Photo du logement</span>
+                    <span>
+                      Photos du logement
+                      <em className={styles.inlineRequirement}>Obligatoire si hôte</em>
+                    </span>
                     <div className={styles.uploadBox}>
                       <div className={styles.uploadMain}>
                         <button
@@ -690,35 +745,53 @@ function InscriptionPageContent() {
                           className={styles.uploadButton}
                           onClick={handleSelectHostPhoto}
                         >
-                          {hostPhotoPreviewUrl
-                            ? "Changer la photo du logement"
-                            : "Importer une photo du logement"}
+                          {hostPhotoPreviewUrls.length > 0
+                            ? "Ajouter des photos du logement"
+                            : "Importer des photos du logement"}
                         </button>
 
                         <p className={styles.uploadHint}>
-                          Optionnel. Formats acceptés : PNG, JPG, JPEG, WebP.
-                          Taille max : {MAX_HOST_HOME_PHOTO_SIZE_MB} Mo.
+                          Ajoute entre {MIN_HOST_HOME_PHOTOS} et {MAX_HOST_HOME_PHOTOS}
+                          {" "}photos du logement. Elles serviront par défaut dans la section
+                          Chez l&apos;hôte de ton profil si ta demande est acceptée. Tu pourras
+                          les changer plus tard depuis ton profil. Formats acceptés : PNG, JPG,
+                          JPEG, WebP. Taille max : {MAX_HOST_HOME_PHOTO_SIZE_MB} Mo par photo.
                         </p>
                       </div>
 
-                      {hostPhotoPreviewUrl ? (
-                        <div className={styles.uploadPreview}>
-                          <span className={styles.uploadPreviewBadge}>Photo du logement ajoutée</span>
-                          <button
-                            type="button"
-                            className={styles.uploadRemove}
-                            onClick={handleRemoveHostPhoto}
-                          >
-                            Retirer la photo
-                          </button>
+                      {hostPhotoPreviewUrls.length > 0 ? (
+                        <div className={styles.uploadPreviewList}>
+                          <span className={styles.uploadPreviewBadge}>
+                            {hostPhotoPreviewUrls.length}/{MAX_HOST_HOME_PHOTOS} photos ajoutées
+                          </span>
+
+                          <div className={styles.uploadThumbGrid}>
+                            {hostPhotoPreviewUrls.map((previewUrl, index) => (
+                              <div key={previewUrl} className={styles.uploadThumb}>
+                                <span
+                                  className={styles.uploadThumbImage}
+                                  style={{ backgroundImage: `url("${previewUrl}")` }}
+                                  aria-label={`Photo du logement ${index + 1}`}
+                                  role="img"
+                                />
+                                <button
+                                  type="button"
+                                  className={styles.uploadRemove}
+                                  onClick={() => handleRemoveHostPhoto(index)}
+                                >
+                                  Retirer
+                                </button>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       ) : null}
                     </div>
                   </label>
 
                   <p className={styles.hostHelp}>
-                    La photo du logement reste optionnelle. En revanche, le
-                    quartier et l&apos;adresse sont obligatoires si la demande hôte est active.
+                    Deux photos du logement, le quartier et l&apos;adresse sont
+                    obligatoires si la demande hôte est active.
                   </p>
                 </div>
               ) : null}

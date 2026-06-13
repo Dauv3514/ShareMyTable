@@ -151,6 +151,15 @@
   color: #8a3a2a;
 }
 
+.profile-menu__action--install {
+  background: #fbfbe8;
+  color: #2f3606;
+}
+
+.profile-menu__action--install:hover {
+  background: #f2f6c7;
+}
+
 .profile-menu__action-left {
   display: inline-flex;
   align-items: center;
@@ -177,6 +186,10 @@
 
 .profile-menu__action--danger .profile-menu__action-icon {
   color: #8a3a2a;
+}
+
+.profile-menu__action--install .profile-menu__action-icon {
+  color: #7b8613;
 }
 
 .profile-menu__action-arrow {

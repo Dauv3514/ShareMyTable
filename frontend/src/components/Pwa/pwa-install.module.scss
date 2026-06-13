@@ -1,0 +1,144 @@
+.overlay {
+  position: fixed;
+  right: 18px;
+  bottom: 22px;
+  left: 18px;
+  z-index: 150;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.sheet {
+  position: relative;
+  width: min(100%, 470px);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px 14px;
+  padding: 18px;
+  border: 1px solid #e3d4a8;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #fffdf7 0%, #fbf7ed 100%);
+  box-shadow: 0 22px 46px rgba(45, 38, 18, 0.2);
+  color: #252904;
+  pointer-events: auto;
+  animation: pwaInstallEnter 0.28s ease-out both;
+}
+
+.closeButton {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #e6dcbf;
+  border-radius: 50%;
+  background: #fffdf7;
+  color: #6f622b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.closeButton svg {
+  width: 17px;
+  height: 17px;
+}
+
+.icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #e9f54b;
+  color: #252904;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 0 1px rgba(123, 134, 19, 0.25);
+}
+
+.icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.copy {
+  padding-right: 34px;
+}
+
+.copy h2 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.05;
+  color: #252904;
+}
+
+.copy p {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #5f5535;
+}
+
+.actions {
+  grid-column: 2;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.primaryButton,
+.secondaryButton {
+  min-height: 34px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primaryButton {
+  border: 1px solid #7b8613;
+  background: #7b8613;
+  color: #fffdf7;
+}
+
+.secondaryButton {
+  border: 1px solid #d8c891;
+  background: #ffffff;
+  color: #6f622b;
+}
+
+@keyframes pwaInstallEnter {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 720px) {
+  .overlay {
+    bottom: calc(98px + env(safe-area-inset-bottom));
+  }
+
+  .sheet {
+    width: min(100%, 380px);
+    border-radius: 24px;
+  }
+
+  .actions {
+    grid-column: 1 / -1;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    flex: 1 1 130px;
+  }
+}

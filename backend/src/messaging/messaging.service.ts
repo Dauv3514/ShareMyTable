@@ -7,6 +7,10 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Meal } from '../meals/meal.entity';
+import {
+  PushNotificationCategory,
+  PushNotificationsService,
+} from '../push-notifications/push-notifications.service';
 import { Utilisateur } from '../users/users.entity';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { MessageConversationMemberRole } from './message-conversation-member.entity';
@@ -43,6 +47,7 @@ type ConversationSummary = {
   title: string | null;
   createdAt: Date;
   updatedAt: Date;
+  unreadCount: number;
   meal: {
     mealId: number;
     title: string | null;
@@ -73,6 +78,7 @@ export class MessagingService {
     private readonly mealsRepository: Repository<Meal>,
     @InjectRepository(Utilisateur)
     private readonly usersRepository: Repository<Utilisateur>,
+    private readonly pushNotificationsService: PushNotificationsService,
   ) {}
 
   async listMyConversations(userId: number): Promise<ConversationSummary[]> {
@@ -109,13 +115,27 @@ export class MessagingService {
       await this.findLatestMessagesByConversationIds(
         conversations.map((conversation) => conversation.id),
       );
+    const unreadCountsByConversationId =
+      await this.findUnreadCountsForUserByConversationIds(
+        userId,
+        conversations.map((conversation) => conversation.id),
+      );
 
     return conversations.map((conversation) =>
       this.toConversationSummary(
         conversation,
         latestMessagesByConversationId.get(conversation.id) ?? null,
+        unreadCountsByConversationId.get(conversation.id) ?? 0,
       ),
     );
+  }
+
+  async getUnreadMessagesCount(
+    userId: number,
+  ): Promise<{ unreadCount: number }> {
+    const unreadCount = await this.findUnreadMessagesCountForUser(userId);
+
+    return { unreadCount };
   }
 
   async getConversationMessages(
@@ -131,11 +151,35 @@ export class MessagingService {
     });
 
     const latestMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+    await this.markConversationAsRead(userId, conversation.id);
 
     return {
-      ...this.toConversationSummary(conversation, latestMessage),
+      ...this.toConversationSummary(conversation, latestMessage, 0),
       messages: messages.map((message) => this.toMessageSummary(message)),
     };
+  }
+
+  async markConversationAsRead(
+    userId: number,
+    conversationId: number,
+  ): Promise<{ unreadCount: number }> {
+    const membership = await this.membersRepository.findOne({
+      where: {
+        conversation: { id: conversationId },
+        user: { id: userId },
+      },
+    });
+
+    if (!membership) {
+      throw new ForbiddenException(
+        "Vous n'avez pas acces a cette conversation",
+      );
+    }
+
+    membership.lastReadAt = new Date();
+    await this.membersRepository.save(membership);
+
+    return this.getUnreadMessagesCount(userId);
   }
 
   async sendMessage(
@@ -164,6 +208,9 @@ export class MessagingService {
     const savedMessage = await this.messagesRepository.save(message);
     conversation.updatedAt = new Date();
     await this.conversationsRepository.save(conversation);
+    await this.markConversationAsRead(userId, conversation.id);
+
+    await this.notifyConversationMembers(conversation, savedMessage, sender);
 
     return this.toMessageSummary(savedMessage);
   }
@@ -674,6 +721,101 @@ export class MessagingService {
     return latestMessagesByConversationId;
   }
 
+  private async findUnreadCountsForUserByConversationIds(
+    userId: number,
+    conversationIds: number[],
+  ): Promise<Map<number, number>> {
+    if (conversationIds.length === 0) {
+      return new Map<number, number>();
+    }
+
+    const rows = await this.messagesRepository
+      .createQueryBuilder('message')
+      .select('message.conversation_id', 'conversationId')
+      .addSelect('COUNT(message.id)', 'unreadCount')
+      .innerJoin(
+        MessageConversationMember,
+        'membership',
+        'membership.conversation_id = message.conversation_id AND membership.user_id = :userId',
+        { userId },
+      )
+      .where('message.conversation_id IN (:...conversationIds)', {
+        conversationIds,
+      })
+      .andWhere('message.sender_user_id != :userId', { userId })
+      .andWhere(
+        'message.created_at > COALESCE(membership.last_read_at, membership.joined_at)',
+      )
+      .groupBy('message.conversation_id')
+      .getRawMany<{ conversationId: string; unreadCount: string }>();
+
+    return new Map(
+      rows.map((row) => [
+        Number(row.conversationId),
+        Number(row.unreadCount),
+      ]),
+    );
+  }
+
+  private async findUnreadMessagesCountForUser(userId: number): Promise<number> {
+    const unreadCount = await this.messagesRepository
+      .createQueryBuilder('message')
+      .innerJoin(
+        MessageConversationMember,
+        'membership',
+        'membership.conversation_id = message.conversation_id AND membership.user_id = :userId',
+        { userId },
+      )
+      .where('message.sender_user_id != :userId', { userId })
+      .andWhere(
+        'message.created_at > COALESCE(membership.last_read_at, membership.joined_at)',
+      )
+      .getCount();
+
+    return unreadCount;
+  }
+
+  private async notifyConversationMembers(
+    conversation: MessageConversation,
+    message: MessageEntry,
+    sender: Utilisateur,
+  ): Promise<void> {
+    const recipientUserIds = (conversation.members ?? [])
+      .map((member) => member.user?.id)
+      .filter(
+        (memberUserId): memberUserId is number =>
+          Boolean(memberUserId) && memberUserId !== sender.id,
+      );
+
+    if (recipientUserIds.length === 0) {
+      return;
+    }
+
+    const senderName =
+      sender.pseudo ||
+      [sender.firstName, sender.lastName].filter(Boolean).join(' ').trim() ||
+      'Nouveau message';
+    const mealTitle = conversation.meal?.title;
+    const body =
+      message.body.length > 90 ? `${message.body.slice(0, 87)}...` : message.body;
+
+    await this.pushNotificationsService.notifyUsers(
+      recipientUserIds,
+      {
+        title: mealTitle ? `${senderName} - ${mealTitle}` : senderName,
+        body,
+        url: `/messages/conversations/${conversation.id}`,
+        tag: `conversation-${conversation.id}`,
+        data: {
+          type: 'message',
+          conversationId: conversation.id,
+          messageId: message.id,
+        },
+      },
+      PushNotificationCategory.MESSAGES,
+    );
+  }
+
   private async findConversationForMember(
     userId: number,
     conversationId: number,
@@ -729,6 +871,7 @@ export class MessagingService {
   private toConversationSummary(
     conversation: MessageConversation,
     latestMessage: MessageEntry | null,
+    unreadCount = 0,
   ): ConversationSummary {
     return {
       id: conversation.id,
@@ -736,6 +879,7 @@ export class MessagingService {
       title: conversation.title,
       createdAt: conversation.createdAt,
       updatedAt: conversation.updatedAt,
+      unreadCount,
       meal: conversation.meal
         ? {
             mealId: conversation.meal.id,

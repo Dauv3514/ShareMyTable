@@ -176,12 +176,251 @@
 .eventLink:hover,
 .eventLink:focus-visible {
   border-width: 2px;
+.profileActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .eventLink svg {
   width: 16px;
   height: 16px;
   flex: 0 0 auto;
+}
+
+.reportButton {
+  min-height: 30px;
+  height: 30px;
+  min-width: 180px;
+  padding: 0 16px;
+  border: 1px solid #d9b7b0;
+  border-radius: 27px;
+  background: #fff7f5;
+  color: #8d4338;
+  font: inherit;
+  font-size: 0.96rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.reportButton:hover,
+.reportButton:focus-visible {
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.reportButton svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.reportModal {
+  position: fixed;
+  inset: 0;
+  z-index: 180;
+  display: grid;
+  align-items: end;
+  justify-items: center;
+}
+
+.reportBackdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: rgba(28, 28, 22, 0.58);
+  cursor: pointer;
+}
+
+.reportSheet {
+  position: relative;
+  width: min(540px, calc(100% - 22px));
+  max-height: min(86vh, 680px);
+  border: 1px solid #ded1ad;
+  border-radius: 18px 18px 0 0;
+  background: #fffdf7;
+  box-shadow: 0 -16px 36px rgba(58, 47, 26, 0.22);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+
+.reportHeader {
+  padding: 18px;
+  border-bottom: 1px solid #efe4ca;
+  background: #ffffff;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.reportHeader p {
+  margin: 0 0 4px;
+  color: #7c7335;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.reportHeader h2 {
+  margin: 0;
+  color: #292d06;
+  font-size: 22px;
+  line-height: 1.05;
+}
+
+.reportClose {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  border: 1px solid #e6dcc1;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #312914;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(77, 62, 25, 0.08);
+}
+
+.reportClose:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.reportClose svg {
+  width: 18px;
+  height: 18px;
+}
+
+.reportContent {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 18px;
+  display: grid;
+  gap: 16px;
+  scrollbar-color: #a8a8a8 transparent;
+  scrollbar-width: thin;
+}
+
+.reportContent::-webkit-scrollbar {
+  width: 8px;
+}
+
+.reportContent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.reportContent::-webkit-scrollbar-thumb {
+  background: #a8a8a8;
+  border-radius: 999px;
+}
+
+.reportField {
+  display: grid;
+  gap: 8px;
+}
+
+.reportField span {
+  color: #292d06;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.reportField select,
+.reportField textarea {
+  width: 100%;
+  border: 1px solid #dfd3b1;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #312914;
+  font-family: inherit;
+  font-size: 15px;
+  box-shadow: 0 8px 18px rgba(59, 45, 18, 0.06);
+}
+
+.reportField select {
+  min-height: 48px;
+  padding: 0 14px;
+}
+
+.reportField textarea {
+  min-height: 126px;
+  resize: vertical;
+  padding: 14px 16px;
+}
+
+.reportField select:focus,
+.reportField textarea:focus {
+  border-color: #cab35a;
+  box-shadow: 0 0 0 4px rgba(225, 236, 121, 0.25);
+  outline: none;
+}
+
+.reportField select:disabled,
+.reportField textarea:disabled {
+  background: #fbf8ef;
+  cursor: wait;
+}
+
+.reportHint {
+  margin: 0;
+  color: #756a42;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.reportFooter {
+  padding: 12px 18px calc(16px + env(safe-area-inset-bottom));
+  border-top: 1px solid #efe4ca;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.reportSecondary,
+.reportSubmit {
+  min-height: 38px;
+  border-radius: 999px;
+  padding: 0 16px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.reportSecondary {
+  border: 1px solid #e4d8b8;
+  background: #ffffff;
+  color: #5e532d;
+}
+
+.reportSubmit {
+  border: 1px solid #7B8613;
+  background: #7B8613;
+  color: #ffffff;
+}
+
+.reportSecondary:disabled,
+.reportSubmit:disabled {
+  opacity: 0.68;
+  cursor: wait;
 }
 
 .reviews {
@@ -199,22 +438,155 @@
 
 .homeGallery {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 180px));
   gap: 16px;
 }
 
-.homePhotoCard {
-  position: relative;
-  min-height: 170px;
+.homePhotoButton {
+  width: 180px;
+  height: 180px;
+  padding: 0;
   overflow: hidden;
   border-radius: 20px;
-  border: 1px solid #e3d8b9;
-  background: linear-gradient(180deg, #fffdf7 0%, #fbf7ed 100%);
-  box-shadow: 0 18px 36px rgba(77, 62, 25, 0.08);
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  cursor: zoom-in;
+  display: block;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.homePhotoButton:hover,
+.homePhotoButton:focus-visible {
+  box-shadow: 0 14px 28px rgba(77, 62, 25, 0.16);
+  outline: none;
+  transform: translateY(-1px);
 }
 
 .homePhoto {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
   object-fit: cover;
+}
+
+.photoLightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 220;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+}
+
+.photoLightboxBackdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: rgba(21, 18, 13, 0.78);
+  cursor: zoom-out;
+}
+
+.photoLightboxContent {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 980px);
+  height: min(82vh, 680px);
+  display: grid;
+  place-items: center;
+}
+
+.photoLightboxFigure {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 10px;
+  justify-items: center;
+}
+
+.photoLightboxImage {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 22px;
+  border: 1px solid rgba(236, 227, 206, 0.68);
+  background: #fffdf7;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.34);
+  object-fit: contain;
+}
+
+.photoLightboxFigure figcaption {
+  min-height: 28px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 253, 247, 0.92);
+  color: #5a4c21;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.photoLightboxClose,
+.photoLightboxNav {
+  position: absolute;
+  z-index: 2;
+  border: 1px solid #e6dcc1;
+  border-radius: 50%;
+  background: #fffdf7;
+  color: #5a4c21;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.photoLightboxClose:hover,
+.photoLightboxNav:hover,
+.photoLightboxClose:focus-visible,
+.photoLightboxNav:focus-visible {
+  background: #e7f16f;
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.photoLightboxClose {
+  top: 0;
+  right: 0;
+  width: 42px;
+  height: 42px;
+}
+
+.photoLightboxNav {
+  top: 50%;
+  width: 46px;
+  height: 46px;
+  transform: translateY(-50%);
+}
+
+.photoLightboxNav:hover,
+.photoLightboxNav:focus-visible {
+  transform: translateY(calc(-50% - 1px));
+}
+
+.photoLightboxPrev {
+  left: 0;
+}
+
+.photoLightboxNext {
+  right: 0;
+}
+
+.photoLightboxClose svg,
+.photoLightboxNav svg {
+  width: 20px;
+  height: 20px;
 }
 
 .reviewGrid {
@@ -329,7 +701,7 @@
   }
 
   .homeGallery {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 180px));
   }
 }
 
@@ -367,6 +739,21 @@
     justify-self: start;
   }
 
+  .profileActions {
+    display: grid;
+    justify-items: start;
+  }
+
+  .reportFooter {
+    display: grid;
+    gap: 8px;
+  }
+
+  .reportSecondary,
+  .reportSubmit {
+    width: 100%;
+  }
+
   .homeGallery {
     display: flex;
     gap: 12px;
@@ -380,11 +767,46 @@
     display: none;
   }
 
-  .homePhotoCard {
-    min-height: 120px;
-    min-width: 148px;
-    flex: 0 0 148px;
+  .homePhotoButton {
+    width: 102px;
+    height: 102px;
+    min-width: 102px;
+    flex: 0 0 102px;
     scroll-snap-align: start;
     border-radius: 16px;
+    padding: 0;
   }
+
+  .homePhoto {
+    border-radius: 16px;
+  }
+
+  .photoLightbox {
+    padding: 58px 48px 42px;
+  }
+
+  .photoLightboxClose {
+    top: -46px;
+    right: -22px;
+  }
+
+  .photoLightboxPrev {
+    left: -42px;
+  }
+
+  .photoLightboxNext {
+    right: -42px;
+  }
+}
+
+@media (min-width: 720px) {
+  .reportModal {
+    align-items: center;
+  }
+
+  .reportSheet {
+    border-radius: 18px;
+    box-shadow: 0 22px 48px rgba(58, 47, 26, 0.24);
+  }
+}
 }

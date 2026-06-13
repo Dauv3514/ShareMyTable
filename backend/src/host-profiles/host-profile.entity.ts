@@ -42,6 +42,13 @@ export class HostProfile {
   homePhotoUrl: string | null;
 
   @Column({
+    name: 'home_photo_urls',
+    type: 'jsonb',
+    default: () => "'[]'::jsonb",
+  })
+  homePhotoUrls: string[];
+
+  @Column({
     name: 'validation_status',
     type: 'enum',
     enum: HostValidationStatus,

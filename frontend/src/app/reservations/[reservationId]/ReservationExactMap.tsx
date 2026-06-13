@@ -1,12 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CircleMarker, MapContainer, TileLayer, Tooltip, useMap } from "react-leaflet";
+import { divIcon } from "leaflet";
+import { MapContainer, Marker, TileLayer, Tooltip, useMap } from "react-leaflet";
 
 type ReservationExactMapProps = {
   center: [number, number] | null;
   addressLabel: string;
 };
+
+const mealPinIcon = divIcon({
+  className: "reservation-exact-map__pin-wrapper",
+  html: '<img class="reservation-exact-map__meal-pin" src="/pin-repas.png" alt="" aria-hidden="true" />',
+  iconSize: [58, 64],
+  iconAnchor: [29, 58],
+  popupAnchor: [0, -58],
+  tooltipAnchor: [0, -46],
+});
 
 function MapViewport({ center }: { center: [number, number] }) {
   const map = useMap();
@@ -105,21 +115,11 @@ export default function ReservationExactMap({
         subdomains="abcd"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
       />
-      <CircleMarker
-        center={resolvedCenter}
-        radius={9}
-        pathOptions={{
-          color: "#6f6325",
-          fillColor: "#e6f06f",
-          fillOpacity: 0.95,
-          opacity: 1,
-          weight: 2,
-        }}
-      >
-        <Tooltip direction="top" offset={[0, -8]} opacity={1}>
+      <Marker position={resolvedCenter} icon={mealPinIcon}>
+        <Tooltip direction="top" offset={[0, -4]} opacity={1}>
           {addressLabel}
         </Tooltip>
-      </CircleMarker>
+      </Marker>
     </MapContainer>
   );
 }

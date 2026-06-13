@@ -75,7 +75,7 @@ export class AuthController {
     FileFieldsInterceptor(
       [
         { name: 'profile_photo', maxCount: 1 },
-        { name: 'host_home_photo', maxCount: 1 },
+        { name: 'host_home_photo', maxCount: 5 },
       ],
       registrationImageUploadOptions,
     ),
@@ -91,9 +91,17 @@ export class AuthController {
   ) {
     const requestHost = this.isTrue(userDto.request_host);
     const profilePhotoFile = this.getUploadedFile(files, 'profile_photo');
-    const hostHomePhotoFile = this.getUploadedFile(files, 'host_home_photo');
+    const hostHomePhotoFiles = files?.host_home_photo ?? [];
+    const hostHomePhotoUrls = hostHomePhotoFiles.map((file) =>
+      buildHostHomePhotoUrl(file.filename),
+    );
 
     if (requestHost) {
+      const submittedHostHomePhotos = [
+        ...hostHomePhotoUrls,
+        userDto.host_home_photo_url?.trim(),
+      ].filter((photoUrl): photoUrl is string => Boolean(photoUrl));
+
       if (!userDto.host_district_label?.trim()) {
         throw new BadRequestException(
           'Le quartier est obligatoire pour envoyer une demande hôte',
@@ -103,6 +111,12 @@ export class AuthController {
       if (!userDto.host_address?.trim()) {
         throw new BadRequestException(
           "L'adresse est obligatoire pour envoyer une demande hôte",
+        );
+      }
+
+      if (submittedHostHomePhotos.length < 2) {
+        throw new BadRequestException(
+          'Au moins 2 photos du logement sont obligatoires pour envoyer une demande hote',
         );
       }
     }
@@ -123,9 +137,10 @@ export class AuthController {
         city: userDto.city,
         districtLabel: userDto.host_district_label!.trim(),
         address: userDto.host_address!.trim(),
-        homePhotoUrl: hostHomePhotoFile?.filename
-          ? buildHostHomePhotoUrl(hostHomePhotoFile.filename)
-          : userDto.host_home_photo_url?.trim() || undefined,
+        homePhotoUrl:
+          hostHomePhotoUrls[0] ?? userDto.host_home_photo_url?.trim() ?? undefined,
+        homePhotoUrls:
+          hostHomePhotoUrls.length > 0 ? hostHomePhotoUrls : undefined,
       });
 
       return {

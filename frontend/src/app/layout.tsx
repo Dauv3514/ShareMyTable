@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import type { CSSProperties } from "react";
 import { ToastContainer } from "react-toastify";
 import AppChrome from "../components/AppChrome";
+import { PwaInstallProvider } from "../components/Pwa";
 import { AuthProvider } from "./providers/AuthProvider";
 import "./globals.scss";
 import "leaflet/dist/leaflet.css";
@@ -59,11 +60,25 @@ const toastStyle = {
 } as CSSProperties;
 
 export const metadata: Metadata = {
-  title: "RameneTaPoire",
+  title: "RamèneTaPoire",
   description: "Le blablacar des repas",
+  manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/rtp.svg",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
+  appleWebApp: {
+    capable: true,
+    title: "RamèneTaPoire",
+    statusBarStyle: "default",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#7B8613",
 };
 
 export default function RootLayout({
@@ -73,15 +88,12 @@ export default function RootLayout({
     <html lang="fr">
       <body className={`${clashGrotesk.variable} ${alpino.variable}`}>
         <AuthProvider>
-          <AppChrome>
-            {children}
-          </AppChrome>
-          <ToastContainer
-            position="top-right"
-            autoClose={3000}
-            theme="dark"
-            style={toastStyle}
-          />
+          <PwaInstallProvider>
+            <AppChrome>
+              {children}
+            </AppChrome>
+            <ToastContainer position="top-right" autoClose={3000} theme="dark" style={toastStyle}/>
+          </PwaInstallProvider>
         </AuthProvider>
       </body>
     </html>

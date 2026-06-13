@@ -481,13 +481,26 @@ $message-other: #292d06;
 
 .membersPanelItem {
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr);
+  grid-template-columns: 40px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   color: $text-classic;
   font-size: 14px;
   font-weight: 700;
   line-height: 1.1;
+}
+
+.membersPanelReportButton {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid #d9b7b0;
+  border-radius: 999px;
+  background: #fff7f5;
+  color: #8d4338;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .membersPanelAvatar {
@@ -624,6 +637,7 @@ $message-other: #292d06;
 }
 
 .chatHeader {
+  position: relative;
   height: 139px;
   display: flex;
   align-items: end;
@@ -722,6 +736,36 @@ $message-other: #292d06;
 
 .chatMealLink {
   display: none;
+}
+
+.chatReportButton {
+  position: absolute;
+  right: 32px;
+  bottom: 48px;
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  min-height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #d9b7b0;
+  border-radius: 50%;
+  background: #fff7f5;
+  color: #8d4338;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.chatReportButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(74, 66, 28, 0.1);
 }
 
 .messagesViewport {
@@ -955,6 +999,170 @@ $message-other: #292d06;
     font-size: 14px;
     line-height: 1.35;
   }
+}
+
+.reportBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: rgba(20, 18, 12, 0.42);
+}
+
+.reportModal {
+  width: min(100%, 560px);
+  max-height: min(720px, calc(100vh - 44px));
+  overflow: auto;
+  border: 1px solid $stroke-thin;
+  border-radius: 28px;
+  background: $bg-secondary;
+  box-shadow: 0 24px 60px rgba(34, 25, 8, 0.24);
+}
+
+.reportModalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px 22px 18px;
+  border-bottom: 1px solid $stroke-thin;
+
+  span {
+    color: $text-muted;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  h2 {
+    margin: 6px 0 0;
+    color: $text-heading;
+    font-size: 24px;
+    line-height: 1.05;
+  }
+
+  p {
+    margin: 8px 0 0;
+    color: #6a6148;
+    font-size: 14px;
+    line-height: 1.35;
+  }
+}
+
+.reportCloseButton {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border: 1px solid $stroke-thin;
+  border-radius: 50%;
+  background: $bg-secondary;
+  color: #5c512c;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.reportModalBody {
+  display: grid;
+  gap: 16px;
+  padding: 20px 22px;
+}
+
+.reportField {
+  display: grid;
+  gap: 8px;
+
+  span {
+    color: $text-heading;
+    font-weight: 800;
+  }
+
+  select,
+  textarea {
+    width: 100%;
+    border: 1px solid $stroke-thin;
+    border-radius: 18px;
+    background-color: $bg-third;
+    color: #17120d;
+    font: inherit;
+    line-height: 1.45;
+    outline: none;
+  }
+
+  select {
+    min-height: 48px;
+    padding: 0 56px 0 14px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%235c512c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right 22px center;
+    background-repeat: no-repeat;
+    background-size: 18px 18px;
+  }
+
+  textarea {
+    min-height: 136px;
+    padding: 14px 16px;
+    resize: vertical;
+  }
+
+  select:focus,
+  textarea:focus {
+    border-color: $stroke-classic;
+    box-shadow: 0 0 0 4px rgba(225, 236, 121, 0.24);
+  }
+}
+
+.reportHint {
+  margin: 0;
+  color: #6a6148;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.reportModalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 18px 22px 22px;
+  border-top: 1px solid $stroke-thin;
+}
+
+.reportSecondaryButton,
+.reportSubmitButton {
+  min-height: 30px;
+  height: 30px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.reportSecondaryButton {
+  border: 1px solid $stroke-classic;
+  background: $bg-secondary;
+  color: #5c512c;
+}
+
+.reportSubmitButton {
+  border: 1px solid $message-mine;
+  background: $message-mine;
+  color: #ffffff;
+}
+
+.reportSecondaryButton:disabled,
+.reportSubmitButton:disabled {
+  opacity: 0.6;
+  cursor: wait;
 }
 
 @media (min-width: 721px) {
@@ -1260,6 +1468,11 @@ $message-other: #292d06;
     bottom: 14px;
   }
 
+  .chatReportButton {
+    right: 58px;
+    bottom: 40px;
+  }
+
   .chatHeaderMain > .avatarWrap,
   .chatHeaderMain > .avatarPanelAnchor {
     margin-bottom: 16px;
@@ -1271,6 +1484,26 @@ $message-other: #292d06;
     left: 50%;
     bottom: 0;
     transform: translateX(-50%);
+  }
+
+  .reportBackdrop {
+    align-items: end;
+    padding: 14px;
+  }
+
+  .reportModal {
+    width: 100%;
+    max-height: calc(100vh - 28px);
+    border-radius: 24px;
+  }
+
+  .reportModalFooter {
+    flex-direction: column-reverse;
+  }
+
+  .reportSecondaryButton,
+  .reportSubmitButton {
+    width: 100%;
   }
 }
 

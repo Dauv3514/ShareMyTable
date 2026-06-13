@@ -11,7 +11,7 @@ const HOST_HOME_PHOTO_DIRECTORY = join(
   'host-home-photos',
 );
 
-export const MAX_REGISTRATION_IMAGE_SIZE = 5 * 1024 * 1024;
+export const MAX_REGISTRATION_IMAGE_SIZE = 3 * 1024 * 1024;
 
 function ensureDirectory(path: string) {
   if (!existsSync(path)) {

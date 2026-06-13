@@ -9,6 +9,10 @@ import { HostProfile } from '../host-profiles/host-profile.entity';
 import { Meal, MealStatus } from '../meals/meal.entity';
 import { MessagingService } from '../messaging/messaging.service';
 import { PaymentsService } from '../payments/payments.service';
+import {
+  PushNotificationCategory,
+  PushNotificationsService,
+} from '../push-notifications/push-notifications.service';
 import { Utilisateur } from '../users/users.entity';
 import {
   Booking,
@@ -132,6 +136,7 @@ export class BookingsService {
     private readonly usersRepository: Repository<Utilisateur>,
     private readonly messagingService: MessagingService,
     private readonly paymentsService: PaymentsService,
+    private readonly pushNotificationsService: PushNotificationsService,
   ) {}
 
   async create(userId: number, dto: CreateBookingDto): Promise<BookingResponse> {
@@ -197,6 +202,7 @@ export class BookingsService {
 
     const savedBooking = await this.bookingsRepository.save(booking);
     await this.messagingService.openReservationDirectConversation(meal.id, userId);
+    await this.notifyHostNewBooking(savedBooking);
     const reloadedBooking = await this.findOwnedBookingEntity(userId, savedBooking.id);
     return this.toBookingResponse(reloadedBooking);
   }
@@ -255,6 +261,7 @@ export class BookingsService {
 
     const savedBooking = await this.bookingsRepository.save(booking);
     await this.syncAcceptedMealConversations(savedBooking.meal.id);
+    await this.notifyHostBookingCancelled(savedBooking);
     return this.toBookingResponse(savedBooking);
   }
 
@@ -330,6 +337,7 @@ export class BookingsService {
 
     const savedBooking = await this.bookingsRepository.save(booking);
     await this.syncAcceptedMealConversations(savedBooking.meal.id);
+    await this.notifyGuestBookingAccepted(savedBooking);
     return this.toHostBookingResponse(savedBooking);
   }
 
@@ -356,7 +364,88 @@ export class BookingsService {
 
     const savedBooking = await this.bookingsRepository.save(booking);
     await this.syncAcceptedMealConversations(savedBooking.meal.id);
+    await this.notifyGuestBookingRefused(savedBooking);
     return this.toHostBookingResponse(savedBooking);
+  }
+
+  private async notifyHostNewBooking(booking: Booking): Promise<void> {
+    await this.pushNotificationsService.notifyUsers(
+      [booking.meal.host.id],
+      {
+        title: 'Nouvelle demande de réservation',
+        body: `${this.getUserDisplayName(booking.guestUser)} souhaite réserver ${booking.seats} place${booking.seats > 1 ? 's' : ''} pour ${booking.meal.title ?? 'ton repas'}.`,
+        url: '/mes-evenements',
+        tag: `booking-request-${booking.id}`,
+        data: {
+          type: 'booking_request',
+          bookingId: booking.id,
+          mealId: booking.meal.id,
+        },
+      },
+      PushNotificationCategory.RESERVATIONS,
+    );
+  }
+
+  private async notifyGuestBookingAccepted(booking: Booking): Promise<void> {
+    await this.pushNotificationsService.notifyUsers(
+      [booking.guestUser.id],
+      {
+        title: 'Réservation acceptée',
+        body: `Ta réservation pour ${booking.meal.title ?? 'le repas'} a été acceptée.`,
+        url: `/reservation/${booking.meal.id}/confirmation?reservationId=${booking.id}`,
+        tag: `booking-${booking.id}`,
+        data: {
+          type: 'booking_accepted',
+          bookingId: booking.id,
+          mealId: booking.meal.id,
+        },
+      },
+      PushNotificationCategory.RESERVATIONS,
+    );
+  }
+
+  private async notifyGuestBookingRefused(booking: Booking): Promise<void> {
+    await this.pushNotificationsService.notifyUsers(
+      [booking.guestUser.id],
+      {
+        title: 'Réservation refusée',
+        body: `Ta demande pour ${booking.meal.title ?? 'le repas'} n'a pas été acceptée.`,
+        url: `/reservation/${booking.meal.id}/confirmation?reservationId=${booking.id}`,
+        tag: `booking-${booking.id}`,
+        data: {
+          type: 'booking_refused',
+          bookingId: booking.id,
+          mealId: booking.meal.id,
+        },
+      },
+      PushNotificationCategory.RESERVATIONS,
+    );
+  }
+
+  private async notifyHostBookingCancelled(booking: Booking): Promise<void> {
+    await this.pushNotificationsService.notifyUsers(
+      [booking.meal.host.id],
+      {
+        title: 'Réservation annulée',
+        body: `${this.getUserDisplayName(booking.guestUser)} a annulé sa réservation pour ${booking.meal.title ?? 'ton repas'}.`,
+        url: '/mes-evenements',
+        tag: `booking-${booking.id}`,
+        data: {
+          type: 'booking_cancelled',
+          bookingId: booking.id,
+          mealId: booking.meal.id,
+        },
+      },
+      PushNotificationCategory.RESERVATIONS,
+    );
+  }
+
+  private getUserDisplayName(user: Utilisateur): string {
+    return (
+      user.pseudo ||
+      [user.firstName, user.lastName].filter(Boolean).join(' ').trim() ||
+      'Un invité'
+    );
   }
 
   private async syncAcceptedMealConversations(mealId: number): Promise<void> {

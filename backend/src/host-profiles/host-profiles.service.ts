@@ -34,6 +34,7 @@ type HostProfileResponse = {
   id: number;
   isActive: boolean;
   homePhotoUrl: string | null;
+  homePhotoUrls: string[];
   validationStatus: HostValidationStatus;
   hostLevel: number;
   activatedAt: Date | null;
@@ -102,6 +103,8 @@ type HostProfileReviewHistoryResponse = {
 // Il orchestre la creation, la moderation admin et l'auto-review niveau 1.
 @Injectable()
 export class HostProfilesService {
+  private static readonly MIN_HOME_PHOTOS = 2;
+  private static readonly MAX_HOME_PHOTOS = 5;
   private static readonly AUTO_INVALID_ADDRESS_REJECTION_REASON =
     "Adresse non valide ou non vérifiable. Merci de corriger l'adresse avant de renvoyer votre demande hôte.";
 
@@ -142,8 +145,15 @@ export class HostProfilesService {
       throw new NotFoundException('Utilisateur non trouvé');
     }
 
+    const homePhotoUrls = this.normalizeHomePhotoUrls(
+      createHostProfileDto.homePhotoUrls,
+      createHostProfileDto.homePhotoUrl,
+    );
+    this.assertHomePhotosRange(homePhotoUrls);
+
     const hostProfile = this.hostProfilesRepository.create({
-      homePhotoUrl: this.normalizeNullableString(createHostProfileDto.homePhotoUrl),
+      homePhotoUrl: homePhotoUrls[0] ?? null,
+      homePhotoUrls,
       lat: createHostProfileDto.lat ?? null,
       lng: createHostProfileDto.lng ?? null,
       country: createHostProfileDto.country.trim(),
@@ -188,15 +198,27 @@ export class HostProfilesService {
   ): Promise<HostProfileResponse> {
     const hostProfile = await this.findEntityByUserId(userId);
 
-    if (hostProfile.validationStatus === HostValidationStatus.APPROVED) {
+    if (
+      hostProfile.validationStatus === HostValidationStatus.APPROVED &&
+      this.hasNonPhotoUpdate(updateHostProfileDto)
+    ) {
       throw new BadRequestException(
         'Un profil hôte approuvé ne peut pas être modifié',
       );
     }
 
     this.applyUpdatableFields(hostProfile, updateHostProfileDto);
-    await this.hostProfileVerificationService.runAutoReview(hostProfile);
-    this.applyAutomaticAddressDecision(hostProfile);
+    this.assertHomePhotosRange(
+      this.normalizeHomePhotoUrls(
+        hostProfile.homePhotoUrls,
+        hostProfile.homePhotoUrl,
+      ),
+    );
+
+    if (hostProfile.validationStatus !== HostValidationStatus.APPROVED) {
+      await this.hostProfileVerificationService.runAutoReview(hostProfile);
+      this.applyAutomaticAddressDecision(hostProfile);
+    }
 
     const updatedHostProfile = await this.hostProfilesRepository.save(hostProfile);
     return this.toHostProfileResponse(updatedHostProfile);
@@ -211,6 +233,13 @@ export class HostProfilesService {
         'Seul un profil hôte rejeté peut être resoumis',
       );
     }
+
+    this.assertHomePhotosRange(
+      this.normalizeHomePhotoUrls(
+        hostProfile.homePhotoUrls,
+        hostProfile.homePhotoUrl,
+      ),
+    );
 
     hostProfile.validationStatus = HostValidationStatus.PENDING;
     hostProfile.isActive = false;
@@ -465,9 +494,20 @@ export class HostProfilesService {
     updateHostProfileDto: UpdateHostProfileDto,
   ): void {
     if (updateHostProfileDto.homePhotoUrl !== undefined) {
-      hostProfile.homePhotoUrl = this.normalizeNullableString(
+      const homePhotoUrl = this.normalizeNullableString(
         updateHostProfileDto.homePhotoUrl,
       );
+      hostProfile.homePhotoUrl = homePhotoUrl;
+      hostProfile.homePhotoUrls = homePhotoUrl ? [homePhotoUrl] : [];
+    }
+
+    if (updateHostProfileDto.homePhotoUrls !== undefined) {
+      const homePhotoUrls = this.normalizeHomePhotoUrls(
+        updateHostProfileDto.homePhotoUrls,
+        updateHostProfileDto.homePhotoUrl,
+      );
+      hostProfile.homePhotoUrl = homePhotoUrls[0] ?? null;
+      hostProfile.homePhotoUrls = homePhotoUrls;
     }
 
     if (updateHostProfileDto.lat !== undefined) {
@@ -513,6 +553,10 @@ export class HostProfilesService {
       id: hostProfile.id,
       isActive: hostProfile.isActive,
       homePhotoUrl: hostProfile.homePhotoUrl,
+      homePhotoUrls: this.normalizeHomePhotoUrls(
+        hostProfile.homePhotoUrls,
+        hostProfile.homePhotoUrl,
+      ),
       validationStatus: hostProfile.validationStatus,
       hostLevel: hostProfile.hostLevel,
       activatedAt: hostProfile.activatedAt,
@@ -589,5 +633,46 @@ export class HostProfilesService {
 
     const normalizedValue = value.trim();
     return normalizedValue.length > 0 ? normalizedValue : null;
+  }
+
+  private normalizeHomePhotoUrls(
+    values?: string[] | null,
+    fallbackValue?: string | null,
+  ): string[] {
+    const rawValues = Array.isArray(values) ? values : [];
+    const normalizedValues = rawValues
+      .map((value) => this.normalizeNullableString(value))
+      .filter((value): value is string => Boolean(value));
+    const fallback = this.normalizeNullableString(fallbackValue);
+    const uniqueValues = fallback
+      ? [fallback, ...normalizedValues]
+      : normalizedValues;
+
+    return Array.from(new Set(uniqueValues)).slice(0, 5);
+  }
+
+  private hasNonPhotoUpdate(updateHostProfileDto: UpdateHostProfileDto): boolean {
+    return (
+      updateHostProfileDto.lat !== undefined ||
+      updateHostProfileDto.lng !== undefined ||
+      updateHostProfileDto.country !== undefined ||
+      updateHostProfileDto.city !== undefined ||
+      updateHostProfileDto.districtLabel !== undefined ||
+      updateHostProfileDto.address !== undefined
+    );
+  }
+
+  private assertHomePhotosRange(homePhotoUrls: string[]): void {
+    if (homePhotoUrls.length < HostProfilesService.MIN_HOME_PHOTOS) {
+      throw new BadRequestException(
+        `Au moins ${HostProfilesService.MIN_HOME_PHOTOS} photos du logement sont obligatoires pour une demande hote`,
+      );
+    }
+
+    if (homePhotoUrls.length > HostProfilesService.MAX_HOME_PHOTOS) {
+      throw new BadRequestException(
+        `Tu peux ajouter au maximum ${HostProfilesService.MAX_HOME_PHOTOS} photos du logement`,
+      );
+    }
   }
 }

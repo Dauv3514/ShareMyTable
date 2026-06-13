@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   Clock3,
   CreditCard,
+  Flag,
   History,
   House,
   MapPin,
@@ -22,6 +23,7 @@ import {
   Star,
   Ticket,
   Users,
+  X,
 } from "lucide-react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
@@ -30,6 +32,12 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useAuth } from "@/app/providers/AuthProvider";
+import {
+  getReportErrorMessage,
+  REPORT_REASON_LABELS,
+  type ReportReason,
+  submitReport,
+} from "@/lib/reports";
 import {
   cancelGuestReservation,
   confirmReservationTip,
@@ -58,6 +66,15 @@ const ReservationExactMap = dynamic(() => import("./ReservationExactMap"), {
 
 const ADDRESS_RELEASE_DELAY_MS = 24 * 60 * 60 * 1000;
 const REVIEW_STEP_LABELS = ["Avis", "Note", "Pourboire"] as const;
+const RESERVATION_REPORT_REASON_OPTIONS: ReportReason[] = [
+  "inappropriate_behavior",
+  "harassment",
+  "safety",
+  "hygiene",
+  "wrong_information",
+  "payment",
+  "other",
+];
 const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "";
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
@@ -130,6 +147,10 @@ function getExactMapCenter(reservation: ReservationItem): [number, number] | nul
 
 function toCents(value: number) {
   return Math.max(0, Math.round(value * 100));
+}
+
+function isBackendReservationId(value: string) {
+  return /^\d+$/.test(value);
 }
 
 function buildStoredReview(
@@ -235,6 +256,10 @@ export default function ReservationDetailClient({
   const [editReviewComment, setEditReviewComment] = useState("");
   const [editReviewRating, setEditReviewRating] = useState(5);
   const [isSavingReviewEdit, setIsSavingReviewEdit] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState<ReportReason>("inappropriate_behavior");
+  const [reportDescription, setReportDescription] = useState("");
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 
   useEffect(() => {
     if (!loading && !isLoggedIn) {
@@ -324,6 +349,8 @@ export default function ReservationDetailClient({
   const badgeStatus = getReservationBadgeStatus(reservation);
   const cancellationQuote = getReservationCancellationQuote(reservation);
   const canShowReviewFlow = reservation.canReview && !reservation.hasReview;
+  const canReportAfterMeal =
+    badgeStatus === "past" && isBackendReservationId(reservation.id);
   const pendingTip = reviewResult?.tip?.clientSecret ? reviewResult.tip : null;
   const pendingTipClientSecret = pendingTip?.clientSecret ?? null;
 
@@ -457,6 +484,48 @@ export default function ReservationDetailClient({
       );
     } finally {
       setIsSavingReviewEdit(false);
+    }
+  };
+
+  const closeReportModal = () => {
+    if (isSubmittingReport) {
+      return;
+    }
+
+    setIsReportOpen(false);
+  };
+
+  const handleSubmitReport = async () => {
+    const token = localStorage.getItem("token");
+    const targetId = Number.parseInt(reservation.id, 10);
+
+    if (!token) {
+      toast.error("Reconnecte-toi pour envoyer un signalement.");
+      return;
+    }
+
+    if (!Number.isInteger(targetId) || targetId < 1) {
+      toast.error("Cette réservation ne peut pas être signalée.");
+      return;
+    }
+
+    try {
+      setIsSubmittingReport(true);
+      await submitReport(token, {
+        targetType: "booking",
+        targetId,
+        reason: reportReason,
+        description: reportDescription,
+      });
+
+      toast.success("Signalement envoyé. L'équipe admin va le consulter.");
+      setReportDescription("");
+      setReportReason("inappropriate_behavior");
+      setIsReportOpen(false);
+    } catch (error) {
+      toast.error(getReportErrorMessage(error));
+    } finally {
+      setIsSubmittingReport(false);
     }
   };
 
@@ -908,6 +977,27 @@ export default function ReservationDetailClient({
             </section>
           ) : null}
 
+          {canReportAfterMeal ? (
+            <section className={`${styles.panel} ${styles.afterMealReportPanel}`}>
+              <div>
+                <h2>Un problème après le repas ?</h2>
+                <p>
+                  Signale une situation liée à cette réservation si quelque chose
+                  doit être vérifié par l&apos;équipe admin.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className={styles.reportButton}
+                onClick={() => setIsReportOpen(true)}
+              >
+                <Flag aria-hidden="true" />
+                Signaler un problème
+              </button>
+            </section>
+          ) : null}
+
           <section className={styles.panel}>
             <h2>Règles importantes</h2>
             <ul className={styles.ruleList}>
@@ -918,6 +1008,81 @@ export default function ReservationDetailClient({
           </section>
         </section>
       </article>
+
+      {isReportOpen ? (
+        <div className={styles.reportBackdrop} role="presentation">
+          <div
+            className={styles.reportModal}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="after-meal-report-title"
+          >
+            <div className={styles.reportModalHeader}>
+              <div>
+                <span>Signalement</span>
+                <h2 id="after-meal-report-title">Signaler cette réservation</h2>
+              </div>
+              <button
+                type="button"
+                className={styles.reportCloseButton}
+                onClick={closeReportModal}
+                aria-label="Fermer la fenêtre de signalement"
+              >
+                <X aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className={styles.reportModalBody}>
+              <label className={styles.reportField}>
+                <span>Motif</span>
+                <select
+                  value={reportReason}
+                  onChange={(event) => setReportReason(event.target.value as ReportReason)}
+                >
+                  {RESERVATION_REPORT_REASON_OPTIONS.map((reason) => (
+                    <option key={reason} value={reason}>
+                      {REPORT_REASON_LABELS[reason]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className={styles.reportField}>
+                <span>Détails</span>
+                <textarea
+                  value={reportDescription}
+                  onChange={(event) => setReportDescription(event.target.value)}
+                  maxLength={2000}
+                  rows={5}
+                />
+              </label>
+
+              <p className={styles.reportHint}>
+                Ce signalement sera visible uniquement par l&apos;équipe admin.
+              </p>
+            </div>
+
+            <div className={styles.reportModalFooter}>
+              <button
+                type="button"
+                className={styles.secondaryButton}
+                onClick={closeReportModal}
+                disabled={isSubmittingReport}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                className={styles.primaryButton}
+                onClick={() => void handleSubmitReport()}
+                disabled={isSubmittingReport}
+              >
+                {isSubmittingReport ? "Envoi..." : "Envoyer le signalement"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

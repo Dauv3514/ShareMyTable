@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import { Check, Clock3, ShieldCheck, XCircle } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
@@ -13,6 +14,8 @@ type PendingHostRequest = {
   isActive: boolean;
   validationStatus: "pending" | "approved" | "rejected";
   hostLevel: number;
+  homePhotoUrl: string | null;
+  homePhotoUrls?: string[];
   country: string;
   city: string;
   districtLabel: string;
@@ -210,6 +213,13 @@ export default function AdminPage() {
     }
   };
 
+  const getRequestHomePhotoUrls = (request: PendingHostRequest) =>
+    request.homePhotoUrls?.length
+      ? request.homePhotoUrls
+      : request.homePhotoUrl
+        ? [request.homePhotoUrl]
+        : [];
+
   if (loading || isLoading || (!user && isLoggedIn)) {
     return (
       <section className={styles.page}>
@@ -235,6 +245,11 @@ export default function AdminPage() {
               Valide ou refuse les candidatures en attente, puis retrouve tout
               l&apos;historique des decisions et l&apos;admin qui les a prises.
             </p>
+
+            <div className={styles.adminLinks}>
+              <span aria-current="page">Demandes hôte</span>
+              <Link href="/admin/signalements">Signalements</Link>
+            </div>
           </div>
 
           <div className={styles.heroStats}>
@@ -264,8 +279,11 @@ export default function AdminPage() {
             </div>
           ) : (
             <div className={styles.requestGrid}>
-              {pendingRequests.map((request) => (
-                <article key={request.id} className={styles.requestCard}>
+              {pendingRequests.map((request) => {
+                const homePhotoUrls = getRequestHomePhotoUrls(request);
+
+                return (
+                  <article key={request.id} className={styles.requestCard}>
                   <div className={styles.requestHead}>
                     <div>
                       <span className={styles.requestApplicant}>
@@ -305,6 +323,36 @@ export default function AdminPage() {
                       <dd>{request.verificationScore}/100</dd>
                     </div>
                   </dl>
+
+                  <div className={styles.homePhotosBlock}>
+                    <div className={styles.homePhotosHead}>
+                      <strong>Photos du logement</strong>
+                      <span>{homePhotoUrls.length}/5</span>
+                    </div>
+
+                    {homePhotoUrls.length > 0 ? (
+                      <div className={styles.homePhotoGrid}>
+                        {homePhotoUrls.map((photoUrl, index) => (
+                          <a
+                            key={`${photoUrl}-${index}`}
+                            className={styles.homePhotoPreview}
+                            href={photoUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            aria-label={`Ouvrir la photo du logement ${index + 1}`}
+                          >
+                            <span
+                              style={{ backgroundImage: `url("${photoUrl}")` }}
+                            />
+                          </a>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className={styles.homePhotoEmpty}>
+                        Aucune photo du logement ajoutée.
+                      </p>
+                    )}
+                  </div>
 
                   <div className={styles.flagList}>
                     {request.verificationRiskFlags.length === 0 ? (
@@ -364,7 +412,8 @@ export default function AdminPage() {
                     </button>
                   </div>
                 </article>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>

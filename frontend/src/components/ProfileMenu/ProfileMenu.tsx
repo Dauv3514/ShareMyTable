@@ -6,6 +6,8 @@ import {
   Activity,
   Bell,
   ChevronRight,
+  Download,
+  Flag,
   LockKeyhole,
   LogOut,
   ShieldCheck,
@@ -18,6 +20,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { useAuth } from "../../app/providers/AuthProvider";
+import { usePwaInstall } from "../Pwa";
 import UserAvatar from "../UserAvatar";
 import "./profile-menu.scss";
 
@@ -30,7 +33,7 @@ type ProfileAction = {
   label: string;
   icon: typeof Activity;
   onClick: () => void;
-  tone?: "default" | "danger";
+  tone?: "default" | "danger" | "install";
 };
 
 type ProfileSection = "overview" | "preferences" | "activity" | "payments" | "notifications";
@@ -46,6 +49,7 @@ function ProfileMenuContent({
   const router = useRouter();
   const pathname = usePathname();
   const { logout, user } = useAuth();
+  const { canInstall, openInstallPrompt } = usePwaInstall();
   const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim();
 
   const navigateToProfile = ({
@@ -118,10 +122,19 @@ function ProfileMenuContent({
       ? [
           {
             key: "admin",
-            label: "Administration",
+            label: "Demandes hôte",
             icon: ShieldCheck,
             onClick: () => {
               router.push("/admin");
+              onClose();
+            },
+          } satisfies ProfileAction,
+          {
+            key: "admin-reports",
+            label: "Signalements",
+            icon: Flag,
+            onClick: () => {
+              router.push("/admin/signalements");
               onClose();
             },
           } satisfies ProfileAction,
@@ -151,6 +164,20 @@ function ProfileMenuContent({
         navigateToProfile({ section: "notifications" });
       },
     },
+    ...(canInstall
+      ? [
+          {
+            key: "install-app",
+            label: "Installer l'application",
+            icon: Download,
+            tone: "install",
+            onClick: () => {
+              void openInstallPrompt();
+              onClose();
+            },
+          } satisfies ProfileAction,
+        ]
+      : []),
     {
       key: "logout",
       label: "Déconnexion",
@@ -192,7 +219,9 @@ function ProfileMenuContent({
             <button
               key={action.key}
               type="button"
-              className={`profile-menu__action ${action.tone === "danger" ? "profile-menu__action--danger" : ""}`}
+              className={`profile-menu__action ${
+                action.tone === "danger" ? "profile-menu__action--danger" : ""
+              } ${action.tone === "install" ? "profile-menu__action--install" : ""}`}
               onClick={action.onClick}
             >
               <span className="profile-menu__action-left">

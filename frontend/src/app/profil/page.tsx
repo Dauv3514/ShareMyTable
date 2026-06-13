@@ -5,7 +5,10 @@ import {
   Bell,
   CalendarDays,
   Camera,
+  ChevronLeft,
+  ChevronRight,
   CreditCard,
+  Download,
   History,
   LockKeyhole,
   Mail,
@@ -23,12 +26,14 @@ import {
   FormEvent,
   ReactNode,
   Suspense,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
 import { toast } from "react-toastify";
+import { usePwaInstall, type PushNotificationPreferences } from "@/components/Pwa";
 import UserAvatar from "@/components/UserAvatar";
 import DatePickerField from "@/components/DatePicker";
 import {
@@ -98,11 +103,20 @@ type HostProfileSummary = {
   id: number;
   isActive: boolean;
   validationStatus: "pending" | "approved" | "rejected";
+  homePhotoUrl: string | null;
+  homePhotoUrls: string[];
   country: string;
   city: string;
   districtLabel: string;
   address: string;
   rejectionReason: string | null;
+};
+
+type HomePhotoPreview = {
+  id: string;
+  url: string;
+  file?: File;
+  isObjectUrl: boolean;
 };
 
 type PublicHostReview = {
@@ -121,11 +135,43 @@ type ProfileActivityStats = {
 };
 
 type PreferenceCategory = "dietary" | "ambiance";
+type NotificationPreferenceKey = keyof PushNotificationPreferences;
 
-type ExpandablePanel = "profile" | "password" | null;
+type ExpandablePanel = "profile" | "password" | "notifications" | null;
 type ProfileSection = "overview" | "preferences" | "activity" | "payments" | "notifications";
 
 const PROFILE_NAVIGATE_EVENT = "profile-menu:navigate";
+const MIN_HOST_HOME_PHOTOS = 2;
+const MAX_HOST_HOME_PHOTOS = 5;
+const MAX_HOST_HOME_PHOTO_SIZE_MB = 3;
+const HOST_HOME_PHOTO_MIME_TYPES = ["image/png", "image/jpeg", "image/webp"];
+
+const NOTIFICATION_PREFERENCE_ITEMS: Array<{
+  key: NotificationPreferenceKey;
+  title: string;
+  description: string;
+}> = [
+  {
+    key: "messages",
+    title: "Messages",
+    description: "Nouveaux messages dans les conversations individuelles et de groupe.",
+  },
+  {
+    key: "reservations",
+    title: "Réservations",
+    description: "Demandes, acceptations, refus et annulations de réservation.",
+  },
+  {
+    key: "mealReminders",
+    title: "Rappels repas",
+    description: "Rappels avant un repas auquel tu participes ou que tu organises.",
+  },
+  {
+    key: "hostStatus",
+    title: "Statut hôte",
+    description: "Mises à jour sur ta demande hôte et sa validation.",
+  },
+];
 
 const toDateInputValue = (value: string | null | undefined) => {
   if (!value) {
@@ -906,10 +952,495 @@ const PasswordEditForm = ({
   );
 };
 
+const getHostHomePhotoUrls = (hostProfile: HostProfileSummary) => {
+  const photos = [hostProfile.homePhotoUrl, ...(hostProfile.homePhotoUrls ?? [])]
+    .map((photoUrl) => photoUrl?.trim())
+    .filter((photoUrl): photoUrl is string => Boolean(photoUrl));
+
+  return Array.from(new Set(photos)).slice(0, MAX_HOST_HOME_PHOTOS);
+};
+
+const HostHomePhotosEditor = ({
+  hostProfile,
+  onUpdated,
+}: {
+  hostProfile: HostProfileSummary;
+  onUpdated: (hostProfile: HostProfileSummary) => void;
+}) => {
+  const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const objectUrlsRef = useRef<string[]>([]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [activePhotoIndex, setActivePhotoIndex] = useState<number | null>(null);
+  const initialPhotoUrls = useMemo(
+    () => getHostHomePhotoUrls(hostProfile),
+    [hostProfile],
+  );
+  const [photoPreviews, setPhotoPreviews] = useState<HomePhotoPreview[]>(
+    () =>
+      initialPhotoUrls.map((url, index) => ({
+        id: `existing-${index}-${url}`,
+        url,
+        isObjectUrl: false,
+      })),
+  );
+
+  useEffect(() => {
+    if (isEditing) {
+      return;
+    }
+
+    setPhotoPreviews(
+      initialPhotoUrls.map((url, index) => ({
+        id: `existing-${index}-${url}`,
+        url,
+        isObjectUrl: false,
+      })),
+    );
+  }, [initialPhotoUrls, isEditing]);
+
+  useEffect(() => {
+    return () => {
+      objectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+      objectUrlsRef.current = [];
+    };
+  }, []);
+
+  const displayedPhotos = isEditing
+    ? photoPreviews.map((preview) => preview.url)
+    : initialPhotoUrls;
+  const activePhotoUrl =
+    activePhotoIndex === null ? null : displayedPhotos[activePhotoIndex] ?? null;
+  const hasMultipleDisplayedPhotos = displayedPhotos.length > 1;
+
+  const closePhotoLightbox = () => {
+    setActivePhotoIndex(null);
+  };
+
+  const showPreviousHomePhoto = () => {
+    setActivePhotoIndex((currentIndex) => {
+      if (currentIndex === null || displayedPhotos.length === 0) {
+        return currentIndex;
+      }
+
+      return currentIndex === 0 ? displayedPhotos.length - 1 : currentIndex - 1;
+    });
+  };
+
+  const showNextHomePhoto = () => {
+    setActivePhotoIndex((currentIndex) => {
+      if (currentIndex === null || displayedPhotos.length === 0) {
+        return currentIndex;
+      }
+
+      return currentIndex === displayedPhotos.length - 1 ? 0 : currentIndex + 1;
+    });
+  };
+
+  useEffect(() => {
+    if (
+      activePhotoIndex !== null &&
+      (displayedPhotos.length === 0 || activePhotoIndex >= displayedPhotos.length)
+    ) {
+      setActivePhotoIndex(null);
+    }
+  }, [activePhotoIndex, displayedPhotos.length]);
+
+  useEffect(() => {
+    if (activePhotoIndex === null) {
+      return;
+    }
+
+    const photoCount = displayedPhotos.length;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setActivePhotoIndex(null);
+      }
+
+      if (event.key === "ArrowLeft") {
+        setActivePhotoIndex((currentIndex) => {
+          if (currentIndex === null || photoCount === 0) {
+            return currentIndex;
+          }
+
+          return currentIndex === 0 ? photoCount - 1 : currentIndex - 1;
+        });
+      }
+
+      if (event.key === "ArrowRight") {
+        setActivePhotoIndex((currentIndex) => {
+          if (currentIndex === null || photoCount === 0) {
+            return currentIndex;
+          }
+
+          return currentIndex === photoCount - 1 ? 0 : currentIndex + 1;
+        });
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [activePhotoIndex, displayedPhotos.length]);
+
+  const resetEditor = () => {
+    objectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    objectUrlsRef.current = [];
+    setPhotoPreviews(
+      initialPhotoUrls.map((url, index) => ({
+        id: `existing-${index}-${url}`,
+        url,
+        isObjectUrl: false,
+      })),
+    );
+    setIsEditing(false);
+    setActivePhotoIndex(null);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleSelectPhotos = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handlePhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+
+    if (files.length === 0) {
+      return;
+    }
+
+    const remainingSlots = MAX_HOST_HOME_PHOTOS - photoPreviews.length;
+
+    if (remainingSlots <= 0) {
+      toast.error(`Tu peux importer au maximum ${MAX_HOST_HOME_PHOTOS} photos.`);
+      event.target.value = "";
+      return;
+    }
+
+    for (const file of files) {
+      if (!HOST_HOME_PHOTO_MIME_TYPES.includes(file.type)) {
+        toast.error("Les photos du logement doivent être en PNG, JPG, JPEG ou WebP.");
+        event.target.value = "";
+        return;
+      }
+
+      if (file.size > MAX_HOST_HOME_PHOTO_SIZE_MB * 1024 * 1024) {
+        toast.error(
+          `Chaque photo du logement ne doit pas dépasser ${MAX_HOST_HOME_PHOTO_SIZE_MB} Mo.`,
+        );
+        event.target.value = "";
+        return;
+      }
+    }
+
+    const filesToAdd = files.slice(0, remainingSlots);
+
+    if (files.length > remainingSlots) {
+      toast.info(
+        `Seules ${remainingSlots} photo${remainingSlots > 1 ? "s" : ""} ont été ajoutées pour rester dans la limite de ${MAX_HOST_HOME_PHOTOS}.`,
+      );
+    }
+
+    const previewsToAdd = filesToAdd.map((file) => {
+      const url = URL.createObjectURL(file);
+      objectUrlsRef.current.push(url);
+
+      return {
+        id: `${file.name}-${file.lastModified}-${url}`,
+        url,
+        file,
+        isObjectUrl: true,
+      };
+    });
+
+    setPhotoPreviews((previousPreviews) => [
+      ...previousPreviews,
+      ...previewsToAdd,
+    ]);
+    event.target.value = "";
+  };
+
+  const handleRemovePhoto = (photoIndex: number) => {
+    setPhotoPreviews((previousPreviews) => {
+      const removedPreview = previousPreviews[photoIndex];
+
+      if (removedPreview?.isObjectUrl) {
+        URL.revokeObjectURL(removedPreview.url);
+        objectUrlsRef.current = objectUrlsRef.current.filter(
+          (url) => url !== removedPreview.url,
+        );
+      }
+
+      return previousPreviews.filter((_, index) => index !== photoIndex);
+    });
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (photoPreviews.length < MIN_HOST_HOME_PHOTOS) {
+      toast.error(
+        `Garde au moins ${MIN_HOST_HOME_PHOTOS} photos du logement sur ton profil.`,
+      );
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+    if (!token || !apiUrl) {
+      toast.error("Session invalide. Reconnecte-toi.");
+      router.push("/connexion");
+      return;
+    }
+
+    const retainedPhotoUrls = photoPreviews
+      .filter((preview) => !preview.file)
+      .map((preview) => preview.url);
+    const newPhotoFiles = photoPreviews
+      .map((preview) => preview.file)
+      .filter((file): file is File => Boolean(file));
+    const payload = new FormData();
+
+    retainedPhotoUrls.forEach((photoUrl) => {
+      payload.append("homePhotoUrls", photoUrl);
+    });
+    newPhotoFiles.forEach((file) => {
+      payload.append("host_home_photo", file);
+    });
+
+    try {
+      setSaving(true);
+
+      const response = await axios.patch<HostProfileSummary>(
+        `${apiUrl}/host-profiles/me`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      onUpdated({
+        ...hostProfile,
+        ...response.data,
+        homePhotoUrl: response.data.homePhotoUrl ?? null,
+        homePhotoUrls: Array.isArray(response.data.homePhotoUrls)
+          ? response.data.homePhotoUrls
+          : [],
+      });
+      objectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+      objectUrlsRef.current = [];
+      setIsEditing(false);
+      toast.success("Photos du logement mises à jour.");
+    } catch (error: unknown) {
+      const message = axios.isAxiosError(error)
+        ? error.response?.data?.message ?? "Impossible de mettre à jour les photos."
+        : "Impossible de mettre à jour les photos.";
+      toast.error(Array.isArray(message) ? message.join(", ") : message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className={styles.hostHomePhotosBlock}>
+      <div className={styles.hostHomePhotosHead}>
+        <div>
+          <strong>Photos Chez l&apos;hôte</strong>
+          <span>
+            Ces photos sont visibles sur ton profil public. Elles viennent de ta
+            demande hôte par défaut.
+          </span>
+        </div>
+
+        <span>{displayedPhotos.length}/{MAX_HOST_HOME_PHOTOS}</span>
+      </div>
+
+      {displayedPhotos.length > 0 ? (
+        <div className={styles.hostHomePhotoGrid}>
+          {displayedPhotos.map((photoUrl, index) => (
+            <article key={`${photoUrl}-${index}`} className={styles.hostHomePhotoCard}>
+              <span
+                className={styles.hostHomePhotoImage}
+                style={{ backgroundImage: `url("${photoUrl}")` }}
+                role="button"
+                tabIndex={0}
+                aria-label={`Ouvrir la photo du logement ${index + 1} en grand`}
+                onClick={() => setActivePhotoIndex(index)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setActivePhotoIndex(index);
+                  }
+                }}
+              />
+
+              {isEditing ? (
+                <button
+                  type="button"
+                  className={styles.hostHomePhotoRemove}
+                  onClick={() => handleRemovePhoto(index)}
+                  disabled={saving}
+                >
+                  Retirer
+                </button>
+              ) : null}
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className={styles.hostHomePhotosEmpty}>
+          Aucune photo de logement n&apos;est encore disponible.
+        </p>
+      )}
+
+      {isEditing ? (
+        <form className={styles.hostHomePhotoEditor} onSubmit={handleSubmit}>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+            multiple
+            className={styles.hiddenInput}
+            onChange={handlePhotoChange}
+          />
+
+          <p>
+            Garde entre {MIN_HOST_HOME_PHOTOS} et {MAX_HOST_HOME_PHOTOS} photos.
+            Formats acceptés : PNG, JPG, JPEG, WebP. Taille max :
+            {" "}{MAX_HOST_HOME_PHOTO_SIZE_MB} Mo par photo.
+          </p>
+
+          <div className={styles.formActions}>
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              onClick={handleSelectPhotos}
+              disabled={saving || photoPreviews.length >= MAX_HOST_HOME_PHOTOS}
+            >
+              Ajouter des photos
+            </button>
+
+            <div className={styles.formButtons}>
+              <button
+                type="button"
+                className={`${styles.ghostButton} ${styles.closeButton}`}
+                onClick={resetEditor}
+                disabled={saving}
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                className={styles.primaryButton}
+                disabled={saving || photoPreviews.length < MIN_HOST_HOME_PHOTOS}
+              >
+                {saving ? "Enregistrement..." : "Enregistrer"}
+              </button>
+            </div>
+          </div>
+        </form>
+      ) : (
+        <div className={styles.hostStatusActions}>
+          <button
+            type="button"
+            className={styles.secondaryButton}
+            onClick={() => setIsEditing(true)}
+          >
+            Modifier les photos
+          </button>
+        </div>
+      )}
+
+      {activePhotoUrl ? (
+        <div
+          className={styles.hostHomePhotoLightbox}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Photo du logement en grand"
+        >
+          <button
+            type="button"
+            className={styles.hostHomePhotoLightboxBackdropButton}
+            aria-label="Fermer l'image"
+            onClick={closePhotoLightbox}
+          />
+
+          <div className={styles.hostHomePhotoLightboxContent}>
+            <button
+              type="button"
+              className={styles.hostHomePhotoLightboxCloseButton}
+              onClick={closePhotoLightbox}
+              aria-label="Fermer"
+            >
+              <X aria-hidden="true" />
+            </button>
+
+            {hasMultipleDisplayedPhotos ? (
+              <button
+                type="button"
+                className={`${styles.hostHomePhotoLightboxNavButton} ${styles.hostHomePhotoLightboxPrev}`}
+                onClick={showPreviousHomePhoto}
+                aria-label="Photo précédente"
+              >
+                <ChevronLeft aria-hidden="true" />
+              </button>
+            ) : null}
+
+            <figure className={styles.hostHomePhotoLightboxFigure}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={activePhotoUrl}
+                alt={`Photo du logement ${(activePhotoIndex ?? 0) + 1}`}
+                className={styles.hostHomePhotoLightboxImage}
+              />
+              <figcaption>
+                {(activePhotoIndex ?? 0) + 1}/{displayedPhotos.length}
+              </figcaption>
+            </figure>
+
+            {hasMultipleDisplayedPhotos ? (
+              <button
+                type="button"
+                className={`${styles.hostHomePhotoLightboxNavButton} ${styles.hostHomePhotoLightboxNext}`}
+                onClick={showNextHomePhoto}
+                aria-label="Photo suivante"
+              >
+                <ChevronRight aria-hidden="true" />
+              </button>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+};
+
 const ProfilContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isLoggedIn, loading, user } = useAuth();
+  const {
+    disablePushNotifications,
+    enablePushNotifications,
+    notificationPermission,
+    notificationPreferences,
+    notificationPreferencesLoading,
+    openInstallPrompt,
+    pushNotificationsEnabled,
+    pushNotificationsSupported,
+    showProfileInstallEntry,
+    updateNotificationPreferences,
+  } = usePwaInstall();
   const [expandedPanel, setExpandedPanel] = useState<ExpandablePanel>(null);
   const [hostProfile, setHostProfile] = useState<HostProfileSummary | null>(null);
   const [hostProfileLoading, setHostProfileLoading] = useState(true);
@@ -935,7 +1466,7 @@ const ProfilContent = () => {
   const passwordPanelRef = useRef<HTMLDivElement | null>(null);
   const skipPreferenceSyncRef = useRef(true);
 
-  const getSectionTarget = (section: string | null) => {
+  const getSectionTarget = useCallback((section: string | null) => {
     switch (section) {
       case "overview":
         return overviewSectionRef.current;
@@ -950,15 +1481,19 @@ const ProfilContent = () => {
       default:
         return null;
     }
-  };
+  }, []);
 
-  const scrollToPanel = (
+  const scrollToPanel = useCallback((
     panel: Exclude<ExpandablePanel, null>,
     attempt = 0
   ) => {
-    window.requestAnimationFrame(() => {
+    const scroll = (currentAttempt: number) => {
       const target =
-        panel === "profile" ? profilePanelRef.current : passwordPanelRef.current;
+        panel === "profile"
+          ? profilePanelRef.current
+          : panel === "password"
+            ? passwordPanelRef.current
+            : notificationsSectionRef.current;
 
       if (target) {
         target.scrollIntoView({
@@ -968,11 +1503,15 @@ const ProfilContent = () => {
         return;
       }
 
-      if (attempt < 8) {
-        scrollToPanel(panel, attempt + 1);
+      if (currentAttempt < 8) {
+        window.requestAnimationFrame(() => scroll(currentAttempt + 1));
       }
+    };
+
+    window.requestAnimationFrame(() => {
+      scroll(attempt);
     });
-  };
+  }, []);
 
   useEffect(() => {
     if (!loading && !isLoggedIn) {
@@ -1020,6 +1559,10 @@ const ProfilContent = () => {
           id: response.data.id,
           isActive: Boolean(response.data.isActive),
           validationStatus: response.data.validationStatus,
+          homePhotoUrl: response.data.homePhotoUrl ?? null,
+          homePhotoUrls: Array.isArray(response.data.homePhotoUrls)
+            ? response.data.homePhotoUrls
+            : [],
           country: response.data.country ?? "",
           city: response.data.city ?? "",
           districtLabel: response.data.districtLabel ?? "",
@@ -1131,7 +1674,7 @@ const ProfilContent = () => {
   useEffect(() => {
     const panel = searchParams.get("panel");
 
-    if (panel === "profile" || panel === "password") {
+    if (panel === "profile" || panel === "password" || panel === "notifications") {
       setExpandedPanel(panel);
       return;
     }
@@ -1145,7 +1688,7 @@ const ProfilContent = () => {
     }
 
     const panel = searchParams.get("panel");
-    if (panel === "profile" || panel === "password") {
+    if (panel === "profile" || panel === "password" || panel === "notifications") {
       return;
     }
 
@@ -1164,7 +1707,7 @@ const ProfilContent = () => {
     });
 
     return () => window.cancelAnimationFrame(frameId);
-  }, [searchParams, user]);
+  }, [getSectionTarget, searchParams, user]);
 
   useEffect(() => {
     if (!expandedPanel || !user) {
@@ -1172,7 +1715,7 @@ const ProfilContent = () => {
     }
 
     scrollToPanel(expandedPanel);
-  }, [expandedPanel, user]);
+  }, [expandedPanel, scrollToPanel, user]);
 
   useEffect(() => {
     const handleProfileNavigate = (event: Event) => {
@@ -1207,7 +1750,7 @@ const ProfilContent = () => {
     return () => {
       window.removeEventListener(PROFILE_NAVIGATE_EVENT, handleProfileNavigate);
     };
-  }, []);
+  }, [getSectionTarget, scrollToPanel]);
 
   const displayName = useMemo(() => {
     if (!user) {
@@ -1414,6 +1957,33 @@ const ProfilContent = () => {
     toast.info(`${label} sera ajouté plus tard.`);
   };
 
+  const handleEnablePushNotifications = async () => {
+    const result = pushNotificationsEnabled
+      ? await disablePushNotifications()
+      : await enablePushNotifications();
+
+    if (result.success) {
+      toast.success(result.message);
+      return;
+    }
+
+    toast.info(result.message);
+  };
+
+  const handleNotificationPreferenceChange = async (
+    key: NotificationPreferenceKey,
+    enabled: boolean
+  ) => {
+    const result = await updateNotificationPreferences({ [key]: enabled });
+
+    if (result.success) {
+      toast.success(result.message);
+      return;
+    }
+
+    toast.error(result.message);
+  };
+
   const handleAddPreferenceTag = (rawValue: string) => {
     const nextTag = normalizePreferenceTag(rawValue);
     const targetCategory = activePreferenceModal;
@@ -1474,6 +2044,23 @@ const ProfilContent = () => {
   const noteValue = activityStatsLoading
     ? "..."
     : formatAverageRating(activityStats.averageRating);
+  const notificationsTitle = pushNotificationsEnabled
+    ? "Notifications activées"
+    : notificationPermission === "denied"
+      ? "Notifications bloquées"
+      : "Notifications téléphone";
+  const notificationsDescription = !pushNotificationsSupported
+    ? "Ton navigateur ne permet pas les notifications Web Push."
+    : pushNotificationsEnabled
+      ? "Cet appareil recevra les nouveaux messages et les infos de réservation."
+      : notificationPermission === "denied"
+        ? "Tu peux les réactiver dans les réglages de ton navigateur."
+        : "Active les alertes pour les messages, réservations et réponses d'hôte.";
+  const notificationsActionLabel = pushNotificationsEnabled
+    ? "Désactiver"
+    : notificationPermission === "denied"
+      ? "Bloquées"
+      : "Activer";
 
   return (
     <section className={styles.page}>
@@ -1537,6 +2124,33 @@ const ProfilContent = () => {
             </div>
           </section>
 
+          {showProfileInstallEntry ? (
+            <section className={`${styles.sectionCard} ${styles.pwaInstallCard}`}>
+              <div className={styles.pwaInstallCopy}>
+                <span className={styles.pwaInstallIcon} aria-hidden="true">
+                  <Download />
+                </span>
+                <div className={styles.pwaInstallText}>
+                  <h2>Installer l&apos;application</h2>
+                  <p>
+                    Garde Ramène Ta Poire à portée de main pour retrouver tes
+                    repas, tes réservations et tes messages plus vite.
+                  </p>
+                </div>
+              </div>
+
+              <div className={styles.pwaInstallActions}>
+                <button
+                  type="button"
+                  className={styles.primaryButton}
+                  onClick={() => void openInstallPrompt()}
+                >
+                  Installer
+                </button>
+              </div>
+            </section>
+          ) : null}
+
           <section className={styles.sectionCard}>
             <div className={styles.sectionHead}>
               <div>
@@ -1580,6 +2194,13 @@ const ProfilContent = () => {
                       <dd>{hostProfile.address || "-"}</dd>
                     </div>
                   </dl>
+                ) : null}
+
+                {hostProfile?.validationStatus === "approved" ? (
+                  <HostHomePhotosEditor
+                    hostProfile={hostProfile}
+                    onUpdated={setHostProfile}
+                  />
                 ) : null}
 
                 <div className={styles.hostStatusActions}>
@@ -1752,10 +2373,71 @@ const ProfilContent = () => {
               <div ref={notificationsSectionRef}>
                 <ActionRow
                   icon={Bell}
-                  label="Notifications"
+                  label="Notifications téléphone"
+                  expanded={expandedPanel === "notifications"}
                   showArrow={false}
-                  onClick={() => handlePlaceholderClick("Notifications")}
+                  onClick={() => handlePanelToggle("notifications")}
                 />
+
+                {expandedPanel === "notifications" ? (
+                  <div className={styles.expandedPanel}>
+                    <div className={styles.notificationCard}>
+                      <div className={styles.notificationCopy}>
+                        <strong>{notificationsTitle}</strong>
+                        <p>{notificationsDescription}</p>
+                      </div>
+                      <button
+                        type="button"
+                        className={styles.secondaryButton}
+                        onClick={() => void handleEnablePushNotifications()}
+                        disabled={
+                          !pushNotificationsSupported ||
+                          notificationPermission === "denied"
+                        }
+                      >
+                        {notificationsActionLabel}
+                      </button>
+                    </div>
+
+                    <div className={styles.notificationPreferences}>
+                      <div className={styles.notificationPreferencesHeader}>
+                        <strong>Préférences de notifications</strong>
+                        <p>Choisis les alertes que tu veux recevoir sur cet appareil.</p>
+                      </div>
+
+                      <div className={styles.notificationPreferenceList}>
+                        {NOTIFICATION_PREFERENCE_ITEMS.map((item) => (
+                          <label
+                            key={item.key}
+                            className={styles.notificationPreferenceRow}
+                          >
+                            <span className={styles.notificationPreferenceText}>
+                              <strong>{item.title}</strong>
+                              <small>{item.description}</small>
+                            </span>
+
+                            <input
+                              type="checkbox"
+                              className={styles.notificationToggleInput}
+                              checked={notificationPreferences[item.key]}
+                              disabled={notificationPreferencesLoading}
+                              onChange={(event) =>
+                                void handleNotificationPreferenceChange(
+                                  item.key,
+                                  event.target.checked,
+                                )
+                              }
+                            />
+                            <span
+                              className={styles.notificationToggle}
+                              aria-hidden="true"
+                            />
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
 
