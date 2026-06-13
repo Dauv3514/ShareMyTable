@@ -540,7 +540,7 @@ export default function DevenirHotePage() {
                 type="text"
                 value={formData.address}
                 onChange={handleChange}
-                placeholder="Ex. 12 rue de la Republique"
+                placeholder="Ex. 12 rue de la République"
                 required
               />
             </label>

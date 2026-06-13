@@ -24,7 +24,7 @@ export default function RegisterEventLink({
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
     if (isLoggedIn && loading) {
       event.preventDefault();
-      toast.info("Verification de ton compte en cours, reessaie dans un instant.");
+      toast.info("Vérification de ton compte en cours, réessaie dans un instant.");
       return;
     }
 

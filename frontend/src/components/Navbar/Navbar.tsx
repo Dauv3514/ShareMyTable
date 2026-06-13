@@ -27,7 +27,7 @@ export default function Navbar() {
         <Link href="/" className="navbar__logo" aria-label="RameneTaPoire">
           <div className="navbar__logoRTP">
             <Image
-              src="/ramenetapoire.svg"
+              src="/rtp.svg"
               alt="RameneTaPoire"
               width={40}
               height={40}

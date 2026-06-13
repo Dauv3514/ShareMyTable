@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import BottomMenu from "../BottomMenu";
 import Navbar from "../Navbar";
+import SplashScreen from "../SplashScreen";
 
 type AppChromeProps = {
   children: ReactNode;
@@ -19,6 +20,8 @@ export default function AppChrome({ children }: AppChromeProps) {
         isMessagingConversationRoute ? "app-shell--messaging" : ""
       }`}
     >
+      <SplashScreen />
+
       {!isMessagingConversationRoute ? <Navbar /> : null}
 
       <div className="app-shell__content">

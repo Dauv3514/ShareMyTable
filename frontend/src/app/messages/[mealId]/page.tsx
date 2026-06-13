@@ -286,8 +286,8 @@ export default function MealMessagesPage() {
           <div className={styles.stateCard}>
             <h2>Aucune conversation pour cet événement</h2>
             <p>
-              Apres une reservation, tu pourras echanger ici avec l&apos;hote et
-              les participants de cet evenement.
+              Après une réservation, tu pourras échanger ici avec l&apos;hôte et
+              les participants de cet événement.
             </p>
           </div>
         ) : (
@@ -298,7 +298,7 @@ export default function MealMessagesPage() {
                   <div className={styles.mealCardMedia}>
                     <Image
                       src="/photoRepas.png"
-                      alt={mealDetails?.title || "Evénement"}
+                          alt={mealDetails?.title || "Événement"}
                       fill
                       className={styles.mealCardImage}
                       sizes="(max-width: 900px) 100vw, 380px"
@@ -418,7 +418,7 @@ export default function MealMessagesPage() {
                   {!groupConversation && directConversations.length === 0 ? (
                     <div className={styles.stateCard}>
                       <h2>Aucune discussion pour le filtre actuel</h2>
-                      <p>Essaie un autre mot-cle ou reviens plus tard.</p>
+                      <p>Essaie un autre mot-clé ou reviens plus tard.</p>
                     </div>
                   ) : null}
                 </div>

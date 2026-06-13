@@ -96,8 +96,8 @@ export class MessagingGateway
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'authentification impossible';
-      this.logger.warn(`Connexion socket refusee: ${message}`);
-      client.emit('messaging:error', { message: 'Authentification refusee' });
+      this.logger.warn(`Connexion socket refusée: ${message}`);
+      client.emit('messaging:error', { message: 'Authentification refusée' });
       client.disconnect();
     }
   }
@@ -105,7 +105,7 @@ export class MessagingGateway
   handleDisconnect(client: AuthenticatedSocket): void {
     const userId = client.data.user?.sub;
     if (userId) {
-      this.logger.debug(`Socket deconnecte pour user ${userId}`);
+      this.logger.debug(`Socket déconnecté pour user ${userId}`);
     }
   }
 
@@ -245,7 +245,7 @@ export class MessagingGateway
   private getAuthenticatedUserId(client: AuthenticatedSocket): number {
     const userId = client.data.user?.sub;
     if (!userId) {
-      throw new ForbiddenException('Socket non authentifiee');
+      throw new ForbiddenException('Socket non authentifiée');
     }
 
     return Number(userId);

@@ -173,6 +173,9 @@
   justify-self: start;
 }
 
+.eventLink:hover,
+.eventLink:focus-visible {
+  border-width: 2px;
 .profileActions {
   display: flex;
   align-items: center;
@@ -805,4 +808,5 @@
     border-radius: 18px;
     box-shadow: 0 22px 48px rgba(58, 47, 26, 0.24);
   }
+}
 }

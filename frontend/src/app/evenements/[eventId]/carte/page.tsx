@@ -16,6 +16,16 @@ type EventMapPageProps = {
   }>;
 };
 
+function getHostFirstName(hostName: string) {
+  const normalizedHostName = hostName.trim();
+
+  if (!normalizedHostName) {
+    return "l'hôte";
+  }
+
+  return normalizedHostName.split(/\s+/)[0];
+}
+
 export default async function EventMapPage({ params }: EventMapPageProps) {
   const { eventId } = await params;
   const event = await getMealEventById(eventId);
@@ -24,7 +34,7 @@ export default async function EventMapPage({ params }: EventMapPageProps) {
     notFound();
   }
 
-  const hostFirstName = event.host.split(" ")[0] ?? event.host;
+  const hostFirstName = getHostFirstName(event.host);
 
   return (
     <div className={styles.page}>
@@ -69,7 +79,7 @@ export default async function EventMapPage({ params }: EventMapPageProps) {
       </section>
 
       <div className={styles.detailActions}>
-        <Link href="/connexion" className={styles.contactButton}>
+        <Link href={`/messages/${event.id}`} className={styles.contactButton}>
           <span>Contacter {hostFirstName}</span>
         </Link>
         <RegisterEventLink

@@ -138,7 +138,7 @@ export class HostProfileVisionService {
         isPresent: true,
         isValid: false,
         normalizedUrl: null,
-        note: "Photo du domicile non verifiee: extension d'image non reconnue.",
+        note: "Photo du domicile non vérifiée: extension d'image non reconnue.",
         riskFlags: ['photo_invalid_url'],
       };
     }
@@ -185,7 +185,7 @@ export class HostProfileVisionService {
         homeRelated: false,
         safeSearchFlagged: false,
         visionFailed: false,
-        note: 'Google Vision desactive par configuration: verification image limitee au niveau 1.',
+        note: 'Google Vision désactivé par configuration: vérification image limitée au niveau 1.',
         riskFlags: [],
         manualReviewRequired: false,
       };
@@ -221,7 +221,7 @@ export class HostProfileVisionService {
         safeSearchFlagged: false,
         visionFailed: true,
         note:
-          'Verification Google Vision indisponible: configuration absente ou client non charge.',
+          'Vérification Google Vision indisponible: configuration absente ou client non chargé.',
         riskFlags: ['google_vision_failed'],
         manualReviewRequired: true,
       };
@@ -300,13 +300,13 @@ export class HostProfileVisionService {
 
       const noteParts = [
         labels.length > 0
-          ? `Labels Vision detectes: ${labels
+          ? `Labels Vision détectés: ${labels
               .map((label) => label.description)
               .join(', ')}.`
-          : 'Labels Vision: aucun label exploitable detecte.',
+          : 'Labels Vision: aucun label exploitable détecté.',
         logos.length > 0
-          ? `Logos detectes: ${logos.join(', ')}.`
-          : 'Logos detectes: aucun.',
+          ? `Logos détectés: ${logos.join(', ')}.`
+          : 'Logos détectés: aucun.',
         safeSearch
           ? `SafeSearch: adult=${safeSearch.adult ?? 'UNKNOWN'}, violence=${safeSearch.violence ?? 'UNKNOWN'}, medical=${safeSearch.medical ?? 'UNKNOWN'}, racy=${safeSearch.racy ?? 'UNKNOWN'}, spoof=${safeSearch.spoof ?? 'UNKNOWN'}.`
           : 'SafeSearch: aucune donnee exploitable.',
@@ -457,15 +457,15 @@ export class HostProfileVisionService {
     const normalizedMessage = message.trim();
 
     if (this.isBillingPermissionError(normalizedMessage)) {
-      return "Verification Google Vision indisponible: le billing Google Cloud n'est pas active sur le projet.";
+      return "Vérification Google Vision indisponible: le billing Google Cloud n'est pas activé sur le projet.";
     }
 
-    return `Verification Google Vision echouee: ${normalizedMessage}.`;
+    return `Vérification Google Vision échouée: ${normalizedMessage}.`;
   }
 
   private maybeDisableVision(rawMessage: string, normalizedReason: string): void {
     if (!this.isBillingPermissionError(rawMessage)) {
-      this.logger.warn(`Google Vision analyse echouee: ${rawMessage}`);
+      this.logger.warn(`Google Vision analyse échouée: ${rawMessage}`);
       return;
     }
 

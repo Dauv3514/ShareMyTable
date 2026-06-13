@@ -115,7 +115,8 @@
   &:hover {
     transform: translateY(-1px);
     box-shadow: 0 14px 24px rgba(184, 165, 71, 0.24);
-    background: #7B8613;
+    border-color: #626B0F;
+    background: #626B0F;
   }
 }
 
@@ -136,9 +137,9 @@
   min-height: 30px;
   height: 30px;
   border-radius: 999px;
-  border: 1px solid #b8a547;
+  border: 1px solid #525A0C;
   background: #ffffff;
-  color: #52590d;
+  color: #525A0C;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
@@ -148,9 +149,14 @@
     background 0.2s ease;
 
   &:hover {
+    border-width: 2px;
     transform: translateY(-1px);
     box-shadow: 0 14px 28px rgba(82, 89, 13, 0.12);
-    background: #fffdf6;
+    background: #ffffff;
+  }
+
+  &:focus-visible {
+    border-width: 2px;
   }
 
   &:disabled {

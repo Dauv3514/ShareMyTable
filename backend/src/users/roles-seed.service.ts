@@ -23,7 +23,7 @@ export class RolesSeedService implements OnApplicationBootstrap {
 
       if (!existingRole) {
         await this.rolesRepository.save(this.rolesRepository.create({ name: roleName }));
-        this.logger.log(`Role seed cree: ${roleName}`);
+        this.logger.log(`Rôle seed créé: ${roleName}`);
       }
     }
   }

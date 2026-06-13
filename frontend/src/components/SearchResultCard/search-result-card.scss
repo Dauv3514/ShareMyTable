@@ -1,3 +1,5 @@
+@use "../../app/_variables.scss" as *;
+
 .search-result-card {
   width: 100%;
   position: relative;
@@ -8,9 +10,7 @@
   background: #fbf9f4;
   color: #25210e;
   text-decoration: none;
-  box-shadow:
-    0 1px 1px rgba(0, 0, 0, 0.3),
-    0 2px 3px rgba(0, 0, 0, 0.15);
+  box-shadow: $shadow-lvl2;
   overflow: hidden;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -19,9 +19,7 @@
 .search-result-card:hover,
 .search-result-card:focus-visible {
   transform: translateY(-2px);
-  box-shadow:
-    0 2px 6px rgba(0, 0, 0, 0.18),
-    0 8px 16px rgba(37, 33, 14, 0.12);
+  box-shadow: $shadow-lvl2;
   outline: none;
 }
 
