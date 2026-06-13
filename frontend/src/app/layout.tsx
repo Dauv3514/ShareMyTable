@@ -62,7 +62,7 @@ export const metadata: Metadata = {
   title: "RameneTaPoire",
   description: "Le blablacar des repas",
   icons: {
-    icon: "/ramenetapoire.svg",
+    icon: "/rtp.svg",
   },
 };
 

@@ -14,6 +14,7 @@ const EXIT_DURATION_MS = 420;
 const CAROUSEL_START_DELAY_MS = 3800;
 const CAROUSEL_INTERVAL_MS = 4600;
 const DOT_COUNT = 3;
+const ONBOARDING_STORAGE_KEY = "ramene-ta-poire:onboarding-seen";
 const INTRO_CARDS = getEventsForSection(MOCK_MEAL_EVENTS, "prochainement")
   .toSorted((firstEvent, secondEvent) => {
     const dateComparison = firstEvent.date.localeCompare(secondEvent.date);
@@ -36,20 +37,58 @@ export default function SplashScreen() {
   const [phase, setPhase] = useState<SplashPhase>("loading");
   const [activeCardIndex, setActiveCardIndex] = useState(0);
   const [carouselMode, setCarouselMode] = useState<CarouselMode>("mobile");
+  const [shouldShowOnboarding, setShouldShowOnboarding] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (!shouldRender) {
+    const storageTimer = window.setTimeout(() => {
+      try {
+        setShouldShowOnboarding(localStorage.getItem(ONBOARDING_STORAGE_KEY) !== "true");
+      } catch {
+        setShouldShowOnboarding(true);
+      }
+    }, 0);
+
+    return () => {
+      window.clearTimeout(storageTimer);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!shouldRender || shouldShowOnboarding === null) {
       return;
     }
 
-    const introTimer = window.setTimeout(() => {
-      setPhase("intro");
+    let exitTimer: number | undefined;
+
+    const loadingTimer = window.setTimeout(() => {
+      if (shouldShowOnboarding) {
+        setPhase("intro");
+
+        try {
+          localStorage.setItem(ONBOARDING_STORAGE_KEY, "true");
+        } catch {
+          // Storage can be unavailable in private or restricted browser contexts.
+        }
+
+        return;
+      }
+
+      setIsExiting(true);
+      router.replace("/");
+
+      exitTimer = window.setTimeout(() => {
+        setShouldRender(false);
+      }, EXIT_DURATION_MS);
     }, LOADING_DURATION_MS);
 
     return () => {
-      window.clearTimeout(introTimer);
+      window.clearTimeout(loadingTimer);
+
+      if (exitTimer !== undefined) {
+        window.clearTimeout(exitTimer);
+      }
     };
-  }, [shouldRender]);
+  }, [router, shouldRender, shouldShowOnboarding]);
 
   useEffect(() => {
     const updateCarouselMode = () => {
@@ -145,93 +184,100 @@ export default function SplashScreen() {
           className="splash-screen__pear"
         />
 
-        <section className="splash-screen__intro" aria-label="Meilleurs repas près de chez vous">
-          <h2>
-            <span className="splash-screen__intro-title-line">Les meilleurs repas près</span>
-            <span className="splash-screen__intro-title-line"> de chez vous :</span>
-          </h2>
+        {shouldShowOnboarding ? (
+          <>
+            <section className="splash-screen__intro" aria-label="Meilleurs repas près de chez vous">
+              <h2>
+                <span className="splash-screen__intro-title-line">Les meilleurs repas près</span>
+                <span className="splash-screen__intro-title-line"> de chez vous :</span>
+              </h2>
 
-          <div
-            className={`splash-screen__carousel splash-screen__carousel--${carouselMode}`}
-            aria-label="Repas mis en avant"
-          >
-            {INTRO_CARDS.map((card, index) => {
-              const cardOffset =
-                (index - activeCardIndex + INTRO_CARDS.length) % INTRO_CARDS.length;
-              const mobileOrder =
-                cardOffset === INTRO_CARDS.length - 1 ? 0 : cardOffset === 0 ? 1 : 2;
-              const isMobileVisible =
-                cardOffset === INTRO_CARDS.length - 1 || cardOffset === 0 || cardOffset === 1;
-              const tabletOrder = cardOffset;
-              const isTabletVisible = cardOffset < 2;
-              const desktopOrder = cardOffset;
-              const isDesktopVisible = cardOffset < 3;
-              const itemOrder =
-                carouselMode === "mobile"
-                  ? mobileOrder
-                  : carouselMode === "tablet"
-                    ? tabletOrder
-                    : desktopOrder;
-              const isVisible =
-                carouselMode === "mobile"
-                  ? isMobileVisible
-                  : carouselMode === "tablet"
-                    ? isTabletVisible
-                    : isDesktopVisible;
+              <div
+                className={`splash-screen__carousel splash-screen__carousel--${carouselMode}`}
+                aria-label="Repas mis en avant"
+              >
+                {INTRO_CARDS.map((card, index) => {
+                  const cardOffset =
+                    (index - activeCardIndex + INTRO_CARDS.length) % INTRO_CARDS.length;
+                  const mobileOrder =
+                    cardOffset === INTRO_CARDS.length - 1 ? 0 : cardOffset === 0 ? 1 : 2;
+                  const isMobileVisible =
+                    cardOffset === INTRO_CARDS.length - 1 || cardOffset === 0 || cardOffset === 1;
+                  const tabletOrder = cardOffset;
+                  const isTabletVisible = cardOffset < 2;
+                  const desktopOrder = cardOffset;
+                  const isDesktopVisible = cardOffset < 3;
+                  const itemOrder =
+                    carouselMode === "mobile"
+                      ? mobileOrder
+                      : carouselMode === "tablet"
+                        ? tabletOrder
+                        : desktopOrder;
+                  const isVisible =
+                    carouselMode === "mobile"
+                      ? isMobileVisible
+                      : carouselMode === "tablet"
+                        ? isTabletVisible
+                        : isDesktopVisible;
 
-              return (
-                <div
-                  key={`intro-${card.id}`}
-                  className={`splash-screen__carousel-item ${
-                    isVisible ? "splash-screen__carousel-item--visible" : ""
-                  } ${
-                    carouselMode === "mobile" && cardOffset === 0
-                      ? "splash-screen__carousel-item--current"
-                      : ""
-                  }`}
-                  style={{ "--splash-card-order": itemOrder } as CSSProperties}
-                >
-                  <EventCard
-                    title={card.title}
-                    city={card.city}
-                    dateLabel={card.dateLabel}
-                    host={card.host}
-                    variant={card.variant}
-                    featured
-                    showHost
+                  return (
+                    <div
+                      key={`intro-${card.id}`}
+                      className={`splash-screen__carousel-item ${
+                        isVisible ? "splash-screen__carousel-item--visible" : ""
+                      } ${
+                        carouselMode === "mobile" && cardOffset === 0
+                          ? "splash-screen__carousel-item--current"
+                          : ""
+                      }`}
+                      style={{ "--splash-card-order": itemOrder } as CSSProperties}
+                    >
+                      <EventCard
+                        title={card.title}
+                        city={card.city}
+                        dateLabel={card.dateLabel}
+                        host={card.host}
+                        variant={card.variant}
+                        featured
+                        showHost
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="splash-screen__dots" aria-hidden="true">
+                {Array.from({ length: DOT_COUNT }, (_, index) => (
+                  <span
+                    key={`splash-dot-${index}`}
+                    className={
+                      index === activeCardIndex % DOT_COUNT ? "splash-screen__dot--active" : ""
+                    }
                   />
-                </div>
-              );
-            })}
-          </div>
+                ))}
+              </div>
+            </section>
 
-          <div className="splash-screen__dots" aria-hidden="true">
-            {Array.from({ length: DOT_COUNT }, (_, index) => (
-              <span
-                key={`splash-dot-${index}`}
-                className={
-                  index === activeCardIndex % DOT_COUNT ? "splash-screen__dot--active" : ""
-                }
-              />
-            ))}
-          </div>
-        </section>
-
-        <nav className="splash-screen__actions" aria-label="Actions d'introduction">
-          <Link href="/connexion" className="splash-screen__button splash-screen__button--ghost">
-            Connexion
-          </Link>
-          <Link href="/inscription" className="splash-screen__button splash-screen__button--primary">
-            Inscription
-          </Link>
-          <button
-            type="button"
-            className="splash-screen__later"
-            onClick={handleDismiss}
-          >
-            Plus tard
-          </button>
-        </nav>
+            <nav className="splash-screen__actions" aria-label="Actions d'introduction">
+              <Link href="/connexion" className="splash-screen__button splash-screen__button--ghost">
+                Connexion
+              </Link>
+              <Link
+                href="/inscription"
+                className="splash-screen__button splash-screen__button--primary"
+              >
+                Inscription
+              </Link>
+              <button
+                type="button"
+                className="splash-screen__later"
+                onClick={handleDismiss}
+              >
+                Plus tard
+              </button>
+            </nav>
+          </>
+        ) : null}
       </div>
     </div>
   );
