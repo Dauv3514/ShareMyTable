@@ -176,6 +176,8 @@
 .eventLink:hover,
 .eventLink:focus-visible {
   border-width: 2px;
+}
+
 .profileActions {
   display: flex;
   align-items: center;
@@ -476,7 +478,7 @@
 .photoLightbox {
   position: fixed;
   inset: 0;
-  z-index: 220;
+  z-index: 950;
   display: grid;
   place-items: center;
   padding: 22px;
@@ -493,26 +495,37 @@
 .photoLightboxContent {
   position: relative;
   z-index: 1;
+  box-sizing: border-box;
   width: min(100%, 980px);
-  height: min(82vh, 680px);
-  display: grid;
-  place-items: center;
+  height: auto;
+  max-height: min(82vh, 680px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 70px;
 }
 
 .photoLightboxFigure {
   width: 100%;
-  height: 100%;
+  height: auto;
   margin: 0;
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
-  justify-items: center;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
 }
 
 .photoLightboxImage {
   display: block;
+  width: auto;
   max-width: 100%;
-  max-height: 100%;
+  max-height: min(calc(82vh - 94px), 638px);
+  min-height: 0;
+  flex: 0 1 auto;
   border-radius: 22px;
   border: 1px solid rgba(236, 227, 206, 0.68);
   background: #fffdf7;
@@ -528,6 +541,7 @@
   color: #5a4c21;
   font-size: 12px;
   font-weight: 700;
+  flex: 0 0 auto;
 }
 
 .photoLightboxClose,
@@ -535,7 +549,7 @@
   position: absolute;
   z-index: 2;
   border: 1px solid #e6dcc1;
-  border-radius: 50%;
+  border-radius: 50% !important;
   background: #fffdf7;
   color: #5a4c21;
   display: grid;
@@ -551,22 +565,33 @@
 .photoLightboxNav:hover,
 .photoLightboxClose:focus-visible,
 .photoLightboxNav:focus-visible {
-  background: #e7f16f;
+  background: #ffffff;
+  border-color: #d6c897;
   outline: none;
   transform: translateY(-1px);
 }
 
 .photoLightboxClose {
-  top: 0;
-  right: 0;
+  position: static;
   width: 42px;
-  height: 42px;
+  min-width: 42px !important;
+  max-width: 42px !important;
+  min-height: 42px !important;
+  height: 42px !important;
+  max-height: 42px !important;
+  padding: 0;
+  flex: 0 0 auto;
 }
 
 .photoLightboxNav {
-  top: 50%;
+  top: calc(50% + 26px);
   width: 46px;
-  height: 46px;
+  min-width: 46px !important;
+  max-width: 46px !important;
+  min-height: 46px !important;
+  height: 46px !important;
+  max-height: 46px !important;
+  padding: 0;
   transform: translateY(-50%);
 }
 
@@ -785,17 +810,33 @@
     padding: 58px 48px 42px;
   }
 
-  .photoLightboxClose {
-    top: -46px;
-    right: -22px;
+  .photoLightboxContent {
+    height: auto;
+    max-height: calc(100dvh - 120px);
+    padding-inline: 56px;
+  }
+
+  .photoLightboxClose:hover,
+  .photoLightboxClose:focus-visible {
+    transform: translateY(-1px);
+  }
+
+  .photoLightboxFigure {
+    flex: 0 1 auto;
+    height: auto;
+    min-height: 0;
+  }
+
+  .photoLightboxImage {
+    max-height: calc(100dvh - 190px);
   }
 
   .photoLightboxPrev {
-    left: -42px;
+    left: 0;
   }
 
   .photoLightboxNext {
-    right: -42px;
+    right: 0;
   }
 }
 
@@ -808,5 +849,4 @@
     border-radius: 18px;
     box-shadow: 0 22px 48px rgba(58, 47, 26, 0.24);
   }
-}
 }

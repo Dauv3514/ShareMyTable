@@ -83,7 +83,7 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: #e9f54b;
+  background: #eef37e;
   color: #252904;
   display: inline-flex;
   align-items: center;
@@ -242,6 +242,8 @@
 
 .notificationToggleInput {
   position: absolute;
+  width: 1px;
+  height: 1px;
   opacity: 0;
   pointer-events: none;
 }
@@ -250,11 +252,14 @@
   position: relative;
   width: 48px;
   height: 28px;
-  border: 1px solid #d7c58a;
+  border: 1px solid #dfd5a2;
   border-radius: 999px;
-  background: #f6f1df;
+  background: #fffdf6;
   flex: 0 0 auto;
-  transition: background 0.18s ease, border-color 0.18s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .notificationToggle::after {
@@ -264,25 +269,28 @@
   left: 4px;
   width: 18px;
   height: 18px;
-  border-radius: 50%;
+  border: 1px solid #dfd5a2;
+  border-radius: 999px;
   background: #ffffff;
-  box-shadow: 0 3px 8px rgba(61, 51, 21, 0.22);
-  transition: transform 0.18s ease, background 0.18s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .notificationToggleInput:checked + .notificationToggle {
-  border-color: #b7c233;
-  background: #e9f54b;
+  border-color: #dfd5a2;
+  background: #fffdf6;
 }
 
 .notificationToggleInput:checked + .notificationToggle::after {
+  border-color: #dfd5a2;
+  background: #c4b246;
   transform: translateX(20px);
-  background: #252904;
 }
 
 .notificationToggleInput:focus-visible + .notificationToggle {
-  outline: 3px solid rgba(225, 236, 121, 0.38);
-  outline-offset: 3px;
+  box-shadow: 0 0 0 3px rgba(225, 236, 121, 0.35);
 }
 
 .notificationToggleInput:disabled + .notificationToggle {
@@ -441,9 +449,9 @@
 }
 
 .hostStatusDetails dt {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
-  color: #8a7d57;
+  color: #292d06;
 }
 
 .hostStatusDetails dd {
@@ -476,14 +484,14 @@
 
 .hostHomePhotosHead strong {
   color: #292d06;
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.2;
 }
 
 .hostHomePhotosHead span {
   color: #8a7d57;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.4;
 }
 
@@ -495,6 +503,7 @@
   border: 1px solid #e2d6b8;
   background: #ffffff;
   color: #6f632a;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
 }
@@ -536,26 +545,44 @@
 
 .hostHomePhotoRemove {
   width: fit-content;
-  padding: 0;
-  border: none;
-  border-bottom: 1px solid currentColor;
-  background: transparent;
+  min-height: 30px !important;
+  height: 30px !important;
+  max-height: 30px !important;
+  padding: 0 14px;
+  border: 1px solid #c79a9a;
+  border-radius: 999px !important;
+  background: #fff8f5;
   color: #8b4a4a;
   font: inherit;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.hostHomePhotoRemove:hover,
+.hostHomePhotoRemove:focus-visible {
+  border-color: #a95f5f;
+  background: #fff1ed;
+  box-shadow: 0 8px 18px rgba(139, 74, 74, 0.12);
+  outline: none;
+  transform: translateY(-1px);
 }
 
 .hostHomePhotoRemove:disabled {
   opacity: 0.65;
   cursor: wait;
+  transform: none;
 }
 
 .hostHomePhotoLightbox {
   position: fixed;
   inset: 0;
-  z-index: 220;
+  z-index: 950;
   display: grid;
   place-items: center;
   padding: 22px;
@@ -572,26 +599,37 @@
 .hostHomePhotoLightboxContent {
   position: relative;
   z-index: 1;
+  box-sizing: border-box;
   width: min(100%, 980px);
-  height: min(82vh, 680px);
-  display: grid;
-  place-items: center;
+  height: auto;
+  max-height: min(82vh, 680px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 70px;
 }
 
 .hostHomePhotoLightboxFigure {
   width: 100%;
-  height: 100%;
+  height: auto;
   margin: 0;
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
-  justify-items: center;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
 }
 
 .hostHomePhotoLightboxImage {
   display: block;
+  width: auto;
   max-width: 100%;
-  max-height: 100%;
+  max-height: min(calc(82vh - 94px), 638px);
+  min-height: 0;
+  flex: 0 1 auto;
   border-radius: 22px;
   border: 1px solid rgba(236, 227, 206, 0.68);
   background: #fffdf7;
@@ -606,7 +644,8 @@
   background: rgba(255, 253, 247, 0.92);
   color: #5a4c21;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
+  flex: 0 0 auto;
 }
 
 .hostHomePhotoLightboxCloseButton,
@@ -614,7 +653,7 @@
   position: absolute;
   z-index: 2;
   border: 1px solid #e6dcc1;
-  border-radius: 50%;
+  border-radius: 50% !important;
   background: #fffdf7;
   color: #5a4c21;
   display: grid;
@@ -630,22 +669,33 @@
 .hostHomePhotoLightboxNavButton:hover,
 .hostHomePhotoLightboxCloseButton:focus-visible,
 .hostHomePhotoLightboxNavButton:focus-visible {
-  background: #e7f16f;
+  background: #ffffff;
+  border-color: #d6c897;
   outline: none;
   transform: translateY(-1px);
 }
 
 .hostHomePhotoLightboxCloseButton {
-  top: 0;
-  right: 0;
+  position: static;
   width: 42px;
-  height: 42px;
+  min-width: 42px !important;
+  max-width: 42px !important;
+  min-height: 42px !important;
+  height: 42px !important;
+  max-height: 42px !important;
+  padding: 0;
+  flex: 0 0 auto;
 }
 
 .hostHomePhotoLightboxNavButton {
-  top: 50%;
+  top: calc(50% + 26px);
   width: 46px;
-  height: 46px;
+  min-width: 46px !important;
+  max-width: 46px !important;
+  min-height: 46px !important;
+  height: 46px !important;
+  max-height: 46px !important;
+  padding: 0;
   transform: translateY(-50%);
 }
 
@@ -1487,17 +1537,33 @@
     padding: 58px 48px 42px;
   }
 
-  .hostHomePhotoLightboxCloseButton {
-    top: -46px;
-    right: -22px;
+  .hostHomePhotoLightboxContent {
+    height: auto;
+    max-height: calc(100dvh - 120px);
+    padding-inline: 56px;
+  }
+
+  .hostHomePhotoLightboxCloseButton:hover,
+  .hostHomePhotoLightboxCloseButton:focus-visible {
+    transform: translateY(-1px);
+  }
+
+  .hostHomePhotoLightboxFigure {
+    flex: 0 1 auto;
+    height: auto;
+    min-height: 0;
+  }
+
+  .hostHomePhotoLightboxImage {
+    max-height: calc(100dvh - 190px);
   }
 
   .hostHomePhotoLightboxPrev {
-    left: -42px;
+    left: 0;
   }
 
   .hostHomePhotoLightboxNext {
-    right: -42px;
+    right: 0;
   }
 
   .statCard {

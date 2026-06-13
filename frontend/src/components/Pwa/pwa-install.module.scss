@@ -30,9 +30,12 @@
   top: 12px;
   right: 12px;
   width: 32px;
-  height: 32px;
+  min-height: 32px !important;
+  height: 32px !important;
+  max-height: 32px !important;
+  padding: 0;
   border: 1px solid #e6dcbf;
-  border-radius: 50%;
+  border-radius: 50% !important;
   background: #fffdf7;
   color: #6f622b;
   display: inline-flex;
