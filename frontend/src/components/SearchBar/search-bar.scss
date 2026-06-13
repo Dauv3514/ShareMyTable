@@ -1,3 +1,5 @@
+@use "../../app/_variables.scss" as *;
+
 .search-bar-shell {
   margin: 12px auto 0;
   width: 100%;
@@ -20,7 +22,7 @@
   grid-template-columns: 1fr auto 1fr auto;
   align-items: center;
   gap: 6px;
-  box-shadow: 0 1px 3px rgba(74, 66, 28, 0.25);
+  box-shadow: $shadow-lvl1;
   border: 1px solid #E3DBB5;
 }
 
@@ -58,7 +60,7 @@
   background: #ffffff;
   border: 1px solid #e0d9c7;
   border-radius: 18px;
-  box-shadow: 0 16px 30px rgba(58, 47, 26, 0.18);
+  box-shadow: $shadow-lvl2;
   padding: 8px;
   display: grid;
   gap: 4px;
@@ -149,7 +151,7 @@
   color: #948438;
   display: grid;
   place-items: center;
-  box-shadow: 0 1px 3px rgba(74, 66, 28, 0.25);
+  box-shadow: $shadow-lvl1;
   cursor: pointer;
 }
 
