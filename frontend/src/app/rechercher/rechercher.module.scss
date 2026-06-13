@@ -469,9 +469,11 @@
   display: flex;
   gap: 16px;
   overflow-x: auto;
-  padding: 0 14px 8px 0;
-  margin-right: -16px;
+  padding: 12px 22px 18px 10px;
+  margin-right: -22px;
+  margin-left: -10px;
   scroll-snap-type: x proximity;
+  scroll-padding-left: 10px;
   scrollbar-width: none;
   cursor: grab;
   user-select: none;
@@ -532,7 +534,9 @@
     display: flex;
     overflow-x: auto;
     margin-right: 0;
-    padding: 0 2px 8px;
+    padding: 12px 8px 18px;
+    margin-left: -8px;
+    margin-right: -8px;
   }
 
   .suggestionCards :global(.event-card) {
