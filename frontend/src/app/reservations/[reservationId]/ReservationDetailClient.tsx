@@ -544,7 +544,7 @@ export default function ReservationDetailClient({
                 <div className={styles.exactMapHeader}>
                   <div>
                     <h2>Adresse exacte</h2>
-                    <p>Le point indique l&apos;adresse de l'événement.</p>
+                    <p>Le point indique l&apos;adresse de l&apos;événement.</p>
                   </div>
                 </div>
                 <ReservationExactMap
@@ -714,7 +714,7 @@ export default function ReservationDetailClient({
                     <div className={styles.reviewStage}>
                       <span className={styles.reviewLabel}>Un pourboire ?</span>
                       <p className={styles.reviewHelper}>
-                        Montre que vous avez apprécié l'événement en laissant un pourboire.
+                        Montre que vous avez apprécié l&apos;événement en laissant un pourboire.
                       </p>
                       <div className={styles.tipCounter}>
                         <button

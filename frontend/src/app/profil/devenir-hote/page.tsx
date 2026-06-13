@@ -449,7 +449,7 @@ export default function DevenirHotePage() {
                 type="text"
                 value={formData.address}
                 onChange={handleChange}
-                placeholder="Ex. 12 rue de la Republique"
+                placeholder="Ex. 12 rue de la République"
                 required
               />
             </label>
@@ -459,7 +459,7 @@ export default function DevenirHotePage() {
             <div className={styles.uploadCopy}>
               <h2>Photo du logement</h2>
               <p>
-                Optionnelle. Formats acceptes : PNG, JPG, JPEG, WebP. Taille max
+                Optionnelle. Formats acceptés : PNG, JPG, JPEG, WebP. Taille max
                 : {MAX_HOME_PHOTO_SIZE_MB} Mo.
               </p>
             </div>

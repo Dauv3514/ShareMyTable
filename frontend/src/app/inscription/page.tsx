@@ -673,7 +673,7 @@ function InscriptionPageContent() {
                         className={styles.input}
                         type="text"
                         name="host_address"
-                        placeholder="Ex. 12 rue de la Republique"
+                        placeholder="Ex. 12 rue de la République"
                         value={formData.host_address}
                         onChange={handleChange}
                         required={formData.request_host}
@@ -696,7 +696,7 @@ function InscriptionPageContent() {
                         </button>
 
                         <p className={styles.uploadHint}>
-                          Optionnel. Formats acceptes : PNG, JPG, JPEG, WebP.
+                          Optionnel. Formats acceptés : PNG, JPG, JPEG, WebP.
                           Taille max : {MAX_HOST_HOME_PHOTO_SIZE_MB} Mo.
                         </p>
                       </div>

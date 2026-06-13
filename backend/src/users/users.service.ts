@@ -95,7 +95,7 @@ export class UsersService {
   ): Promise<UserPreferenceSummary> {
     const user = await this.findOneUser(userId);
     if (!user) {
-      throw new NotFoundException('Utilisateur non trouve');
+      throw new NotFoundException('Utilisateur non trouvé');
     }
 
     let userPreferenceTags = await this.userPreferenceTagsRepository.find({
@@ -118,7 +118,7 @@ export class UsersService {
   ): Promise<UserPreferenceSummary> {
     const user = await this.findOneUser(userId);
     if (!user) {
-      throw new NotFoundException('Utilisateur non trouve');
+      throw new NotFoundException('Utilisateur non trouvé');
     }
 
     const normalizedDietaryTags = this.uniqueNormalizedTags(data.dietaryTags);
@@ -167,7 +167,7 @@ export class UsersService {
   async setRole(userId: number, roleName: RoleName): Promise<Utilisateur> {
     const user = await this.findOneUser(userId);
     if (!user) {
-      throw new NotFoundException('Utilisateur non trouve');
+      throw new NotFoundException('Utilisateur non trouvé');
     }
 
     user.role = await this.findOrCreateRole(roleName);
@@ -188,7 +188,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('Utilisateur non trouve');
+      throw new NotFoundException('Utilisateur non trouvé');
     }
 
     let role = await roleRepository.findOne({ where: { name: roleName } });

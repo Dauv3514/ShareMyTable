@@ -152,7 +152,7 @@ export class MessagingService {
 
     const normalizedBody = createMessageDto.body.trim();
     if (!normalizedBody) {
-      throw new BadRequestException('Le message ne peut pas etre vide');
+      throw new BadRequestException('Le message ne peut pas être vide');
     }
 
     const message = this.messagesRepository.create({

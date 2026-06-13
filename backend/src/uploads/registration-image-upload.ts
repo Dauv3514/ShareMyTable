@@ -66,7 +66,7 @@ export const registrationImageUploadOptions = {
     if (!allowedMimeTypes.includes(file.mimetype)) {
       callback(
         new BadRequestException(
-          'Le fichier doit etre une image PNG, JPG, JPEG ou WebP',
+          'Le fichier doit être une image PNG, JPG, JPEG ou WebP',
         ),
         false,
       );

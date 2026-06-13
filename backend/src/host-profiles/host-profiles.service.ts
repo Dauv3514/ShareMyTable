@@ -103,7 +103,7 @@ type HostProfileReviewHistoryResponse = {
 @Injectable()
 export class HostProfilesService {
   private static readonly AUTO_INVALID_ADDRESS_REJECTION_REASON =
-    "Adresse non valide ou non verifiable. Merci de corriger l'adresse avant de renvoyer votre demande hote.";
+    "Adresse non valide ou non vérifiable. Merci de corriger l'adresse avant de renvoyer votre demande hôte.";
 
   constructor(
     private readonly dataSource: DataSource,
@@ -132,14 +132,14 @@ export class HostProfilesService {
 
     if (existingProfile) {
       throw new ConflictException(
-        'Un profil hote existe deja pour cet utilisateur',
+        'Un profil hôte existe déjà pour cet utilisateur',
       );
     }
 
     const user = await this.usersRepository.findOne({ where: { id: userId } });
 
     if (!user) {
-      throw new NotFoundException('Utilisateur non trouve');
+      throw new NotFoundException('Utilisateur non trouvé');
     }
 
     const hostProfile = this.hostProfilesRepository.create({
@@ -190,7 +190,7 @@ export class HostProfilesService {
 
     if (hostProfile.validationStatus === HostValidationStatus.APPROVED) {
       throw new BadRequestException(
-        'Un profil hote approuve ne peut pas etre modifie',
+        'Un profil hôte approuvé ne peut pas être modifié',
       );
     }
 
@@ -208,7 +208,7 @@ export class HostProfilesService {
 
     if (hostProfile.validationStatus !== HostValidationStatus.REJECTED) {
       throw new BadRequestException(
-        'Seul un profil hote rejete peut etre resoumis',
+        'Seul un profil hôte rejeté peut être resoumis',
       );
     }
 
@@ -241,11 +241,11 @@ export class HostProfilesService {
       });
 
       if (!hostProfile) {
-        throw new NotFoundException('Profil hote introuvable');
+        throw new NotFoundException('Profil hôte introuvable');
       }
 
       if (hostProfile.validationStatus === HostValidationStatus.APPROVED) {
-        throw new BadRequestException('La demande hote est deja approuvee');
+        throw new BadRequestException('La demande hôte est déjà approuvée');
       }
 
       hostProfile.validationStatus = HostValidationStatus.APPROVED;
@@ -297,16 +297,16 @@ export class HostProfilesService {
       });
 
       if (!hostProfile) {
-        throw new NotFoundException('Profil hote introuvable');
+        throw new NotFoundException('Profil hôte introuvable');
       }
 
       if (hostProfile.validationStatus === HostValidationStatus.REJECTED) {
-        throw new BadRequestException('La demande hote est deja rejetee');
+        throw new BadRequestException('La demande hôte est déjà rejetée');
       }
 
       if (hostProfile.validationStatus === HostValidationStatus.APPROVED) {
         throw new BadRequestException(
-          'Un profil hote approuve ne peut pas etre rejete',
+          'Un profil hôte approuvé ne peut pas être rejeté',
         );
       }
 
@@ -386,7 +386,7 @@ export class HostProfilesService {
     });
 
     if (!hostProfile) {
-      throw new NotFoundException('Profil hote public introuvable');
+      throw new NotFoundException('Profil hôte public introuvable');
     }
 
     const [publishedMealsCount, completedMealsCount, organizedMealsCount] =
@@ -438,7 +438,7 @@ export class HostProfilesService {
 
     if (!hostProfile) {
       throw new NotFoundException(
-        'Aucun profil hote trouve pour cet utilisateur',
+        'Aucun profil hôte trouvé pour cet utilisateur',
       );
     }
 
@@ -453,7 +453,7 @@ export class HostProfilesService {
     });
 
     if (!hostProfile) {
-      throw new NotFoundException('Profil hote introuvable');
+      throw new NotFoundException('Profil hôte introuvable');
     }
 
     return hostProfile;

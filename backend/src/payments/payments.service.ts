@@ -93,7 +93,7 @@ export class PaymentsService {
 
     if (booking.totalPriceCents <= 0) {
       throw new BadRequestException(
-        'Le montant de la reservation est invalide',
+        'Le montant de la réservation est invalide',
       );
     }
 
@@ -102,7 +102,7 @@ export class PaymentsService {
 
     if (existingPayment?.status === PaymentStatus.SUCCEEDED) {
       throw new BadRequestException(
-        'Un paiement a deja ete confirme pour cette reservation',
+        'Un paiement a déjà été confirmé pour cette réservation',
       );
     }
 
@@ -301,13 +301,13 @@ export class PaymentsService {
 
     if (booking.meal.dateTime.getTime() > Date.now()) {
       throw new BadRequestException(
-        'Le paiement ne peut etre capturé qu apres la date de lévénement',
+        "Le paiement ne peut être capturé qu'après la date de l'événement",
       );
     }
 
     if (booking.bookingStatus !== BookingStatus.CONFIRMED) {
       throw new BadRequestException(
-        'Seule une reservation confirmee peut etre capturee',
+        'Seule une réservation confirmée peut être capturée',
       );
     }
 
@@ -317,7 +317,7 @@ export class PaymentsService {
 
     if (payment.status !== PaymentStatus.AUTHORIZED) {
       throw new BadRequestException(
-        'Seul un paiement autorise peut etre capture',
+        'Seul un paiement autorisé peut être capturé',
       );
     }
 
@@ -357,7 +357,7 @@ export class PaymentsService {
       try {
         await this.captureAuthorizedPayment(payment);
         this.logger.log(
-          `Paiement #${payment.id} capture automatiquement pour la reservation #${payment.booking.id}`,
+          `Paiement #${payment.id} capturé automatiquement pour la réservation #${payment.booking.id}`,
         );
       } catch (error) {
         const message =

@@ -57,7 +57,7 @@ export class InscriptionDto {
   birth_date: string;
 
   @IsOptional()
-  @IsBooleanString({ message: 'La demande hote est invalide' })
+  @IsBooleanString({ message: 'La demande hôte est invalide' })
   request_host?: string;
 
   @IsOptional()

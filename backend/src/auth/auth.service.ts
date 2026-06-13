@@ -56,13 +56,13 @@ export class AuthService {
     if (normalizedPseudo) {
       const existingUser = await this.usersService.findByPseudo(normalizedPseudo);
       if (existingUser) {
-        throw new BadRequestException('Ce pseudo existe deja');
+        throw new BadRequestException('Ce pseudo existe déjà');
       }
     }
 
     const existingUserByEmail = await this.usersService.findOne(normalizedEmail);
     if (existingUserByEmail) {
-      throw new BadRequestException('Cet email existe deja');
+      throw new BadRequestException('Cet email existe déjà');
     }
 
     if (!password_hash) {
@@ -82,7 +82,7 @@ export class AuthService {
 
     return {
       success: true,
-      message: 'Utilisateur cree avec succes',
+      message: 'Utilisateur créé avec succès',
       username: user.pseudo,
       userId: user.id,
     };
@@ -90,14 +90,14 @@ export class AuthService {
 
   async connexion(email: string, pass: string) {
     const user = await this.usersService.findOne(email);
-    if (!user) throw new UnauthorizedException("Cet email n'est pas enregistre");
+    if (!user) throw new UnauthorizedException("Cet email n'est pas enregistré");
 
     if (!user.passwordHash) {
       throw new UnauthorizedException('Ce compte utilise un fournisseur externe');
     }
 
     if (!user.emailVerifiedAt) {
-      throw new UnauthorizedException("Veuillez verifier votre adresse email");
+      throw new UnauthorizedException("Veuillez vérifier votre adresse email");
     }
 
     const isValid = await bcrypt.compare(pass, user.passwordHash);
@@ -350,13 +350,13 @@ export class AuthService {
       !user.emailVerificationExpiresAt ||
       user.emailVerificationExpiresAt < new Date()
     ) {
-      throw new BadRequestException('Token invalide ou expire');
+      throw new BadRequestException('Token invalide ou expiré');
     }
 
     await this.usersService.updateEmailVerifiedAt(user.id, new Date());
     await this.usersService.clearEmailVerificationToken(user.id);
 
-    return { success: true, message: 'Email verifie avec succes' };
+    return { success: true, message: 'Email vérifié avec succès' };
   }
 
   async forgotPassword(dto: ForgotPasswordDto) {
@@ -379,7 +379,7 @@ export class AuthService {
 
     return {
       success: true,
-      message: 'Si cet email existe, un lien de reinitialisation a ete envoye.',
+      message: 'Si cet email existe, un lien de réinitialisation a été envoyé.',
     };
   }
 
@@ -393,14 +393,14 @@ export class AuthService {
     const tokenHash = createHash('sha256').update(token).digest('hex');
     const user = await this.usersService.findByPasswordResetTokenHash(tokenHash);
     if (!user || !user.passwordResetExpiresAt || user.passwordResetExpiresAt < new Date()) {
-      throw new BadRequestException('Token invalide ou expire');
+      throw new BadRequestException('Token invalide ou expiré');
     }
 
     const hashedPassword = await bcrypt.hash(new_password, 10);
     await this.usersService.updatePasswordHash(user.id, hashedPassword);
     await this.usersService.clearPasswordResetToken(user.id);
 
-    return { success: true, message: 'Mot de passe mis a jour' };
+    return { success: true, message: 'Mot de passe mis à jour' };
   }
 
   async changePassword(userId: number, dto: ChangePasswordDto) {
@@ -422,12 +422,12 @@ export class AuthService {
 
     const isSamePassword = await bcrypt.compare(dto.new_password, user.passwordHash);
     if (isSamePassword) {
-      throw new BadRequestException('Le nouveau mot de passe doit etre different de l ancien');
+      throw new BadRequestException("Le nouveau mot de passe doit être différent de l'ancien");
     }
 
     const hashedPassword = await bcrypt.hash(dto.new_password, 10);
     await this.usersService.updatePasswordHash(user.id, hashedPassword);
 
-    return { success: true, message: 'Mot de passe mis a jour' };
+    return { success: true, message: 'Mot de passe mis à jour' };
   }
 }
