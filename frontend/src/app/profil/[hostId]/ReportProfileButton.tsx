@@ -38,14 +38,15 @@ export default function ReportProfileButton({
     user?.id !== undefined &&
     user.id === numericTargetUserId;
 
-  if (isOwnProfile) {
-    return null;
-  }
-
   const openReportModal = () => {
     if (!isLoggedIn) {
       toast.info("Connecte-toi pour signaler ce profil.");
       router.push("/connexion");
+      return;
+    }
+
+    if (isOwnProfile) {
+      toast.info("Tu ne peux pas signaler ton propre profil.");
       return;
     }
 
