@@ -562,6 +562,11 @@
   cursor: pointer;
 }
 
+.preferenceModalResult:hover,
+.preferenceModalResult:focus-visible {
+  background: #626B0F;
+}
+
 .preferenceModalResult:disabled {
   background: #cfcfcf;
   color: #f7f7f7;
@@ -895,11 +900,22 @@
   color: #52590d;
 }
 
+.closeButton:hover,
+.closeButton:focus-visible {
+  border-width: 2px;
+}
+
 .primaryButton:hover,
 .secondaryButton:hover,
 .ghostButton:hover,
 .deleteButton:hover {
   transform: translateY(-1px);
+}
+
+.primaryButton:hover,
+.primaryButton:focus-visible {
+  border-color: #626B0F;
+  background: #626B0F;
 }
 
 .primaryButton:disabled {

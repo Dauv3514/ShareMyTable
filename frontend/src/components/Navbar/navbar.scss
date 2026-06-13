@@ -1,4 +1,6 @@
 .navbar {
+  position: relative;
+  z-index: 800;
   width: 100%;
   background: #fbf9f4;
   border-bottom: 1px solid #E3DBB5;
@@ -100,6 +102,11 @@
   color: #525A0C;
 }
 
+.navbar__btn--ghost:hover,
+.navbar__btn--ghost:focus-visible {
+  border-width: 2px;
+}
+
 .navbar__btn--primary {
   height: 30px;
   min-width: 0;
@@ -113,6 +120,12 @@
 
 .navbar__btn:hover {
   transform: translateY(-1px);
+}
+
+.navbar__btn--primary:hover,
+.navbar__btn--primary:focus-visible {
+  border-color: #626B0F;
+  background: #626B0F;
 }
 
 .navbar__avatar {

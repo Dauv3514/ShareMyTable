@@ -273,6 +273,11 @@
   cursor: pointer;
 }
 
+.aroundMeButton:hover,
+.aroundMeButton:focus-visible {
+  border-width: 2px;
+}
+
 .aroundMeButton svg {
   width: 16px;
   height: 16px;

@@ -824,6 +824,11 @@
   font-weight: 600;
 }
 
+.contactButton:hover,
+.contactButton:focus-visible {
+  border-width: 2px;
+}
+
 .registerButton {
   min-height: 30px;
   height: 30px;
@@ -844,7 +849,8 @@
 
 .registerButton:hover,
 .registerButton:focus-visible {
-  filter: brightness(0.98);
+  border-color: #626B0F;
+  background: #626B0F;
   outline: none;
 }
 

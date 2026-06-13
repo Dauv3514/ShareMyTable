@@ -98,6 +98,11 @@
   line-height: 1;
 }
 
+.hostButton:hover,
+.hostButton:focus-visible {
+  border-width: 2px;
+}
+
 .primaryButton {
   min-height: 30px;
   height: 30px;
@@ -108,6 +113,12 @@
   border-radius: 27px;
   background: #7B8613;
   box-shadow: none;
+}
+
+.primaryButton:hover,
+.primaryButton:focus-visible {
+  border-color: #626B0F;
+  background: #626B0F;
 }
 
 .warningButton {
@@ -331,7 +342,7 @@
   margin-top: 4px;
   color: #62583f;
   font-size: 0.94rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .exactMapHeader span {
@@ -704,6 +715,11 @@
   border-color: #525a0c;
   background: #ffffff;
   color: #525a0c;
+}
+
+.reviewPanel .secondaryButton:hover,
+.reviewPanel .secondaryButton:focus-visible {
+  border-width: 2px;
 }
 
 .reviewPanel .primaryButton,

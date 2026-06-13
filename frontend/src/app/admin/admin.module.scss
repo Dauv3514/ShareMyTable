@@ -341,6 +341,12 @@
   transform: translateY(-1px);
 }
 
+.approveButton:hover,
+.approveButton:focus-visible {
+  border-color: #626B0F;
+  background: #626B0F;
+}
+
 .approveButton:disabled,
 .rejectButton:disabled {
   opacity: 0.65;

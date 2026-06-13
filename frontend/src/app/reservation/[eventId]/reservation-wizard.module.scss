@@ -604,6 +604,12 @@
     box-shadow 0.2s ease;
 }
 
+.inlinePrimaryButton:hover,
+.inlinePrimaryButton:focus-visible {
+  border-color: #626B0F;
+  background: #626B0F;
+}
+
 .inlinePrimaryButton:disabled {
   cursor: not-allowed;
   opacity: 0.55;
@@ -661,6 +667,12 @@
   color: #fcfbf8;
   border-color: #7B8613;
   box-shadow: none;
+}
+
+.footerPrimaryButton:hover,
+.footerPrimaryButton:focus-visible {
+  border-color: #626B0F;
+  background: #626B0F;
 }
 
 .footerGhostButton:hover,

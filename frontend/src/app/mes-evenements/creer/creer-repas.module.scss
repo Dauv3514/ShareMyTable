@@ -834,6 +834,12 @@
   box-shadow: none;
 }
 
+.footerPrimaryButton:hover,
+.footerPrimaryButton:focus-visible {
+  border-color: #626B0F;
+  background: #626B0F;
+}
+
 .footerGhostButton:hover,
 .footerPrimaryButton:hover {
   transform: translateY(-1px);

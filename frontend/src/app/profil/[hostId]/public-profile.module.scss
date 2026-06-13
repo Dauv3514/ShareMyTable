@@ -173,6 +173,11 @@
   justify-self: start;
 }
 
+.eventLink:hover,
+.eventLink:focus-visible {
+  border-width: 2px;
+}
+
 .eventLink svg {
   width: 16px;
   height: 16px;
