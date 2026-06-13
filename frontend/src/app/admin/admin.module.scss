@@ -81,25 +81,48 @@
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  width: 124px;
-  height: 42px;
-  min-height: 34px;
-  padding: 0 16px;
+  min-width: 152px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 18px;
   border-radius: 999px;
-  border: 1px solid #d7c692;
+  border: 1px solid #525A0C;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
   text-decoration: none;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .adminLinks a {
-  color: #615620;
-  background: #fffef9;
+  color: #525A0C;
+  background: #ffffff;
 }
 
 .adminLinks span {
-  color: #202400;
-  background: #e6f14f;
+  border-color: #7B8613;
+  color: #fcfbf8;
+  background: #7B8613;
+}
+
+.adminLinks a:hover,
+.adminLinks a:focus-visible {
+  border-width: 2px;
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.adminLinks span:hover,
+.adminLinks span:focus-visible {
+  border-color: #626B0F;
+  background: #626B0F;
+  outline: none;
+  transform: translateY(-1px);
 }
 
 .statCard {
@@ -211,7 +234,7 @@
   padding: 0 12px;
   border-radius: 999px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .badgeOk {
@@ -590,8 +613,20 @@
   background: #7b8613;
   color: #fcfbf8;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: none;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.reportActions a:hover,
+.reportActions a:focus-visible {
+  border-color: #626B0F;
+  background: #626B0F;
+  outline: none;
+  transform: translateY(-1px);
 }
 
 .reportActions svg {
@@ -652,6 +687,6 @@
   .adminLinks a,
   .adminLinks span {
     width: auto;
-    min-width: 124px;
+    min-width: 152px;
   }
 }
