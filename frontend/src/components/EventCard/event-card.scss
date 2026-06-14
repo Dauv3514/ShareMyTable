@@ -42,6 +42,12 @@
   place-items: center;
 }
 
+.event-card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .event-card--veggie .event-card__media {
   background:
     radial-gradient(circle at 22% 18%, rgba(255, 255, 255, 0.86), transparent 38%),

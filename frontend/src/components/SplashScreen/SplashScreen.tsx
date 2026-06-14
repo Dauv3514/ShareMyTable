@@ -237,6 +237,7 @@ export default function SplashScreen() {
                         city={card.city}
                         dateLabel={card.dateLabel}
                         host={card.host}
+                        imageUrl={card.imageUrl}
                         variant={card.variant}
                         featured
                         showHost

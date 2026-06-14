@@ -225,6 +225,7 @@ export default function Home() {
                     city={card.city}
                     dateLabel={card.dateLabel}
                     host={card.host}
+                    imageUrl={card.imageUrl}
                     variant={card.variant}
                     featured={section.slug === "prochainement"}
                     showHost={section.slug === "prochainement"}

@@ -92,6 +92,7 @@ export default async function EventSectionPage({
               city={event.city}
               dateLabel={event.dateLabel}
               host={event.host}
+              imageUrl={event.imageUrl}
               variant={event.variant}
               href={buildMealEventHref(event.id)}
             />

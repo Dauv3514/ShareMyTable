@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { getNextImageSrc } from "@/lib/image-src";
 import "./event-card.scss";
 
 type EventCardProps = {
@@ -14,6 +15,7 @@ type EventCardProps = {
   featured?: boolean;
   showHost?: boolean;
   href?: string;
+  imageUrl?: string | null;
 };
 
 function EventCardContent({
@@ -21,20 +23,19 @@ function EventCardContent({
   city,
   dateLabel,
   host,
+  imageUrl,
   showHost = false,
 }: Omit<EventCardProps, "variant" | "layout" | "href">) {
   return (
     <>
-      <div className="event-card__media" aria-hidden="true">
-        <div className="event-card__plate">
-          <Image
-            src="/ramenetapoire.svg"
-            alt=""
-            width={58}
-            height={58}
-            className="event-card__logo"
-          />
-        </div>
+      <div className="event-card__media">
+        <Image
+          src={getNextImageSrc(imageUrl)}
+          alt={title}
+          fill
+          sizes="(max-width: 720px) 112px, 260px"
+          className="event-card__image"
+        />
       </div>
 
       <div className="event-card__body">
@@ -57,6 +58,7 @@ export default function EventCard({
   featured = false,
   showHost = false,
   href,
+  imageUrl,
 }: EventCardProps) {
   const className = `event-card event-card--${variant} event-card--${layout} ${
     href ? "event-card--link" : ""
@@ -70,6 +72,7 @@ export default function EventCard({
           city={city}
           dateLabel={dateLabel}
           host={host}
+          imageUrl={imageUrl}
           showHost={showHost}
         />
       </Link>
@@ -83,6 +86,7 @@ export default function EventCard({
         city={city}
         dateLabel={dateLabel}
         host={host}
+        imageUrl={imageUrl}
         showHost={showHost}
       />
     </article>
