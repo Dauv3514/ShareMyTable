@@ -42,6 +42,7 @@ FRONTEND_URL=https://ramenetapoire.bouchard-mehdi.fr
 BACKEND_URL=https://ramenetapoire.bouchard-mehdi.fr
 NEXT_PUBLIC_API_URL=https://ramenetapoire.bouchard-mehdi.fr/api
 NEXT_PUBLIC_BACKEND_URL=https://ramenetapoire.bouchard-mehdi.fr
+INTERNAL_API_URL=http://backend:5001/api
 ```
 
 `TYPEORM_SYNCHRONIZE=false` évite que TypeORM modifie automatiquement le schéma de base en production. Les changements de base devront ensuite passer par migrations ou scripts SQL contrôlés.
