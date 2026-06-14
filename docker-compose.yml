@@ -1,0 +1,68 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ramenetapoire}
+      POSTGRES_USER: ${POSTGRES_USER:-ramenetapoire}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ramenetapoire} -d ${POSTGRES_DB:-ramenetapoire}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ramenetapoire_internal
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NODE_ENV: production
+      PORT: 5001
+      DATABASE_URL: postgres://${POSTGRES_USER:-ramenetapoire}:${POSTGRES_PASSWORD:-change_me}@db:5432/${POSTGRES_DB:-ramenetapoire}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-3008}:5001"
+    volumes:
+      - backend_uploads:/app/uploads
+    networks:
+      - ramenetapoire_internal
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3008/api}
+        NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL:-http://localhost:3008}
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+    depends_on:
+      - backend
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-8088}:3000"
+    networks:
+      - ramenetapoire_internal
+
+volumes:
+  postgres_data:
+  backend_uploads:
+
+networks:
+  ramenetapoire_internal:
+    driver: bridge

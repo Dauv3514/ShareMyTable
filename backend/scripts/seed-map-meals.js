@@ -517,7 +517,7 @@ async function main() {
             NULL,
             $3,
             $4,
-            '/homme-profil.jpg',
+            '/assets/avatars/001.jpg',
             $5,
             'France',
             $6,

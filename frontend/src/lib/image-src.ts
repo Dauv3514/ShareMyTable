@@ -26,6 +26,27 @@ export function sanitizeNextImageSrc(value?: string | null): string | null {
     ) {
       return trimmedValue;
     }
+
+    const allowedUploadOrigins = [
+      process.env.NEXT_PUBLIC_BACKEND_URL,
+      process.env.NEXT_PUBLIC_API_URL,
+    ]
+      .filter(Boolean)
+      .map((configuredUrl) => {
+        try {
+          return new URL(configuredUrl as string).origin;
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean);
+
+    if (
+      url.pathname.startsWith("/uploads/") &&
+      allowedUploadOrigins.includes(url.origin)
+    ) {
+      return trimmedValue;
+    }
   } catch {
     return null;
   }

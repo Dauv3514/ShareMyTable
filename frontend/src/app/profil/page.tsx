@@ -1425,7 +1425,7 @@ const HostHomePhotosEditor = ({
   );
 };
 
-const ProfilContent = () => {
+const ProfilPageContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isLoggedIn, loading, user } = useAuth();
@@ -2486,10 +2486,10 @@ const ProfilContent = () => {
   );
 };
 
-export default function ProfilPage() {
-  return (
-    <Suspense fallback={null}>
-      <ProfilContent />
-    </Suspense>
-  );
-}
+const ProfilPage = () => (
+  <Suspense fallback={null}>
+    <ProfilPageContent />
+  </Suspense>
+);
+
+export default ProfilPage;
