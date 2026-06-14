@@ -1382,8 +1382,8 @@ async function main() {
     for (let index = 1; index <= MEAL_COUNT; index += 1) {
       const host = context.hosts[index % context.hosts.length];
       const template = mealTemplates[index % mealTemplates.length];
-      const isPast = index % 100 < 42;
-      const isToday = index % 100 >= 42 && index % 100 < 47;
+      const isPast = index % 100 < 25;
+      const isToday = index % 100 >= 25 && index % 100 < 32;
       const isCancelled = index % 29 === 0;
       const isDraft = index % 37 === 0;
       const mealHour = template.type === 'Brunch' ? 11 : template.type === 'Déjeuner' ? 12 : template.type === 'Goûter' ? 16 : 19;
