@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -8,10 +9,17 @@ import {
   Post,
   Query,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '../auth/auth.guard';
 import type { IAuthInfoRequest } from '../auth/auth.guard';
+import {
+  buildMealPhotoUrl,
+  mealPhotoUploadOptions,
+} from '../uploads/meal-photo-upload';
 import { CreateMealDto } from './dto/create-meal.dto';
 import { UpdateMealDto } from './dto/update-meal.dto';
 import { MealsService } from './meals.service';
@@ -52,6 +60,25 @@ export class MealsController {
     @Body() updateMealDto: UpdateMealDto,
   ) {
     return this.mealsService.updateMine(Number(req.user.sub), id, updateMealDto);
+  }
+
+  @UseGuards(AuthGuard)
+  @Patch('me/:id/photo')
+  @UseInterceptors(FileInterceptor('meal_photo', mealPhotoUploadOptions))
+  async updateMyMealPhoto(
+    @Req() req: IAuthInfoRequest,
+    @Param('id', ParseIntPipe) id: number,
+    @UploadedFile() file?: { filename: string },
+  ) {
+    if (!file) {
+      throw new BadRequestException('Ajoute une photo du repas.');
+    }
+
+    return this.mealsService.updateMealPhotoMine(
+      Number(req.user.sub),
+      id,
+      buildMealPhotoUrl(file.filename),
+    );
   }
 
   @UseGuards(AuthGuard)

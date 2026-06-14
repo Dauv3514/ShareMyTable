@@ -14,6 +14,7 @@ import {
 import { useAuth } from "@/app/providers/AuthProvider";
 import { PWA_BADGE_REFRESH_EVENT } from "@/components/Pwa";
 import { buildMealEventHref } from "@/lib/meal-data";
+import { getNextImageSrc } from "@/lib/image-src";
 import ConversationAvatar from "../ConversationAvatar";
 import {
   createMessagingSocket,
@@ -297,7 +298,7 @@ export default function MealMessagesPage() {
                 <div className={styles.mealCard}>
                   <div className={styles.mealCardMedia}>
                     <Image
-                      src="/photoRepas.png"
+                      src={getNextImageSrc(mealDetails?.mealPhotoUrl)}
                           alt={mealDetails?.title || "Événement"}
                       fill
                       className={styles.mealCardImage}

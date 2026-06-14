@@ -40,6 +40,7 @@ import {
   type ReservationPaymentMethod,
 } from "@/lib/reservations";
 import { buildMealEventHref } from "@/lib/meal-data";
+import { getNextImageSrc } from "@/lib/image-src";
 import styles from "./reservation-wizard.module.scss";
 
 type ReservationWizardMode = "places" | "recap" | "payment" | "confirmation";
@@ -683,7 +684,7 @@ export default function ReservationWizard({
             <div className={styles.summaryCard}>
               <div className={styles.summaryMedia}>
                 <Image
-                  src={hostProfile.homePhotos[0] ?? "/photoRepas.png"}
+                  src={event.imageUrl ?? hostProfile.homePhotos[0] ?? getNextImageSrc(null)}
                   alt={event.title}
                   fill
                   className={styles.summaryImage}

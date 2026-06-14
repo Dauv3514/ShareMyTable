@@ -39,6 +39,7 @@ type MealResponse = {
   title: string | null;
   mealType: string | null;
   menuDescription: string | null;
+  mealPhotoUrl: string | null;
   menuItems: Array<{
     id: number;
     category: MealMenuItemCategory;
@@ -112,6 +113,7 @@ export class MealsService implements OnModuleInit {
       title: this.normalizeNullableString(dto.title),
       mealType: this.normalizeNullableString(dto.mealType),
       menuDescription: this.normalizeMenuDescription(dto),
+      mealPhotoUrl: this.normalizeNullableString(dto.mealPhotoUrl),
       dateTime: dto.dateTime ? new Date(dto.dateTime) : null,
       seatsTotal: dto.seatsTotal,
       pricePerSeatCents: dto.pricePerSeatCents,
@@ -276,6 +278,10 @@ export class MealsService implements OnModuleInit {
       meal.menuDescription = this.normalizeNullableString(dto.menuDescription);
     }
 
+    if (dto.mealPhotoUrl !== undefined) {
+      meal.mealPhotoUrl = this.normalizeNullableString(dto.mealPhotoUrl);
+    }
+
     if (dto.menuItems !== undefined) {
       meal.menuDescription = this.normalizeMenuDescription(dto);
       await this.syncMealMenuItems(meal.id, dto.menuItems);
@@ -305,10 +311,34 @@ export class MealsService implements OnModuleInit {
       title: meal.title,
       mealType: meal.mealType,
       menuDescription: meal.menuDescription,
+      mealPhotoUrl: meal.mealPhotoUrl,
       dateTime: meal.dateTime,
       seatsTotal: meal.seatsTotal,
       pricePerSeatCents: meal.pricePerSeatCents,
       houseRules: meal.houseRules,
+    });
+
+    const reloadedMeal = await this.findOwnedMealEntity(userId, meal.id);
+    return this.toMealResponse(reloadedMeal);
+  }
+
+  async updateMealPhotoMine(
+    userId: number,
+    mealId: number,
+    mealPhotoUrl: string,
+  ): Promise<MealResponse> {
+    await this.ensureApprovedActiveHost(userId);
+    const meal = await this.findOwnedMealEntity(userId, mealId);
+
+    if (meal.status === MealStatus.DONE) {
+      throw new BadRequestException(
+        'Un événement terminé ne peut plus être modifié',
+      );
+    }
+
+    meal.mealPhotoUrl = this.normalizeNullableString(mealPhotoUrl);
+    await this.mealsRepository.update(meal.id, {
+      mealPhotoUrl: meal.mealPhotoUrl,
     });
 
     const reloadedMeal = await this.findOwnedMealEntity(userId, meal.id);
@@ -462,6 +492,12 @@ export class MealsService implements OnModuleInit {
       );
     }
 
+    if (!meal.mealPhotoUrl || meal.mealPhotoUrl.trim().length === 0) {
+      throw new BadRequestException(
+        'Ajoute une photo principale du repas avant de publier',
+      );
+    }
+
     if (!meal.dateTime) {
       throw new BadRequestException(
         'La date de l événement est obligatoire pour publier',
@@ -560,6 +596,7 @@ export class MealsService implements OnModuleInit {
       title: meal.title,
       mealType: meal.mealType,
       menuDescription: meal.menuDescription,
+      mealPhotoUrl: meal.mealPhotoUrl,
       menuItems: this.getMenuItems(meal).map((item) => ({
         id: item.id,
         category: item.category,

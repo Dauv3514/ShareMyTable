@@ -18,7 +18,7 @@ import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import DatePickerField from "@/components/DatePicker";
 import TimePickerField from "@/components/TimePicker";
@@ -43,6 +43,7 @@ type MealDetails = {
   title: string | null;
   mealType: string | null;
   menuDescription: string | null;
+  mealPhotoUrl: string | null;
   menuItems?: MealMenuItem[];
   dateTime: string | null;
   seatsTotal: number;
@@ -98,11 +99,15 @@ type MealSavePayload = {
   pricePerSeatCents: number;
   houseRules: string;
   selectedTagCodes: string[];
+  mealPhotoUrl?: string | null;
   dateTime?: string;
 };
 
 const STANDARD_COMMISSION_RATE = 0.15;
 const FINAL_COMMISSION_FIXED_FEE = 1;
+const MAX_MEAL_PHOTO_SIZE_MB = 3;
+const MAX_MEAL_PHOTO_SIZE_BYTES = MAX_MEAL_PHOTO_SIZE_MB * 1024 * 1024;
+const MEAL_PHOTO_MIME_TYPES = ["image/png", "image/jpeg", "image/webp"];
 
 const STEP_LABELS = [
   "Bienvenue",
@@ -390,6 +395,10 @@ export default function CreerRepasPage() {
   const [selectedHouseRuleCodes, setSelectedHouseRuleCodes] = useState<HouseRuleTagCode[]>([]);
   const [selectedDietaryFilterIds, setSelectedDietaryFilterIds] = useState<string[]>([]);
   const [selectedAmbianceFilterIds, setSelectedAmbianceFilterIds] = useState<string[]>([]);
+  const [mealPhotoFile, setMealPhotoFile] = useState<File | null>(null);
+  const [mealPhotoPreviewUrl, setMealPhotoPreviewUrl] = useState("");
+  const [mealPhotoUrl, setMealPhotoUrl] = useState<string | null>(null);
+  const [removeMealPhoto, setRemoveMealPhoto] = useState(false);
   const [form, setForm] = useState<MealDraftForm>({
     seatsTotal: "1",
     date: "",
@@ -400,6 +409,14 @@ export default function CreerRepasPage() {
     pricePerSeat: "18",
     houseRules: "",
   });
+
+  useEffect(() => {
+    return () => {
+      if (mealPhotoPreviewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(mealPhotoPreviewUrl);
+      }
+    };
+  }, [mealPhotoPreviewUrl]);
 
   useEffect(() => {
     if (!loading && !isLoggedIn) {
@@ -541,6 +558,10 @@ export default function CreerRepasPage() {
           pricePerSeat: String(meal.pricePerSeatCents / 100),
           houseRules: customHouseRules,
         });
+        setMealPhotoFile(null);
+        setMealPhotoPreviewUrl("");
+        setMealPhotoUrl(meal.mealPhotoUrl);
+        setRemoveMealPhoto(false);
         setEditingMealStatus(meal.status);
       } catch (error: unknown) {
         const message = axios.isAxiosError(error)
@@ -637,6 +658,8 @@ export default function CreerRepasPage() {
   ]);
 
   const selectedDateLabel = formatSelectedDate(form.date);
+  const visibleMealPhotoSrc =
+    mealPhotoPreviewUrl || (!removeMealPhoto ? mealPhotoUrl : null);
 
   const goToStep = (nextStep: WizardStep, options?: { force?: boolean }) => {
     if (!options?.force && !isEditingMeal && nextStep > maxUnlockedStep) {
@@ -700,6 +723,12 @@ export default function CreerRepasPage() {
       payload.dateTime = composedDateTime.toISOString();
     }
 
+    if (removeMealPhoto) {
+      payload.mealPhotoUrl = null;
+    } else if (mealPhotoUrl) {
+      payload.mealPhotoUrl = mealPhotoUrl;
+    }
+
     return payload;
   };
 
@@ -731,8 +760,64 @@ export default function CreerRepasPage() {
     return { token, apiUrl };
   };
 
+  const handleMealPhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    if (!MEAL_PHOTO_MIME_TYPES.includes(file.type)) {
+      toast.error("La photo doit être au format PNG, JPG, JPEG ou WebP.");
+      return;
+    }
+
+    if (file.size > MAX_MEAL_PHOTO_SIZE_BYTES) {
+      toast.error(`La photo ne doit pas dépasser ${MAX_MEAL_PHOTO_SIZE_MB} Mo.`);
+      return;
+    }
+
+    setMealPhotoFile(file);
+    setMealPhotoPreviewUrl(URL.createObjectURL(file));
+    setRemoveMealPhoto(false);
+  };
+
+  const handleRemoveMealPhoto = () => {
+    setMealPhotoFile(null);
+    setMealPhotoPreviewUrl("");
+    setMealPhotoUrl(null);
+    setRemoveMealPhoto(true);
+  };
+
+  const uploadMealPhoto = async (
+    mealId: number,
+    token: string,
+    apiUrl: string,
+  ) => {
+    if (!mealPhotoFile) {
+      return null;
+    }
+
+    const formData = new FormData();
+    formData.append("meal_photo", mealPhotoFile);
+
+    const response = await axios.patch<MealDetails>(
+      `${apiUrl}/meals/me/${mealId}/photo`,
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    return response.data;
+  };
+
   const persistMealDraft = async (token: string, apiUrl: string) => {
     const payload = buildMealSavePayload();
+    let savedMeal: MealDetails;
 
     if (editingMealId) {
       const response = await axios.patch<MealDetails>(
@@ -744,21 +829,31 @@ export default function CreerRepasPage() {
           },
         },
       );
-      setEditingMealStatus(response.data.status);
-      return response.data;
+      savedMeal = response.data;
+    } else {
+      const response = await axios.post<MealDetails>(`${apiUrl}/meals`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      savedMeal = response.data;
+      setEditingMealId(response.data.id);
+      setIsEditingMeal(true);
+      updateDraftUrl(response.data.id);
     }
 
-    const response = await axios.post<MealDetails>(`${apiUrl}/meals`, payload, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    setEditingMealId(response.data.id);
-    setIsEditingMeal(true);
-    setEditingMealStatus(response.data.status);
-    updateDraftUrl(response.data.id);
+    const uploadedMeal = await uploadMealPhoto(savedMeal.id, token, apiUrl);
+    if (uploadedMeal) {
+      savedMeal = uploadedMeal;
+    }
 
-    return response.data;
+    setEditingMealStatus(savedMeal.status);
+    setMealPhotoUrl(savedMeal.mealPhotoUrl);
+    setMealPhotoFile(null);
+    setMealPhotoPreviewUrl("");
+    setRemoveMealPhoto(false);
+
+    return savedMeal;
   };
 
   const handleSaveDraft = async () => {
@@ -793,6 +888,15 @@ export default function CreerRepasPage() {
     const authContext = getAuthContext();
 
     if (!authContext) {
+      return;
+    }
+
+    if (
+      (shouldPublishOnSubmit || editingMealStatus === "published") &&
+      !mealPhotoFile &&
+      !visibleMealPhotoSrc
+    ) {
+      toast.error("Ajoute une photo principale du repas avant de publier.");
       return;
     }
 
@@ -1157,6 +1261,60 @@ export default function CreerRepasPage() {
                         placeholder="Ex. Diner italien entre voisins"
                       />
                     </label>
+
+                    <div className={styles.mealPhotoField}>
+                      <div className={styles.mealPhotoHeading}>
+                        <span>Photo principale du repas</span>
+                        <small className={styles.fieldSubtitle}>
+                          Obligatoire pour publier. PNG, JPG, JPEG ou WebP, 3 Mo max.
+                        </small>
+                      </div>
+
+                      <div className={styles.mealPhotoUploadBox}>
+                        {visibleMealPhotoSrc ? (
+                          <div className={styles.mealPhotoPreview}>
+                            <Image
+                              src={visibleMealPhotoSrc}
+                              alt="Aperçu de la photo du repas"
+                              fill
+                              unoptimized
+                              sizes="(max-width: 560px) 100vw, 260px"
+                              className={styles.mealPhotoPreviewImage}
+                            />
+                          </div>
+                        ) : (
+                          <div className={styles.mealPhotoPlaceholder}>
+                            <CookingPot aria-hidden="true" />
+                            <span>Ajoute une image qui donne envie de réserver.</span>
+                          </div>
+                        )}
+
+                        <div className={styles.mealPhotoActions}>
+                          <label
+                            htmlFor="meal-photo-upload"
+                            className={styles.mealPhotoUploadButton}
+                          >
+                            {visibleMealPhotoSrc ? "Changer la photo" : "Ajouter une photo"}
+                          </label>
+                          <input
+                            id="meal-photo-upload"
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            onChange={handleMealPhotoChange}
+                            className={styles.mealPhotoInput}
+                          />
+                          {visibleMealPhotoSrc ? (
+                            <button
+                              type="button"
+                              className={styles.photoRemoveButton}
+                              onClick={handleRemoveMealPhoto}
+                            >
+                              Supprimer
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
 
                     <label className={`${styles.field} ${styles.priceInputField}`}>
                       <span>Prix par place</span>

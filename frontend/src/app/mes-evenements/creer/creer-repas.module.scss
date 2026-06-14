@@ -568,6 +568,105 @@
   max-width: none;
 }
 
+.mealPhotoField {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 10px;
+}
+
+.mealPhotoHeading {
+  display: grid;
+  gap: 5px;
+}
+
+.mealPhotoHeading span {
+  color: #5f553d;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.mealPhotoUploadBox {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  padding: 12px;
+  border: 1px dashed #d9cb9b;
+  border-radius: 22px;
+  background: rgba(248, 246, 237, 0.64);
+}
+
+.mealPhotoPreview,
+.mealPhotoPlaceholder {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid #dfd2af;
+  background: #fffdf6;
+}
+
+.mealPhotoPreviewImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mealPhotoPlaceholder {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  padding: 16px;
+  color: #8c7f56;
+  text-align: center;
+  font-weight: 600;
+}
+
+.mealPhotoPlaceholder svg {
+  width: 30px;
+  height: 30px;
+  color: #7b8613;
+}
+
+.mealPhotoActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.mealPhotoInput {
+  display: none;
+}
+
+.mealPhotoUploadButton,
+.photoRemoveButton {
+  min-height: 38px;
+  border-radius: 999px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mealPhotoUploadButton {
+  border: 1px solid #d9cb9b;
+  background: #fffdf6;
+  color: #645938;
+}
+
+.photoRemoveButton {
+  border: 1px solid #d7a09a;
+  background: #fff8f6;
+  color: #9a3d35;
+}
+
 .commissionPreview {
   display: grid;
   gap: 8px;
@@ -1025,6 +1124,10 @@
   .dateTimeGrid,
   .formGrid,
   .locationGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .mealPhotoUploadBox {
     grid-template-columns: 1fr;
   }
 

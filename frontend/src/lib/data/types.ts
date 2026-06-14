@@ -17,6 +17,7 @@ export type MealFilterGroup = {
 export type MealEvent = {
   id: string;
   title: string;
+  imageUrl?: string | null;
   city: string;
   locationLabel: string;
   locationLat?: number | null;

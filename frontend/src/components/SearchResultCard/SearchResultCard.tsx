@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getMealFilterById } from "@/lib/search-data";
 import { buildMealEventHref } from "@/lib/meal-data";
 import type { MealEvent } from "@/lib/data/types";
+import { getNextImageSrc } from "@/lib/image-src";
 import "./search-result-card.scss";
 
 type SearchResultCardProps = {
@@ -24,7 +25,7 @@ export default function SearchResultCard({ event }: SearchResultCardProps) {
     >
       <div className="search-result-card__media">
         <Image
-          src="/photoRepas.png"
+          src={getNextImageSrc(event.imageUrl)}
           alt={event.title}
           fill
           sizes="(max-width: 720px) 360px, 440px"

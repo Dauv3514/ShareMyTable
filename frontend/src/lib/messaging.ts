@@ -62,6 +62,7 @@ type ApiMealItem = {
   title: string | null;
   mealType: string | null;
   menuDescription: string | null;
+  mealPhotoUrl: string | null;
   dateTime: string;
   seatsTotal: number;
   pricePerSeatCents: number;

@@ -16,6 +16,7 @@ import {
   EventDietaryPreferenceSection,
   EventProfileFilters,
 } from "./ProfilePreferencePanels";
+import { getNextImageSrc } from "@/lib/image-src";
 import RegisterEventLink from "./RegisterEventLink";
 import styles from "./event-detail.module.scss";
 
@@ -83,7 +84,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
         <header className={styles.hero}>
           <div className={styles.heroPhoto}>
             <Image
-              src={hostProfile?.homePhotos[0] ?? "/photoRepas.png"}
+              src={event.imageUrl ?? hostProfile?.homePhotos[0] ?? getNextImageSrc(null)}
               alt={event.title}
               fill
               priority

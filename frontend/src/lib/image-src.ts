@@ -1,4 +1,4 @@
-export const FALLBACK_MEAL_IMAGE_SRC = "/photoRepas.png";
+export const FALLBACK_MEAL_IMAGE_SRC = "/assets/meals/couscous.webp";
 
 export function sanitizeNextImageSrc(value?: string | null): string | null {
   const trimmedValue = value?.trim();

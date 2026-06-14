@@ -42,6 +42,10 @@ export class CreateMealDto {
   menuDescription?: string;
 
   @IsOptional()
+  @IsString()
+  mealPhotoUrl?: string | null;
+
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => MealMenuItemDto)
