@@ -14,6 +14,7 @@ import {
   Mail,
   Plus,
   ShieldCheck,
+  Trash2,
   TriangleAlert,
   Users,
   UtensilsCrossed,
@@ -647,10 +648,11 @@ const ProfileEditForm = ({
             {photoPreviewUrl ? (
               <button
                 type="button"
-                className={styles.ghostButton}
+                className={styles.photoDeleteButton}
                 onClick={handleRemovePhoto}
               >
-                Retirer la photo
+                <Trash2 aria-hidden="true" />
+                Supprimer la photo
               </button>
             ) : null}
           </div>
@@ -1291,7 +1293,8 @@ const HostHomePhotosEditor = ({
                   onClick={() => handleRemovePhoto(index)}
                   disabled={saving}
                 >
-                  Retirer
+                  <Trash2 aria-hidden="true" />
+                  Supprimer
                 </button>
               ) : null}
             </article>

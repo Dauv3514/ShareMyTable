@@ -1,7 +1,7 @@
 "use client";
 
 import axios from "axios";
-import { ArrowLeft, Home, MapPin, Upload } from "lucide-react";
+import { ArrowLeft, Home, MapPin, Trash2, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   ChangeEvent,
@@ -605,7 +605,8 @@ export default function DevenirHotePage() {
                         className={styles.photoRemoveButton}
                         onClick={() => handleRemovePhoto(index)}
                       >
-                        Retirer
+                        <Trash2 aria-hidden="true" />
+                        Supprimer
                       </button>
                     </div>
                   ))}

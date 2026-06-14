@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import {
   ChangeEvent,
@@ -637,7 +638,8 @@ function InscriptionPageContent() {
                           className={styles.uploadRemove}
                           onClick={handleRemovePhoto}
                         >
-                          Retirer la photo
+                          <Trash2 aria-hidden="true" />
+                          Supprimer la photo
                         </button>
                       </div>
                     ) : null}
@@ -779,7 +781,8 @@ function InscriptionPageContent() {
                                   className={styles.uploadRemove}
                                   onClick={() => handleRemoveHostPhoto(index)}
                                 >
-                                  Retirer
+                                  <Trash2 aria-hidden="true" />
+                                  Supprimer
                                 </button>
                               </div>
                             ))}
