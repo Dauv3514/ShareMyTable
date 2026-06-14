@@ -127,8 +127,6 @@ type EventDetailPayload = {
   hostReviews: HostReview[];
 };
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
 const filterKeywordMap: Array<{ id: string; keywords: string[] }> = [
   { id: "vegan", keywords: ["vegetalien", "vegan", "vegetal"] },
   { id: "vegetarien", keywords: ["vegetarien", "veggie"] },
@@ -193,18 +191,23 @@ const menuCategoryOrder: ApiMealMenuItem["category"][] = [
 ];
 
 function buildUrl(path: string, query?: Record<string, string | number | undefined>) {
+  const publicApiUrl = process.env.NEXT_PUBLIC_API_URL;
   const baseUrl =
     typeof window === "undefined"
-      ? apiUrl
-      : "/api";
+      ? process.env.INTERNAL_API_URL ?? publicApiUrl
+      : publicApiUrl ?? "/api";
 
   if (!baseUrl) {
     return null;
   }
 
+  const normalizedPath = path.replace(/^\/+/, "");
   const url = baseUrl.startsWith("http")
-    ? new URL(path, baseUrl)
-    : new URL(`${baseUrl}${path}`, window.location.origin);
+    ? new URL(normalizedPath, baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`)
+    : new URL(
+        `${baseUrl.replace(/\/+$/, "")}/${normalizedPath}`,
+        window.location.origin,
+      );
 
   if (query) {
     for (const [key, value] of Object.entries(query)) {

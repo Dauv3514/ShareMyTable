@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const backendUrl = process.env.NEXT_PUBLIC_API_URL;
+const backendUrl = process.env.INTERNAL_API_URL ?? process.env.NEXT_PUBLIC_API_URL;
+
+function buildBackendUrl(path: string) {
+  return new URL(
+    path.replace(/^\/+/, ""),
+    backendUrl?.endsWith("/") ? backendUrl : `${backendUrl}/`,
+  );
+}
 
 export async function GET(request: NextRequest) {
   if (!backendUrl) {
     return NextResponse.json({ message: "API URL manquante" }, { status: 500 });
   }
 
-  const targetUrl = new URL("/meals", backendUrl);
+  const targetUrl = buildBackendUrl("/meals");
   request.nextUrl.searchParams.forEach((value, key) => {
     targetUrl.searchParams.set(key, value);
   });

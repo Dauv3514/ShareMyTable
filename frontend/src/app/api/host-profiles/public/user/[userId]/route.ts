@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 
-const backendUrl = process.env.NEXT_PUBLIC_API_URL;
+const backendUrl = process.env.INTERNAL_API_URL ?? process.env.NEXT_PUBLIC_API_URL;
+
+function buildBackendUrl(path: string) {
+  return new URL(
+    path.replace(/^\/+/, ""),
+    backendUrl?.endsWith("/") ? backendUrl : `${backendUrl}/`,
+  );
+}
 
 type RouteContext = {
   params: Promise<{
@@ -14,7 +21,7 @@ export async function GET(_: Request, context: RouteContext) {
   }
 
   const { userId } = await context.params;
-  const targetUrl = new URL(`/host-profiles/public/user/${userId}`, backendUrl);
+  const targetUrl = buildBackendUrl(`/host-profiles/public/user/${userId}`);
 
   try {
     const response = await fetch(targetUrl.toString(), {
