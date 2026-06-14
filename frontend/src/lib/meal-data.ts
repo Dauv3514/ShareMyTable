@@ -116,10 +116,13 @@ type ApiPublicHostReview = {
 
 type MealQueryParams = {
   hostId?: string | number;
+  page?: number;
   limit?: number;
   dateFrom?: string;
   dateTo?: string;
 };
+
+const PUBLIC_MEALS_PAGE_LIMIT = 50;
 
 type EventDetailPayload = {
   event: MealEvent;
@@ -561,15 +564,43 @@ function applyReviewsToHostProfile(profile: HostProfile, reviews: HostReview[]) 
   };
 }
 
-async function fetchMeals(params?: MealQueryParams) {
-  const response = await fetchJson<ApiMealsResponse>("/meals", {
-    limit: params?.limit ?? 50,
+async function fetchMealsPage(params?: MealQueryParams) {
+  return fetchJson<ApiMealsResponse>("/meals", {
+    page: params?.page,
+    limit: params?.limit ?? PUBLIC_MEALS_PAGE_LIMIT,
     hostId: params?.hostId,
     dateFrom: params?.dateFrom,
     dateTo: params?.dateTo,
   });
+}
 
-  return response?.items ?? [];
+async function fetchMeals(params?: MealQueryParams) {
+  const firstPage = await fetchMealsPage({
+    ...params,
+    page: params?.page ?? 1,
+  });
+
+  if (!firstPage) {
+    return [];
+  }
+
+  if (params?.page || firstPage.totalPages <= 1) {
+    return firstPage.items ?? [];
+  }
+
+  const nextPages = await Promise.all(
+    Array.from({ length: firstPage.totalPages - 1 }, (_, index) =>
+      fetchMealsPage({
+        ...params,
+        page: index + 2,
+      }),
+    ),
+  );
+
+  return [
+    ...(firstPage.items ?? []),
+    ...nextPages.flatMap((page) => page?.items ?? []),
+  ];
 }
 
 async function fetchMealById(eventId: string | number) {
