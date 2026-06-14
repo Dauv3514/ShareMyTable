@@ -160,6 +160,20 @@ const cities = [
   { name: 'Arras', lat: 50.291, lng: 2.7775, weight: 3, districts: ['Grand-Place', 'Méaulens', 'Saint-Sauveur', 'Baudimont', 'Citadelle'] },
 ];
 
+const priorityHostCityNames = [
+  ...Array(18).fill('Paris'),
+  ...Array(7).fill('Lyon'),
+  ...Array(6).fill('Marseille'),
+  ...Array(5).fill('Toulouse'),
+  ...Array(5).fill('Bordeaux'),
+  ...Array(5).fill('Nantes'),
+  ...Array(4).fill('Lille'),
+  ...Array(4).fill('Rennes'),
+  ...Array(3).fill('Strasbourg'),
+  ...Array(3).fill('Montpellier'),
+  ...Array(3).fill('Nice'),
+];
+
 const streets = [
   'rue de la République',
   'rue Victor Hugo',
@@ -331,6 +345,16 @@ function weightedPick(items) {
     }
   }
   return items[items.length - 1];
+}
+
+function pickPriorityHostCity(index) {
+  const cityName = priorityHostCityNames[index - 1];
+
+  if (!cityName) {
+    return weightedPick(cities);
+  }
+
+  return cities.find((city) => city.name === cityName) ?? weightedPick(cities);
 }
 
 function pad(value, size = 3) {
@@ -1211,7 +1235,7 @@ async function main() {
     }
 
     for (let index = 1; index <= HOST_COUNT; index += 1) {
-      const city = weightedPick(cities);
+      const city = pickPriorityHostCity(index);
       const district = pick(city.districts);
       const coords = offsetCoordinate(city, city.weight >= 18 ? 7 : 4);
       const firstName = firstNames[index % firstNames.length];
