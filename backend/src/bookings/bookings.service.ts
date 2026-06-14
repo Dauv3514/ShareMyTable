@@ -110,7 +110,7 @@ type HostMealBookingSummaryResponse = {
   mealId: number;
   mealTitle: string | null;
   mealStatus: MealStatus;
-  mealDateTime: Date;
+  mealDateTime: Date | null;
   seatsTotal: number;
   pendingBookingsCount: number;
   pendingSeatsCount: number;
@@ -163,7 +163,9 @@ export class BookingsService {
       );
     }
 
-    if (meal.dateTime.getTime() <= Date.now()) {
+    const mealDateTime = this.getMealDateTimeOrThrow(meal);
+
+    if (mealDateTime.getTime() <= Date.now()) {
       throw new BadRequestException(
         'Cet événement est déjà passé et ne peut plus être réservé',
       );
@@ -242,7 +244,9 @@ export class BookingsService {
       );
     }
 
-    if (booking.meal.dateTime.getTime() <= Date.now()) {
+    const mealDateTime = this.getMealDateTimeOrThrow(booking.meal);
+
+    if (mealDateTime.getTime() <= Date.now()) {
       throw new BadRequestException(
         'Cet événement est déjà passé et ne peut plus être annulé',
       );
@@ -581,8 +585,19 @@ export class BookingsService {
     return this.sumBookingSeats(this.dedupeBookingsByGuest(bookings));
   }
 
+  private getMealDateTimeOrThrow(meal: Meal): Date {
+    if (!meal.dateTime) {
+      throw new BadRequestException(
+        'La date de cet événement doit être renseignée pour cette action',
+      );
+    }
+
+    return meal.dateTime;
+  }
+
   private getCancellationRefundAmountCents(booking: Booking): number {
-    const millisecondsUntilMeal = booking.meal.dateTime.getTime() - Date.now();
+    const mealDateTime = this.getMealDateTimeOrThrow(booking.meal);
+    const millisecondsUntilMeal = mealDateTime.getTime() - Date.now();
     const hoursUntilMeal = millisecondsUntilMeal / (1000 * 60 * 60);
 
     if (hoursUntilMeal >= 48) {
@@ -599,6 +614,7 @@ export class BookingsService {
   private toBookingResponse(booking: Booking): BookingResponse {
     const host = booking.meal.host;
     const hostProfile = host.hostProfile ?? null;
+    const mealDateTime = this.getMealDateTimeOrThrow(booking.meal);
     const locationLabel =
       this.normalizeNullableString(hostProfile?.districtLabel) ??
       this.normalizeNullableString(hostProfile?.address) ??
@@ -624,7 +640,7 @@ export class BookingsService {
       refusalReason: booking.refusalReason,
       mealTitle: booking.meal.title,
       mealType: booking.meal.mealType,
-      mealDateTime: booking.meal.dateTime,
+      mealDateTime,
       host: {
         userId: host.id,
         pseudo: host.pseudo,
@@ -680,7 +696,8 @@ export class BookingsService {
   }
 
   private canReviewBooking(booking: Booking): boolean {
-    const mealIsPast = booking.meal.dateTime.getTime() <= Date.now();
+    const mealDateTime = this.getMealDateTimeOrThrow(booking.meal);
+    const mealIsPast = mealDateTime.getTime() <= Date.now();
     const isConfirmedOrCompleted = [
       BookingStatus.CONFIRMED,
       BookingStatus.COMPLETED,

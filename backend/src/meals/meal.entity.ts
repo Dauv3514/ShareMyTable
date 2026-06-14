@@ -41,8 +41,8 @@ export class Meal {
   @OneToMany(() => MealMenuItem, (menuItem) => menuItem.meal)
   menuItems!: MealMenuItem[];
 
-  @Column({ name: 'date_time', type: 'timestamp' })
-  dateTime!: Date;
+  @Column({ name: 'date_time', type: 'timestamp', nullable: true })
+  dateTime!: Date | null;
 
   @Column({ name: 'seats_total', type: 'int' })
   seatsTotal!: number;

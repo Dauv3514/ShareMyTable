@@ -44,7 +44,7 @@ type MealDetails = {
   mealType: string | null;
   menuDescription: string | null;
   menuItems?: MealMenuItem[];
-  dateTime: string;
+  dateTime: string | null;
   seatsTotal: number;
   pricePerSeatCents: number;
   houseRules: string | null;
@@ -87,6 +87,18 @@ type MealDraftForm = {
   menuItems: MealMenuDraftItem[];
   pricePerSeat: string;
   houseRules: string;
+};
+
+type MealSavePayload = {
+  title: string;
+  mealType: string;
+  menuDescription: string;
+  menuItems: ReturnType<typeof getFilledMenuItems>;
+  seatsTotal: number;
+  pricePerSeatCents: number;
+  houseRules: string;
+  selectedTagCodes: string[];
+  dateTime?: string;
 };
 
 const STANDARD_COMMISSION_RATE = 0.15;
@@ -368,6 +380,7 @@ export default function CreerRepasPage() {
   const [step, setStep] = useState<WizardStep>(0);
   const [maxUnlockedStep, setMaxUnlockedStep] = useState<WizardStep>(0);
   const [editingMealId, setEditingMealId] = useState<number | null>(null);
+  const [editingMealStatus, setEditingMealStatus] = useState<MealStatus | null>(null);
   const [isEditingMeal, setIsEditingMeal] = useState(false);
   const [loadingMeal, setLoadingMeal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -492,7 +505,7 @@ export default function CreerRepasPage() {
         }
 
         const meal = response.data;
-        const dateObject = new Date(meal.dateTime);
+        const dateObject = meal.dateTime ? new Date(meal.dateTime) : null;
         const { selectedHouseRuleCodes: legacyHouseRuleCodes, customHouseRules } =
           splitHouseRules(meal.houseRules ?? "");
         const selectedTagCodes = meal.selectedTagCodes ?? meal.selectedFilterIds ?? [];
@@ -516,8 +529,8 @@ export default function CreerRepasPage() {
         );
         setForm({
           seatsTotal: String(meal.seatsTotal),
-          date: meal.dateTime.split("T")[0] ?? "",
-          time: format(dateObject, "HH:mm"),
+          date: meal.dateTime?.split("T")[0] ?? "",
+          time: dateObject ? format(dateObject, "HH:mm") : "19:30",
           title: meal.title ?? "",
           mealType: meal.mealType ?? "Diner",
           menuItems: buildDraftMenuItems(
@@ -528,6 +541,7 @@ export default function CreerRepasPage() {
           pricePerSeat: String(meal.pricePerSeatCents / 100),
           houseRules: customHouseRules,
         });
+        setEditingMealStatus(meal.status);
       } catch (error: unknown) {
         const message = axios.isAxiosError(error)
           ? error.response?.data?.message ?? "Impossible de charger cet événement."
@@ -665,55 +679,137 @@ export default function CreerRepasPage() {
     goToStep(nextStep, { force: true });
   };
 
-  const handleSubmit = async () => {
-    if (!stepCanContinue || !composedDateTime) {
+  const buildMealSavePayload = (): MealSavePayload => {
+    const filledMenuItems = getFilledMenuItems(form.menuItems);
+    const payload: MealSavePayload = {
+      title: form.title.trim(),
+      mealType: form.mealType.trim(),
+      menuDescription: filledMenuItems.map((item) => item.label).join("\n"),
+      menuItems: filledMenuItems,
+      seatsTotal: seatsTotalValue,
+      pricePerSeatCents: Math.round(pricePerSeatValue * 100),
+      houseRules: form.houseRules.trim(),
+      selectedTagCodes: [
+        ...selectedHouseRuleCodes,
+        ...selectedDietaryFilterIds,
+        ...selectedAmbianceFilterIds,
+      ],
+    };
+
+    if (composedDateTime) {
+      payload.dateTime = composedDateTime.toISOString();
+    }
+
+    return payload;
+  };
+
+  const updateDraftUrl = (mealId: number) => {
+    if (typeof window === "undefined") {
       return;
     }
 
+    const searchParams = new URLSearchParams(window.location.search);
+    searchParams.set("mealId", String(mealId));
+    searchParams.set("step", String(step));
+    window.history.replaceState(
+      null,
+      "",
+      `${window.location.pathname}?${searchParams.toString()}`,
+    );
+  };
+
+  const getAuthContext = () => {
     const token = localStorage.getItem("token");
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
     if (!token || !apiUrl) {
       toast.error("Session invalide. Reconnecte-toi.");
       router.push("/connexion");
+      return null;
+    }
+
+    return { token, apiUrl };
+  };
+
+  const persistMealDraft = async (token: string, apiUrl: string) => {
+    const payload = buildMealSavePayload();
+
+    if (editingMealId) {
+      const response = await axios.patch<MealDetails>(
+        `${apiUrl}/meals/me/${editingMealId}`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      setEditingMealStatus(response.data.status);
+      return response.data;
+    }
+
+    const response = await axios.post<MealDetails>(`${apiUrl}/meals`, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    setEditingMealId(response.data.id);
+    setIsEditingMeal(true);
+    setEditingMealStatus(response.data.status);
+    updateDraftUrl(response.data.id);
+
+    return response.data;
+  };
+
+  const handleSaveDraft = async () => {
+    const authContext = getAuthContext();
+
+    if (!authContext) {
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await persistMealDraft(authContext.token, authContext.apiUrl);
+      toast.success("Le brouillon a été enregistré.");
+    } catch (error: unknown) {
+      const message = axios.isAxiosError(error)
+        ? error.response?.data?.message ?? "L'enregistrement du brouillon a échoué."
+        : "L'enregistrement du brouillon a échoué.";
+      toast.error(Array.isArray(message) ? message.join(", ") : message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const shouldPublishOnSubmit = !editingMealId || editingMealStatus === "draft";
+  const showDraftButton = editingMealStatus === null || editingMealStatus === "draft";
+
+  const handleSubmit = async () => {
+    if (!stepCanContinue || !composedDateTime) {
+      return;
+    }
+
+    const authContext = getAuthContext();
+
+    if (!authContext) {
       return;
     }
 
     try {
       setSubmitting(true);
 
-      const payload = {
-        title: form.title.trim(),
-        mealType: form.mealType.trim(),
-        menuDescription: getFilledMenuItems(form.menuItems)
-          .map((item) => item.label)
-          .join("\n"),
-        menuItems: getFilledMenuItems(form.menuItems),
-        dateTime: composedDateTime.toISOString(),
-        seatsTotal: seatsTotalValue,
-        pricePerSeatCents: Math.round(pricePerSeatValue * 100),
-        houseRules: form.houseRules.trim(),
-        selectedTagCodes: [
-          ...selectedHouseRuleCodes,
-          ...selectedDietaryFilterIds,
-          ...selectedAmbianceFilterIds,
-        ],
-      };
+      const savedMeal = await persistMealDraft(authContext.token, authContext.apiUrl);
 
-      if (editingMealId) {
-        await axios.patch(`${apiUrl}/meals/me/${editingMealId}`, payload, {
+      if (shouldPublishOnSubmit) {
+        await axios.patch(`${authContext.apiUrl}/meals/me/${savedMeal.id}/publish`, null, {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${authContext.token}`,
           },
         });
-        toast.success("L'événement a été mis à jour.");
+        toast.success("Ton événement a été publié.");
       } else {
-        await axios.post(`${apiUrl}/meals`, payload, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        toast.success("Ton événement a été créé en brouillon.");
+        toast.success("L'événement a été mis à jour.");
       }
 
       router.push("/mes-evenements");
@@ -1442,33 +1538,47 @@ export default function CreerRepasPage() {
               {step === 0 ? "Retour en arrière" : "Étape précédente"}
             </button>
 
-            {step < 4 ? (
-              <button
-                type="button"
-                className={styles.footerPrimaryButton}
-                onClick={handleNext}
-                disabled={!stepCanContinue}
-              >
-                {step === 0 ? "C'est parti !" : "Suivant"}
-                <ChevronRight />
-              </button>
-            ) : (
-              <button
-                type="button"
-                className={styles.footerPrimaryButton}
-                onClick={() => void handleSubmit()}
-                disabled={!stepCanContinue || submitting}
-              >
-                {submitting
-                  ? isEditingMeal
-                    ? "Mise à jour..."
-                    : "Création..."
-                  : isEditingMeal
-                    ? "Enregistrer"
-                    : "Créer"}
-                <Check />
-              </button>
-            )}
+            <div className={styles.footerActions}>
+              {showDraftButton ? (
+                <button
+                  type="button"
+                  className={styles.footerDraftButton}
+                  onClick={() => void handleSaveDraft()}
+                  disabled={submitting}
+                >
+                  <NotebookText />
+                  {submitting ? "Enregistrement..." : "Enregistrer le brouillon"}
+                </button>
+              ) : null}
+
+              {step < 4 ? (
+                <button
+                  type="button"
+                  className={styles.footerPrimaryButton}
+                  onClick={handleNext}
+                  disabled={!stepCanContinue || submitting}
+                >
+                  {step === 0 ? "C'est parti !" : "Suivant"}
+                  <ChevronRight />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className={styles.footerPrimaryButton}
+                  onClick={() => void handleSubmit()}
+                  disabled={!stepCanContinue || submitting}
+                >
+                  {submitting
+                    ? shouldPublishOnSubmit
+                      ? "Publication..."
+                      : "Enregistrement..."
+                    : shouldPublishOnSubmit
+                      ? "Publier"
+                      : "Enregistrer"}
+                  <Check />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

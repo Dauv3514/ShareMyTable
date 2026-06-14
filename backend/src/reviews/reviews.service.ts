@@ -266,7 +266,8 @@ export class ReviewsService {
   }
 
   private canReviewBooking(booking: Booking) {
-    const mealIsPast = booking.meal.dateTime.getTime() <= Date.now();
+    const mealDateTime = booking.meal.dateTime;
+    const mealIsPast = mealDateTime ? mealDateTime.getTime() <= Date.now() : false;
     const isConfirmedOrCompleted = [
       BookingStatus.CONFIRMED,
       BookingStatus.COMPLETED,

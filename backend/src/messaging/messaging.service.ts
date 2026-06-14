@@ -51,7 +51,7 @@ type ConversationSummary = {
   meal: {
     mealId: number;
     title: string | null;
-    dateTime: Date;
+    dateTime: Date | null;
     hostUserId: number;
   } | null;
   members: ConversationMemberSummary[];

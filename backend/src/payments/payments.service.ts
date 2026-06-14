@@ -299,7 +299,7 @@ export class PaymentsService {
       throw new NotFoundException('Paiement introuvable pour cet hôte');
     }
 
-    if (booking.meal.dateTime.getTime() > Date.now()) {
+    if (!booking.meal.dateTime || booking.meal.dateTime.getTime() > Date.now()) {
       throw new BadRequestException(
         "Le paiement ne peut être capturé qu'après la date de l'événement",
       );
