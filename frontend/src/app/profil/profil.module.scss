@@ -543,18 +543,23 @@
   transform: translateY(-1px);
 }
 
+.photoDeleteButton,
 .hostHomePhotoRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   width: fit-content;
   min-height: 30px !important;
   height: 30px !important;
   max-height: 30px !important;
   padding: 0 14px;
-  border: 1px solid #c79a9a;
-  border-radius: 999px !important;
-  background: #fff8f5;
-  color: #8b4a4a;
+  border: 1px solid #d9b7b0;
+  border-radius: 27px !important;
+  background: #fff7f5;
+  color: #8d4338;
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   transition:
@@ -564,13 +569,32 @@
     transform 0.18s ease;
 }
 
+.photoDeleteButton {
+  min-width: 180px;
+}
+
+.hostHomePhotoRemove {
+  justify-self: start;
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+.photoDeleteButton:hover,
+.photoDeleteButton:focus-visible,
 .hostHomePhotoRemove:hover,
 .hostHomePhotoRemove:focus-visible {
-  border-color: #a95f5f;
+  border-color: #c58c83;
   background: #fff1ed;
-  box-shadow: 0 8px 18px rgba(139, 74, 74, 0.12);
+  box-shadow: 0 8px 18px rgba(141, 67, 56, 0.12);
   outline: none;
   transform: translateY(-1px);
+}
+
+.photoDeleteButton svg,
+.hostHomePhotoRemove svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
 }
 
 .hostHomePhotoRemove:disabled {
