@@ -13,6 +13,7 @@ import {
   getMealFilterById,
 } from "@/lib/search-data";
 import { buildMealEventHref, getMealEvents, type MealEvent } from "@/lib/meal-data";
+import { getNextImageSrc } from "@/lib/image-src";
 import styles from "./rechercher.module.scss";
 
 function parseFilters(value: string | null) {
@@ -248,7 +249,7 @@ export default function SearchResultsPage() {
           title: event.title,
           city: event.city,
           dateLabel: event.dateLabel,
-          imageSrc: "/photoRepas.png",
+          imageSrc: getNextImageSrc(event.imageUrl),
           href: buildMealEventHref(event.id),
           lat: event.locationLat as number,
           lng: event.locationLng as number,

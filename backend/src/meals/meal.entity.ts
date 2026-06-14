@@ -38,6 +38,9 @@ export class Meal {
   @Column({ name: 'menu_description', type: 'text', nullable: true })
   menuDescription!: string | null;
 
+  @Column({ name: 'meal_photo_url', type: 'text', nullable: true })
+  mealPhotoUrl!: string | null;
+
   @OneToMany(() => MealMenuItem, (menuItem) => menuItem.meal)
   menuItems!: MealMenuItem[];
 

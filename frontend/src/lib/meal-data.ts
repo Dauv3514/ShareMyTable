@@ -36,6 +36,7 @@ type ApiMealItem = {
   title: string | null;
   mealType: string | null;
   menuDescription: string | null;
+  mealPhotoUrl: string | null;
   menuItems?: ApiMealMenuItem[];
   dateTime: string;
   seatsTotal: number;
@@ -437,6 +438,7 @@ function mapMealToEvent(
   return {
     id: String(meal.id),
     title: meal.title?.trim() || fallbackEvent.title,
+    imageUrl: getNextImageSrc(meal.mealPhotoUrl),
     city: meal.host.city || options?.hostProfile?.city || fallbackEvent.city,
     locationLabel:
       options?.hostProfile?.districtLabel ||

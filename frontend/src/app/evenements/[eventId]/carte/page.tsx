@@ -7,6 +7,7 @@ import {
   buildMealEventHref,
   getMealEventById,
 } from "@/lib/meal-data";
+import { getNextImageSrc } from "@/lib/image-src";
 import RegisterEventLink from "../RegisterEventLink";
 import styles from "./event-map.module.scss";
 
@@ -67,7 +68,7 @@ export default async function EventMapPage({ params }: EventMapPageProps) {
 
           <div className={styles.summaryPhoto}>
             <Image
-              src="/photoRepas.png"
+              src={getNextImageSrc(event.imageUrl)}
               alt={event.title}
               fill
               priority

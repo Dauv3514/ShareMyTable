@@ -30,6 +30,7 @@ import {
   type ReservationItem,
   type ReservationStatus,
 } from "@/lib/reservations";
+import { getNextImageSrc } from "@/lib/image-src";
 import { useAuth } from "../providers/AuthProvider";
 import styles from "./mes-evenements.module.scss";
 
@@ -50,6 +51,7 @@ type MealItem = {
   title: string | null;
   mealType: string | null;
   menuDescription: string | null;
+  mealPhotoUrl: string | null;
   dateTime: string | null;
   seatsTotal: number;
   pricePerSeatCents: number;
@@ -240,7 +242,7 @@ function MealCard({
     >
       <div className={styles.mealCardMedia}>
         <Image
-          src="/photoRepas.png"
+          src={getNextImageSrc(meal.mealPhotoUrl)}
           alt={meal.title || "Evénement sans titre"}
           fill
           className={styles.mealCardImage}

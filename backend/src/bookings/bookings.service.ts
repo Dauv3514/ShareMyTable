@@ -654,7 +654,7 @@ export class BookingsService {
         country: host.country,
         profilePhotoUrl: host.profilePhotoUrl,
       },
-      coverImageUrl: hostProfile?.homePhotoUrl ?? null,
+      coverImageUrl: booking.meal.mealPhotoUrl ?? hostProfile?.homePhotoUrl ?? null,
       locationLabel,
       exactAddressLabel,
       exactLocationLat: hostProfile?.lat ?? null,

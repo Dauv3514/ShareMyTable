@@ -42,6 +42,10 @@ export class UpdateMealDto {
   menuDescription?: string;
 
   @IsOptional()
+  @IsString()
+  mealPhotoUrl?: string | null;
+
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => UpdateMealMenuItemDto)
