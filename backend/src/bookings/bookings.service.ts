@@ -367,6 +367,10 @@ export class BookingsService {
     booking.refusalReason = this.normalizeNullableString(dto.reason);
 
     const savedBooking = await this.bookingsRepository.save(booking);
+    await this.messagingService.removeReservationDirectConversation(
+      savedBooking.meal.id,
+      savedBooking.guestUser.id,
+    );
     await this.syncAcceptedMealConversations(savedBooking.meal.id);
     await this.notifyGuestBookingRefused(savedBooking);
     return this.toHostBookingResponse(savedBooking);

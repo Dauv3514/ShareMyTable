@@ -245,6 +245,27 @@ export class MessagingService {
     return this.toConversationSummary(conversation, null);
   }
 
+  async removeReservationDirectConversation(
+    mealId: number,
+    guestUserId: number,
+  ): Promise<void> {
+    const meal = await this.findMealOrFail(mealId);
+    const pairUserIds = [meal.host.id, guestUserId].sort(
+      (firstUserId, secondUserId) => firstUserId - secondUserId,
+    );
+    const conversations = await this.findPairConversations(
+      meal.id,
+      [MessageConversationType.BOOKING_DIRECT],
+      pairUserIds,
+    );
+
+    if (conversations.length === 0) {
+      return;
+    }
+
+    await this.conversationsRepository.remove(conversations);
+  }
+
   async syncAcceptedMealConversations(
     mealId: number,
     participantUserIds: number[],
