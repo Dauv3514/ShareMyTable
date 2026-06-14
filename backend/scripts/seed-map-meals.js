@@ -6,6 +6,24 @@ dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
 
 const seedEmailDomain = 'ramenetapoire.test';
 
+const mealPhotoFiles = [
+  'boeuf bourguignon.webp',
+  'couscous.webp',
+  'croque monsieur.webp',
+  'gratin.webp',
+  'lasagne.webp',
+  'pate carbonara.webp',
+  'pates pesto.webp',
+  'pizza.webp',
+  'pot au feu.webp',
+  'poulet roti.webp',
+  'quiche lorraine.webp',
+  'riz cantonnais.webp',
+  'spaghetti bolognaise.webp',
+  'sushi.webp',
+  'tarte aux pommes.webp',
+];
+
 const meals = [
   {
     title: 'Table bretonne au Thabor',
@@ -603,6 +621,7 @@ async function main() {
             title,
             meal_type,
             menu_description,
+            meal_photo_url,
             date_time,
             seats_total,
             price_per_seat_cents,
@@ -614,10 +633,11 @@ async function main() {
             $2,
             $3,
             $4,
-            $5::timestamp,
-            $6,
+            $5,
+            $6::timestamp,
             $7,
             $8,
+            $9,
             'published'
           )
           RETURNING id
@@ -627,6 +647,7 @@ async function main() {
           meal.title,
           meal.type,
           meal.menu.join(', '),
+          encodeURI(`/assets/meals/${mealPhotoFiles[index % mealPhotoFiles.length]}`),
           meal.dateTime,
           meal.seats,
           meal.price * 100,

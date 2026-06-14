@@ -117,6 +117,8 @@ type ApiPublicHostReview = {
 type MealQueryParams = {
   hostId?: string | number;
   limit?: number;
+  dateFrom?: string;
+  dateTo?: string;
 };
 
 type EventDetailPayload = {
@@ -560,6 +562,8 @@ async function fetchMeals(params?: MealQueryParams) {
   const response = await fetchJson<ApiMealsResponse>("/meals", {
     limit: params?.limit ?? 50,
     hostId: params?.hostId,
+    dateFrom: params?.dateFrom,
+    dateTo: params?.dateTo,
   });
 
   return response?.items ?? [];
@@ -581,7 +585,7 @@ async function fetchPublicHostReviews(hostId: string | number) {
 export type { HostProfile, HostReview, MealEvent };
 
 export async function getMealEvents() {
-  const meals = await fetchMeals();
+  const meals = await fetchMeals({ dateFrom: new Date().toISOString() });
   if (meals.length === 0) {
     return MOCK_MEAL_EVENTS;
   }

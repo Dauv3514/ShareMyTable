@@ -201,6 +201,26 @@ const mealTemplates = [
   { title: 'Repas calme et sans écrans', type: 'Diner', main: 'Risotto aux champignons', tags: ['sans-ecrans', 'repas-calme'] },
 ];
 
+const mealPhotoFiles = [
+  'boeuf bourguignon.webp',
+  'couscous.webp',
+  'croque monsieur.webp',
+  'crêpes.webp',
+  'gratin.webp',
+  'lasagne.webp',
+  'pate carbonara.webp',
+  'pates pesto.webp',
+  'pizza.webp',
+  'pot au feu.webp',
+  'poulet roti.webp',
+  'quiche lorraine.webp',
+  'riz cantonnais.webp',
+  'salade césar.webp',
+  'spaghetti bolognaise.webp',
+  'sushi.webp',
+  'tarte aux pommes.webp',
+];
+
 const mealTags = [
   ['arriver_a_l_heure', "Merci d'arriver à l'heure", 'house_rule', 10],
   ['prevenir_allergie', "Préviens-moi en cas d'allergie", 'house_rule', 20],
@@ -337,6 +357,11 @@ function offsetCoordinate(city, distanceKm = 8) {
 
 function makeAddress(city, index) {
   return `${(index % 96) + 2} ${pick(streets)}, ${city.name}`;
+}
+
+function makeMealPhotoUrl(index) {
+  const fileName = mealPhotoFiles[index % mealPhotoFiles.length];
+  return encodeURI(`/assets/meals/${fileName}`);
 }
 
 function makeBio(role, cityName) {
@@ -656,13 +681,14 @@ async function insertMeal(client, data) {
         title,
         meal_type,
         menu_description,
+        meal_photo_url,
         date_time,
         seats_total,
         price_per_seat_cents,
         house_rules,
         status
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING id
     `,
     [
@@ -670,6 +696,7 @@ async function insertMeal(client, data) {
       data.title,
       data.mealType,
       data.menuDescription,
+      data.mealPhotoUrl,
       data.dateTime,
       data.seatsTotal,
       data.pricePerSeatCents,
@@ -1349,6 +1376,7 @@ async function main() {
         hostId: host.userId,
         title: `${template.title}${titleSuffix}`,
         mealType: template.type,
+        mealPhotoUrl: makeMealPhotoUrl(index - 1),
         menuDescription: `${template.main}, entrée maison et dessert de saison. Repas préparé pour une table conviviale.`,
         dateTime,
         seatsTotal,
