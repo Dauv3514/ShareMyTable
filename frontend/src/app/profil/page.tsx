@@ -224,7 +224,8 @@ const isConfirmedGuestReservation = (reservation: ReservationItem) =>
   reservation.status === "confirmed";
 
 const isPastHostMeal = (meal: HostMealBookingSummary) =>
-  meal.mealStatus === "done" || new Date(meal.mealDateTime).getTime() < Date.now();
+  meal.mealStatus === "done" ||
+  (meal.mealDateTime ? new Date(meal.mealDateTime).getTime() < Date.now() : false);
 
 const formatAverageRating = (rating: number | null) => {
   if (rating === null) {

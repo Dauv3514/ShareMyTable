@@ -71,7 +71,11 @@ function getStatusLabel(booking: HostBooking) {
   return "Passée";
 }
 
-function formatMealDate(dateTime: string) {
+function formatMealDate(dateTime: string | null) {
+  if (!dateTime) {
+    return "Date à compléter";
+  }
+
   return format(new Date(dateTime), "EEEE d MMMM", { locale: fr });
 }
 

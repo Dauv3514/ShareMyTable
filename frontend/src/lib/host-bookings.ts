@@ -16,7 +16,7 @@ export type HostMealBookingSummary = {
   mealId: number;
   mealTitle: string | null;
   mealStatus: "draft" | "published" | "cancelled" | "done";
-  mealDateTime: string;
+  mealDateTime: string | null;
   seatsTotal: number;
   pendingBookingsCount: number;
   pendingSeatsCount: number;

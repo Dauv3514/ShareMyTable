@@ -45,7 +45,7 @@ type MealResponse = {
     label: string;
     position: number;
   }>;
-  dateTime: Date;
+  dateTime: Date | null;
   seatsTotal: number;
   currentParticipants: number;
   pricePerSeatCents: number;
@@ -109,10 +109,10 @@ export class MealsService implements OnModuleInit {
 
     const meal = this.mealsRepository.create({
       host: user,
-      title: dto.title.trim(),
+      title: this.normalizeNullableString(dto.title),
       mealType: this.normalizeNullableString(dto.mealType),
       menuDescription: this.normalizeMenuDescription(dto),
-      dateTime: new Date(dto.dateTime),
+      dateTime: dto.dateTime ? new Date(dto.dateTime) : null,
       seatsTotal: dto.seatsTotal,
       pricePerSeatCents: dto.pricePerSeatCents,
       houseRules: this.normalizeNullableString(dto.houseRules),
@@ -265,7 +265,7 @@ export class MealsService implements OnModuleInit {
     }
 
     if (dto.title !== undefined) {
-      meal.title = dto.title.trim();
+      meal.title = this.normalizeNullableString(dto.title);
     }
 
     if (dto.mealType !== undefined) {
@@ -282,7 +282,7 @@ export class MealsService implements OnModuleInit {
     }
 
     if (dto.dateTime !== undefined) {
-      meal.dateTime = new Date(dto.dateTime);
+      meal.dateTime = dto.dateTime ? new Date(dto.dateTime) : null;
     }
 
     if (dto.seatsTotal !== undefined) {
@@ -301,7 +301,16 @@ export class MealsService implements OnModuleInit {
       await this.syncMealTags(meal.id, dto.selectedTagCodes);
     }
 
-    await this.mealsRepository.save(meal);
+    await this.mealsRepository.update(meal.id, {
+      title: meal.title,
+      mealType: meal.mealType,
+      menuDescription: meal.menuDescription,
+      dateTime: meal.dateTime,
+      seatsTotal: meal.seatsTotal,
+      pricePerSeatCents: meal.pricePerSeatCents,
+      houseRules: meal.houseRules,
+    });
+
     const reloadedMeal = await this.findOwnedMealEntity(userId, meal.id);
     return this.toMealResponse(reloadedMeal);
   }
@@ -323,10 +332,10 @@ export class MealsService implements OnModuleInit {
     }
 
     this.ensureMealCanBePublished(meal);
-    meal.status = MealStatus.PUBLISHED;
 
-    const updatedMeal = await this.mealsRepository.save(meal);
-    return this.toMealResponse(updatedMeal);
+    await this.mealsRepository.update(meal.id, { status: MealStatus.PUBLISHED });
+    const reloadedMeal = await this.findOwnedMealEntity(userId, meal.id);
+    return this.toMealResponse(reloadedMeal);
   }
 
   async cancelMine(userId: number, mealId: number): Promise<MealResponse> {
@@ -343,10 +352,9 @@ export class MealsService implements OnModuleInit {
       );
     }
 
-    meal.status = MealStatus.CANCELLED;
-
-    const updatedMeal = await this.mealsRepository.save(meal);
-    return this.toMealResponse(updatedMeal);
+    await this.mealsRepository.update(meal.id, { status: MealStatus.CANCELLED });
+    const reloadedMeal = await this.findOwnedMealEntity(userId, meal.id);
+    return this.toMealResponse(reloadedMeal);
   }
 
   async markDoneMine(userId: number, mealId: number): Promise<MealResponse> {
@@ -363,16 +371,15 @@ export class MealsService implements OnModuleInit {
       );
     }
 
-    if (meal.dateTime.getTime() > Date.now()) {
+    if (!meal.dateTime || meal.dateTime.getTime() > Date.now()) {
       throw new BadRequestException(
         'Un événement ne peut être marqué comme terminé que lorsque sa date est passée',
       );
     }
 
-    meal.status = MealStatus.DONE;
-
-    const updatedMeal = await this.mealsRepository.save(meal);
-    return this.toMealResponse(updatedMeal);
+    await this.mealsRepository.update(meal.id, { status: MealStatus.DONE });
+    const reloadedMeal = await this.findOwnedMealEntity(userId, meal.id);
+    return this.toMealResponse(reloadedMeal);
   }
 
   private async ensureApprovedActiveHost(userId: number): Promise<Utilisateur> {

@@ -27,9 +27,10 @@ export class MealMenuItemDto {
 }
 
 export class CreateMealDto {
+  @IsOptional()
   @IsString()
   @MaxLength(120)
-  title: string;
+  title?: string;
 
   @IsOptional()
   @IsString()
@@ -46,8 +47,9 @@ export class CreateMealDto {
   @Type(() => MealMenuItemDto)
   menuItems?: MealMenuItemDto[];
 
+  @IsOptional()
   @IsDateString()
-  dateTime!: string;
+  dateTime?: string;
 
   @Type(() => Number)
   @IsInt()

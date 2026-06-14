@@ -50,7 +50,7 @@ type MealItem = {
   title: string | null;
   mealType: string | null;
   menuDescription: string | null;
-  dateTime: string;
+  dateTime: string | null;
   seatsTotal: number;
   pricePerSeatCents: number;
   houseRules: string | null;
@@ -96,7 +96,20 @@ function getStatusLabel(status: MealStatus) {
   return "Brouillon";
 }
 
-function formatMealDate(dateTime: string) {
+function getMealTimestamp(dateTime: string | null) {
+  if (!dateTime) {
+    return null;
+  }
+
+  const timestamp = new Date(dateTime).getTime();
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+function formatMealDate(dateTime: string | null) {
+  if (!dateTime) {
+    return "Date à compléter";
+  }
+
   return format(new Date(dateTime), "EEEE d MMMM yyyy 'a' HH:mm", {
     locale: fr,
   });
@@ -117,17 +130,19 @@ function formatReservationPrice(value: number) {
 }
 
 function isUpcomingMeal(meal: MealItem) {
-  return meal.status !== "cancelled" && new Date(meal.dateTime).getTime() >= Date.now();
+  const timestamp = getMealTimestamp(meal.dateTime);
+  return meal.status !== "cancelled" && timestamp !== null && timestamp >= Date.now();
 }
 
 function isPastMeal(meal: MealItem) {
-  return meal.status !== "cancelled" && new Date(meal.dateTime).getTime() < Date.now();
+  const timestamp = getMealTimestamp(meal.dateTime);
+  return meal.status !== "cancelled" && timestamp !== null && timestamp < Date.now();
 }
 
 function sortMealsByDate(meals: MealItem[], direction: "asc" | "desc") {
   return [...meals].sort((firstMeal, secondMeal) => {
-    const firstTimestamp = new Date(firstMeal.dateTime).getTime();
-    const secondTimestamp = new Date(secondMeal.dateTime).getTime();
+    const firstTimestamp = getMealTimestamp(firstMeal.dateTime) ?? 0;
+    const secondTimestamp = getMealTimestamp(secondMeal.dateTime) ?? 0;
 
     return direction === "asc"
       ? firstTimestamp - secondTimestamp
@@ -180,13 +195,21 @@ type MealCardProps = {
   variant?: "default" | "hosting";
 };
 
-function formatMealDay(dateTime: string) {
+function formatMealDay(dateTime: string | null) {
+  if (!dateTime) {
+    return "-";
+  }
+
   return format(new Date(dateTime), "d", {
     locale: fr,
   });
 }
 
-function formatMealMonth(dateTime: string) {
+function formatMealMonth(dateTime: string | null) {
+  if (!dateTime) {
+    return "Date";
+  }
+
   const month = format(new Date(dateTime), "MMM", {
     locale: fr,
   }).replace(".", "");

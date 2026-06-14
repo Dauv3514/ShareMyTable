@@ -49,7 +49,7 @@ type AdminReportTargetResponse = {
     id: number;
     title: string | null;
     status: string;
-    dateTime: Date;
+    dateTime: Date | null;
     host: ReportUserSummary | null;
   } | null;
   booking: {

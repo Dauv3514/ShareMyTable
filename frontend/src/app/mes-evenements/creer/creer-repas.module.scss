@@ -798,7 +798,16 @@
   align-self: end;
 }
 
+.footerActions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .footerGhostButton,
+.footerDraftButton,
 .footerPrimaryButton {
   min-height: 30px;
   height: 30px;
@@ -822,6 +831,12 @@
   color: #726740;
 }
 
+.footerDraftButton {
+  background: #fffdf6;
+  color: #645938;
+  border-color: #ded1ad;
+}
+
 .footerPrimaryButton {
   min-width: 196px;
   min-height: 30px;
@@ -841,14 +856,24 @@
 }
 
 .footerGhostButton:hover,
+.footerDraftButton:hover,
 .footerPrimaryButton:hover {
   transform: translateY(-1px);
 }
 
+.footerDraftButton:disabled,
 .footerPrimaryButton:disabled {
   cursor: not-allowed;
   opacity: 0.55;
   transform: none;
+}
+
+.footerDraftButton svg,
+.footerPrimaryButton svg,
+.footerGhostButton svg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
 }
 
 .loadingState {
@@ -956,7 +981,13 @@
     flex-direction: column;
   }
 
+  .footerActions {
+    width: 100%;
+    flex-direction: column;
+  }
+
   .footerGhostButton,
+  .footerDraftButton,
   .footerPrimaryButton {
     width: 100%;
   }

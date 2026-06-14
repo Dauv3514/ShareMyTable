@@ -70,6 +70,7 @@ export class MealRemindersService {
       .createQueryBuilder('meal')
       .innerJoinAndSelect('meal.host', 'host')
       .where('meal.status = :status', { status: MealStatus.PUBLISHED })
+      .andWhere('meal.dateTime IS NOT NULL')
       .andWhere('meal.dateTime BETWEEN :lowerBound AND :upperBound', {
         lowerBound,
         upperBound,
@@ -170,6 +171,10 @@ export class MealRemindersService {
     userId: number,
     reminderType: MealReminderType,
   ): Promise<boolean> {
+    if (!meal.dateTime) {
+      return false;
+    }
+
     const existingReminder =
       await this.reminderNotificationsRepository.findOne({
         where: {
@@ -207,6 +212,10 @@ export class MealRemindersService {
     reminderType: MealReminderType,
     recipient: ReminderRecipient,
   ) {
+    if (!meal.dateTime) {
+      throw new Error('La date du repas est requise pour envoyer un rappel');
+    }
+
     const mealTitle = meal.title ?? 'Ton repas';
     const timeLabel = this.formatMealTime(meal.dateTime);
     const isHost = recipient.role === 'host';
