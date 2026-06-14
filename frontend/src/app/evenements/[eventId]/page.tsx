@@ -330,14 +330,42 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                 </section>
               ) : null}
 
-              <Link href="#" className={styles.ruleLink}>
-                <span>Règlement de l&apos;application</span>
-                <span className={styles.detailChevron} aria-hidden="true" />
-              </Link>
-              <Link href="#" className={styles.ruleLink}>
-                <span>Politique d&apos;annulation</span>
-                <span className={styles.detailChevron} aria-hidden="true" />
-              </Link>
+              <details className={styles.ruleDisclosure}>
+                <summary>
+                  <span>Règlement de l&apos;application</span>
+                  <span className={styles.detailChevron} aria-hidden="true" />
+                </summary>
+                <div className={styles.ruleDisclosureContent}>
+                  <p>
+                    Chaque participant s&apos;engage à respecter l&apos;hôte, les autres
+                    invités, le logement et les horaires indiqués sur la fiche du repas.
+                  </p>
+                  <ul>
+                    <li>Prévenir l&apos;hôte en cas de retard ou d&apos;imprévu.</li>
+                    <li>Respecter les règles de maison précisées par l&apos;hôte.</li>
+                    <li>Ne pas tenir de propos offensants, discriminatoires ou menaçants.</li>
+                    <li>Signaler tout comportement problématique à l&apos;équipe RamèneTaPoire.</li>
+                  </ul>
+                </div>
+              </details>
+              <details className={styles.ruleDisclosure}>
+                <summary>
+                  <span>Politique d&apos;annulation</span>
+                  <span className={styles.detailChevron} aria-hidden="true" />
+                </summary>
+                <div className={styles.ruleDisclosureContent}>
+                  <p>
+                    Une réservation peut être annulée avant le repas. Le remboursement dépend du
+                    délai restant avant l&apos;événement.
+                  </p>
+                  <ul>
+                    <li>Annulation 48 h ou plus avant le repas : remboursement complet.</li>
+                    <li>Annulation entre 24 h et 48 h avant le repas : remboursement partiel.</li>
+                    <li>Annulation moins de 24 h avant le repas : remboursement non garanti.</li>
+                    <li>Si l&apos;hôte annule le repas, les participants sont remboursés.</li>
+                  </ul>
+                </div>
+              </details>
             </div>
           </section>
         </section>
