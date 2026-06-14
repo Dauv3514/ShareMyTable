@@ -12,6 +12,10 @@ import { GoogleStrategy } from './google.strategy';
 import { AppleStrategy } from './apple.strategy';
 import { GoogleAuthGuard } from './google-auth.guard';
 
+function hasConfigValue(config: ConfigService, key: string) {
+  return Boolean(config.get<string>(key)?.trim());
+}
+
 @Module({
   imports: [
     forwardRef(() => UsersModule),
@@ -30,8 +34,42 @@ import { GoogleAuthGuard } from './google-auth.guard';
     AuthGuard,
     GoogleAuthGuard,
     MailService,
-    GoogleStrategy,
-    AppleStrategy,
+    {
+      provide: GoogleStrategy,
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        if (
+          !hasConfigValue(config, 'GOOGLE_CLIENT_ID') ||
+          !hasConfigValue(config, 'GOOGLE_CLIENT_SECRET') ||
+          !hasConfigValue(config, 'GOOGLE_CALLBACK_URL')
+        ) {
+          return null;
+        }
+
+        return new GoogleStrategy(config);
+      },
+    },
+    {
+      provide: AppleStrategy,
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        const hasPrivateKey =
+          hasConfigValue(config, 'APPLE_PRIVATE_KEY_PATH') ||
+          hasConfigValue(config, 'APPLE_PRIVATE_KEY');
+
+        if (
+          !hasConfigValue(config, 'APPLE_CLIENT_ID') ||
+          !hasConfigValue(config, 'APPLE_TEAM_ID') ||
+          !hasConfigValue(config, 'APPLE_KEY_ID') ||
+          !hasConfigValue(config, 'APPLE_CALLBACK_URL') ||
+          !hasPrivateKey
+        ) {
+          return null;
+        }
+
+        return new AppleStrategy(config);
+      },
+    },
   ],
   controllers: [AuthController],
   exports: [AuthService, AuthGuard, JwtModule],
