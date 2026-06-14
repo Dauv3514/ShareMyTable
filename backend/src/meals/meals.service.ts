@@ -260,7 +260,7 @@ export class MealsService implements OnModuleInit {
 
     if (meal.status === MealStatus.DONE) {
       throw new BadRequestException(
-        'Un événement termine ne peut plus etre modifie',
+        'Un événement terminé ne peut plus être modifié',
       );
     }
 
@@ -312,13 +312,13 @@ export class MealsService implements OnModuleInit {
 
     if (meal.status === MealStatus.CANCELLED) {
       throw new BadRequestException(
-        'Un événement annulé ne peut pas etre republié',
+        'Un événement annulé ne peut pas être republié',
       );
     }
 
     if (meal.status !== MealStatus.DRAFT) {
       throw new BadRequestException(
-        'Seul un événement en brouillon peut etre publié',
+        'Seul un événement en brouillon peut être publié',
       );
     }
 
@@ -334,12 +334,12 @@ export class MealsService implements OnModuleInit {
     const meal = await this.findOwnedMealEntity(userId, mealId);
 
     if (meal.status === MealStatus.CANCELLED) {
-      throw new BadRequestException('Ce événement est deja annulé');
+      throw new BadRequestException('Cet événement est déjà annulé');
     }
 
     if (meal.status === MealStatus.DONE) {
       throw new BadRequestException(
-        'Un événement termine ne peut pas etre annulé',
+        'Un événement terminé ne peut pas être annulé',
       );
     }
 
@@ -354,18 +354,18 @@ export class MealsService implements OnModuleInit {
     const meal = await this.findOwnedMealEntity(userId, mealId);
 
     if (meal.status === MealStatus.DONE) {
-      throw new BadRequestException('Ce événement est deja termine');
+      throw new BadRequestException('Cet événement est déjà terminé');
     }
 
     if (meal.status === MealStatus.CANCELLED) {
       throw new BadRequestException(
-        'Un événement annulé ne peut pas etre marque comme termine',
+        'Un événement annulé ne peut pas être marqué comme terminé',
       );
     }
 
     if (meal.dateTime.getTime() > Date.now()) {
       throw new BadRequestException(
-        'Un événement ne peut etre marque comme termine que lorsque sa date est passee',
+        'Un événement ne peut être marqué comme terminé que lorsque sa date est passée',
       );
     }
 
@@ -387,7 +387,7 @@ export class MealsService implements OnModuleInit {
 
     if (user.role.name !== RoleName.HOST) {
       throw new ForbiddenException(
-        'Seul un host peut creer ou gerer des événements',
+        'Seul un hôte peut créer ou gérer des événements',
       );
     }
 
@@ -407,7 +407,7 @@ export class MealsService implements OnModuleInit {
       !hostProfile.isActive
     ) {
       throw new ForbiddenException(
-        'Le profil host doit etre approuve et actif pour gerer des événements',
+        'Le profil hôte doit être approuvé et actif pour gérer des événements',
       );
     }
 
@@ -463,19 +463,19 @@ export class MealsService implements OnModuleInit {
 
     if (meal.dateTime.getTime() <= Date.now()) {
       throw new BadRequestException(
-        'Un événement dans le passe ne peut pas etre publie',
+        'Un événement dans le passé ne peut pas être publié',
       );
     }
 
     if (meal.seatsTotal <= 0) {
       throw new BadRequestException(
-        'Le nombre de places doit etre superieur a zero',
+        'Le nombre de places doit être supérieur à zéro',
       );
     }
 
     if (meal.pricePerSeatCents < 0) {
       throw new BadRequestException(
-        'Le prix par place ne peut pas etre negatif',
+        'Le prix par place ne peut pas être négatif',
       );
     }
 
@@ -1001,7 +1001,7 @@ export class MealsService implements OnModuleInit {
     const parsedDate = new Date(value);
     if (Number.isNaN(parsedDate.getTime())) {
       throw new BadRequestException(
-        `${fieldName} doit etre une date ISO valide`,
+        `${fieldName} doit être une date ISO valide`,
       );
     }
 

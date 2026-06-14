@@ -392,7 +392,7 @@ function buildReservationItem({
     exactLocationLng: null,
     addressReleaseLabel:
       "Adresse exacte partagée 24h avant le repas",
-    cancellationPolicyLabel: "Annulation gratuite jusqu'a 48h avant, puis retenue partielle.",
+    cancellationPolicyLabel: "Annulation gratuite jusqu'à 48h avant, puis retenue partielle.",
     houseRules: buildHouseRules(event),
     dietaryTags: filters.dietaryTags,
     ambianceTags: filters.ambianceTags,

@@ -143,7 +143,7 @@ export class HostProfileVerificationService {
         verified: false,
         lat: hostProfile.lat,
         lng: hostProfile.lng,
-        note: "Adresse non verifiee: champs d'adresse incomplets.",
+        note: "Adresse non vérifiée: champs d'adresse incomplets.",
         riskFlags: ['address_not_verified', 'address_invalid'],
       };
     }
@@ -198,7 +198,7 @@ export class HostProfileVerificationService {
           verified: false,
           lat: hostProfile.lat,
           lng: hostProfile.lng,
-          note: "Adresse non verifiee: aucun resultat pertinent trouve par OpenStreetMap.",
+          note: "Adresse non vérifiée: aucun résultat pertinent trouvé par OpenStreetMap.",
           riskFlags: ['address_not_verified', 'address_invalid'],
         };
       }
@@ -211,7 +211,7 @@ export class HostProfileVerificationService {
           verified: false,
           lat: hostProfile.lat,
           lng: hostProfile.lng,
-          note: "Adresse non verifiee: coordonnees de geocodage invalides.",
+          note: "Adresse non vérifiée: coordonnées de géocodage invalides.",
           riskFlags: ['address_not_verified', 'address_invalid'],
         };
       }

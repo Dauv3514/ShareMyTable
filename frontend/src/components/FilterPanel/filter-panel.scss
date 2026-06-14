@@ -179,8 +179,14 @@
   background: #7B8613;
   color: #ffffff;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
+}
+
+.filter-panel__result:hover,
+.filter-panel__result:focus-visible {
+  border-color: #626B0F;
+  background: #626B0F;
 }
 
 .filter-panel__clear {

@@ -641,7 +641,7 @@ export default function ConversationPage() {
 
         {sendError ? (
           <div className={styles.stateCard}>
-            <h2>Message non envoye</h2>
+            <h2>Message non envoyé</h2>
             <p>{sendError}</p>
           </div>
         ) : null}

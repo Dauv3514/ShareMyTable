@@ -48,6 +48,25 @@ const MAX_HOME_PHOTOS = 5;
 const MAX_HOME_PHOTO_SIZE_MB = 3;
 const HOME_PHOTO_MIME_TYPES = ["image/png", "image/jpeg", "image/webp"];
 
+const getHostProfilePhotoUrls = (hostProfile: HostProfileResponse | null) => {
+  if (!hostProfile) {
+    return [];
+  }
+
+  return hostProfile.homePhotoUrls?.length
+    ? hostProfile.homePhotoUrls
+    : hostProfile.homePhotoUrl
+      ? [hostProfile.homePhotoUrl]
+      : [];
+};
+
+const buildExistingHomePhotoPreviews = (hostProfile: HostProfileResponse | null) =>
+  getHostProfilePhotoUrls(hostProfile).map((url, index) => ({
+    id: `existing-${index}-${url}`,
+    url,
+    isObjectUrl: false,
+  }));
+
 export default function DevenirHotePage() {
   const router = useRouter();
   const { isLoggedIn, loading, user } = useAuth();
@@ -123,18 +142,7 @@ export default function DevenirHotePage() {
           districtLabel: response.data.districtLabel ?? "",
           address: response.data.address ?? "",
         });
-        setHomePhotoPreviews(
-          (response.data.homePhotoUrls?.length
-            ? response.data.homePhotoUrls
-            : response.data.homePhotoUrl
-              ? [response.data.homePhotoUrl]
-              : []
-          ).map((url, index) => ({
-            id: `existing-${index}-${url}`,
-            url,
-            isObjectUrl: false,
-          })),
-        );
+        setHomePhotoPreviews(buildExistingHomePhotoPreviews(response.data));
       } catch (error: unknown) {
         if (cancelled) {
           return;
@@ -285,6 +293,18 @@ export default function DevenirHotePage() {
 
       return previousPreviews.filter((_, index) => index !== photoIndex);
     });
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleResetPhotos = () => {
+    previewObjectUrlsRef.current.forEach((previewUrl) => {
+      URL.revokeObjectURL(previewUrl);
+    });
+    previewObjectUrlsRef.current = [];
+    setHomePhotoPreviews(buildExistingHomePhotoPreviews(hostProfile));
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -540,7 +560,7 @@ export default function DevenirHotePage() {
                 type="text"
                 value={formData.address}
                 onChange={handleChange}
-                placeholder="Ex. 12 rue de la Republique"
+                placeholder="Ex. 12 rue de la République"
                 required
               />
             </label>
@@ -595,17 +615,30 @@ export default function DevenirHotePage() {
                   Aucune photo du logement ajoutée
                 </div>
               )}
+
+              {homePhotoPreviews.length > 0 ? (
+                <div className={styles.photoButtons}>
+                  <button
+                    type="button"
+                    className={`${styles.ghostButton} ${styles.closeButton}`}
+                    onClick={handleResetPhotos}
+                    disabled={isSubmitting}
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    className={styles.primaryButton}
+                    disabled={isSubmitting || homePhotoPreviews.length < MIN_HOME_PHOTOS}
+                  >
+                    {isSubmitting ? "Enregistrement..." : "Enregistrer"}
+                  </button>
+                </div>
+              ) : null}
             </div>
           </div>
 
           <div className={styles.actionRow}>
-            <button
-              type="button"
-              className={styles.ghostButton}
-              onClick={() => router.push("/profil")}
-            >
-              Annuler
-            </button>
             <button
               type="submit"
               className={styles.primaryButton}

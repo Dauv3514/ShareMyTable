@@ -1,3 +1,5 @@
+@use "../../app/_variables.scss" as *;
+
 .bottom-menu {
   position: fixed;
   left: 50%;
@@ -14,7 +16,7 @@
   padding: 8px 14px;
   background: #ffffff;
   border-radius: 999px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+  box-shadow: $shadow-lvl1;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   align-items: center;
@@ -67,6 +69,11 @@
   height: clamp(24px, 7vw, 30px);
 }
 
+.bottom-menu__icon--meals {
+  width: clamp(30px, 8.8vw, 38px);
+  height: clamp(30px, 8.8vw, 38px);
+}
+
 .bottom-menu__item--active {
   color: #3f3b13;
 }
@@ -75,7 +82,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: #e0ea66;
+  background: #f2edda;
   border-radius: 999px;
   z-index: 0;
 }

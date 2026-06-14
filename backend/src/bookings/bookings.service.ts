@@ -154,7 +154,7 @@ export class BookingsService {
     });
 
     if (!meal || meal.status !== MealStatus.PUBLISHED) {
-      throw new NotFoundException('Événement publie introuvable');
+      throw new NotFoundException('Événement publié introuvable');
     }
 
     if (meal.host.id === userId) {
@@ -165,7 +165,7 @@ export class BookingsService {
 
     if (meal.dateTime.getTime() <= Date.now()) {
       throw new BadRequestException(
-        'Cet événement est deja passe et ne peut plus etre reserve',
+        'Cet événement est déjà passé et ne peut plus être réservé',
       );
     }
 
@@ -180,7 +180,7 @@ export class BookingsService {
     const alreadyReservedSeats = await this.getReservedSeatsCount(meal.id);
     if (alreadyReservedSeats + dto.seats > meal.seatsTotal) {
       throw new BadRequestException(
-        'Le nombre de places demande depasse les places restantes',
+        'Le nombre de places demandé dépasse les places restantes',
       );
     }
 
@@ -238,13 +238,13 @@ export class BookingsService {
       )
     ) {
       throw new BadRequestException(
-        'Cette reservation ne peut plus etre annulee',
+        'Cette réservation ne peut plus être annulée',
       );
     }
 
     if (booking.meal.dateTime.getTime() <= Date.now()) {
       throw new BadRequestException(
-        'Cet événement est deja passe et ne peut plus etre annule',
+        'Cet événement est déjà passé et ne peut plus être annulé',
       );
     }
 
@@ -325,7 +325,7 @@ export class BookingsService {
 
     if (!canBeAccepted) {
       throw new BadRequestException(
-        'Seules les demandes en attente ou declinees peuvent etre acceptees',
+        'Seules les demandes en attente ou déclinées peuvent être acceptées',
       );
     }
 
@@ -350,7 +350,7 @@ export class BookingsService {
 
     if (booking.bookingStatus !== BookingStatus.PENDING) {
       throw new BadRequestException(
-        'Seules les demandes en attente peuvent etre refusees',
+        'Seules les demandes en attente peuvent être refusées',
       );
     }
 
@@ -504,7 +504,7 @@ export class BookingsService {
     });
 
     if (!meal) {
-      throw new NotFoundException('Événements hote introuvable');
+      throw new NotFoundException('Événements hôte introuvable');
     }
 
     return meal;
@@ -520,7 +520,7 @@ export class BookingsService {
     });
 
     if (!booking) {
-      throw new NotFoundException('Demande de reservation introuvable');
+      throw new NotFoundException('Demande de réservation introuvable');
     }
 
     return booking;
@@ -642,7 +642,7 @@ export class BookingsService {
       addressReleaseLabel:
         'Adresse exacte partagée 24h avant l événement',
       cancellationPolicyLabel:
-        "Annulation gratuite jusqu'a 48h avant, puis retenue partielle.",
+        "Annulation gratuite jusqu'à 48h avant, puis retenue partielle.",
       houseRules: this.buildHouseRules(booking.meal, hostProfile),
       reminderLabels: ['Rappel automatique J-3', 'Rappel automatique J-1'],
       canReview: this.canReviewBooking(booking) && !booking.review,

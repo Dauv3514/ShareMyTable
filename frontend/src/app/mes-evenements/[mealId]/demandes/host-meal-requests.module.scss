@@ -332,6 +332,12 @@
   box-shadow: none;
 }
 
+.primaryButton:hover,
+.primaryButton:focus-visible {
+  border-color: #626B0F;
+  background: #626B0F;
+}
+
 .secondaryButton,
 .fullWidthButton {
   border: 2px solid #71631f;
@@ -774,6 +780,14 @@
   background: #7B8613;
 }
 
+.modalPrimaryButton:hover,
+.modalPrimaryButton:focus-visible,
+.modalSheet--accept .modalPrimaryButton:hover,
+.modalSheet--accept .modalPrimaryButton:focus-visible {
+  border-color: #626B0F;
+  background: #626B0F;
+}
+
 .modalSecondaryButton {
   border: 2px solid #71631f;
   color: #635836;
@@ -784,6 +798,11 @@
   border: 1px solid #525a0c;
   color: #525a0c;
   background: #ffffff;
+}
+
+.modalSheet--accept .modalSecondaryButton:hover,
+.modalSheet--accept .modalSecondaryButton:focus-visible {
+  border-width: 2px;
 }
 
 .modalDangerButton {

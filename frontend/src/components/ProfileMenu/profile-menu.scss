@@ -1,5 +1,5 @@
 .profile-menu__popover {
-  z-index: 130;
+  z-index: 900;
   width: min(420px, calc(100vw - 32px));
   padding: 0;
   border: 1px solid #e3dbc9;
@@ -24,7 +24,7 @@
   position: fixed;
   inset: 0;
   background: rgba(23, 18, 10, 0.34);
-  z-index: 70;
+  z-index: 890;
 }
 
 .profile-menu__sheet {
@@ -32,7 +32,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 80;
+  z-index: 900;
   width: min(100%, 480px);
   margin: 0 auto;
   background: #ffffff;

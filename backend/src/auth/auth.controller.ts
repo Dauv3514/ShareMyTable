@@ -104,13 +104,13 @@ export class AuthController {
 
       if (!userDto.host_district_label?.trim()) {
         throw new BadRequestException(
-          'Le quartier est obligatoire pour envoyer une demande hote',
+          'Le quartier est obligatoire pour envoyer une demande hôte',
         );
       }
 
       if (!userDto.host_address?.trim()) {
         throw new BadRequestException(
-          "L'adresse est obligatoire pour envoyer une demande hote",
+          "L'adresse est obligatoire pour envoyer une demande hôte",
         );
       }
 
@@ -151,7 +151,7 @@ export class AuthController {
       const hostRequestError =
         error instanceof Error
           ? error.message
-          : "La demande hote n'a pas pu etre envoyee";
+          : "La demande hôte n'a pas pu être envoyée";
 
       return {
         ...inscriptionResult,
@@ -304,7 +304,7 @@ export class AuthController {
   async deconnexion() {
     return {
       success: true,
-      message: 'Deconnecté avec succès',
+      message: 'Déconnecté avec succès',
     };
   }
 }

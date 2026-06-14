@@ -18,7 +18,7 @@ function validateOptionalUrl(env: EnvRecord, key: string): void {
   try {
     new URL(value);
   } catch {
-    throw new Error(`Variable d'environnement invalide: ${key} doit etre une URL valide`);
+    throw new Error(`Variable d'environnement invalide: ${key} doit être une URL valide`);
   }
 }
 
@@ -30,7 +30,7 @@ function validateOptionalNumber(env: EnvRecord, key: string): void {
 
   const parsedValue = Number(value);
   if (!Number.isFinite(parsedValue)) {
-    throw new Error(`Variable d'environnement invalide: ${key} doit etre un nombre`);
+    throw new Error(`Variable d'environnement invalide: ${key} doit être un nombre`);
   }
 }
 

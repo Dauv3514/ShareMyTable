@@ -172,14 +172,13 @@ export default function Home() {
       {!loading && !isLoggedIn && (
         <section className={styles.heroCard}>
           <div className={styles.heroContent}>
-            <h1>Ramène ta poire !</h1>
-            <p>On passe à table</p>
+            <h1>Ramène ta poire</h1>
             <div className={styles.heroActions}>
               <Link className={styles.btnGhost} href="/connexion">
-                Connexion
+                Se connecter
               </Link>
               <Link className={styles.btnPrimary} href="/inscription">
-                S&apos;inscrire
+                Voir plus de repas
               </Link>
             </div>
           </div>
@@ -227,6 +226,8 @@ export default function Home() {
                     dateLabel={card.dateLabel}
                     host={card.host}
                     variant={card.variant}
+                    featured={section.slug === "prochainement"}
+                    showHost={section.slug === "prochainement"}
                     href={buildMealEventHref(card.id)}
                   />
                 ))}
@@ -244,15 +245,21 @@ export default function Home() {
 
             {section.slug === "autour-de-moi" ? (
               <div className={styles.newsletterBlock}>
+                <div className={styles.newsletterCopy}>
+                  <h2>Newsletter Ramène ta poire</h2>
+                  <p>Soyez au courant des derniers repas près de chez vous</p>
+                </div>
                 <button
                   type="button"
                   className={styles.newsletterButton}
                   onClick={() => setNewsletterModalOpen(true)}
                 >
-                  S&apos;inscrire à notre newsletter
+                  Je m&apos;abonne
                 </button>
                 {newsletterConfirmed ? (
-                  <p>Votre demande d&apos;inscription a bien été prise en compte.</p>
+                  <p className={styles.newsletterConfirmation}>
+                    Votre demande d&apos;inscription a bien été prise en compte.
+                  </p>
                 ) : null}
               </div>
             ) : null}

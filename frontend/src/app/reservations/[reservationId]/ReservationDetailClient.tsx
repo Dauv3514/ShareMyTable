@@ -9,7 +9,6 @@ import {
 import { loadStripe } from "@stripe/stripe-js";
 import {
   CalendarDays,
-  Check,
   CircleAlert,
   ChevronLeft,
   Clock3,
@@ -725,7 +724,19 @@ export default function ReservationDetailClient({
                       onClick={() => setReviewStep(index)}
                       disabled={Boolean(pendingTip)}
                     >
-                      <span>{index < reviewStep ? <Check /> : index + 1}</span>
+                      <span
+                        className={
+                          index < reviewStep ? styles["reviewStepIcon--done"] : ""
+                        }
+                      >
+                        <Image
+                          src={index < reviewStep ? "/poire1.svg" : "/poire2.svg"}
+                          alt=""
+                          width={18}
+                          height={22}
+                          aria-hidden="true"
+                        />
+                      </span>
                       {label}
                     </button>
                   ))}

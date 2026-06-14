@@ -1,6 +1,10 @@
 import type { MealEvent } from "./meal-data";
 
-export type EventSectionSlug = "prochainement" | "veggie" | "autour-de-moi";
+export type EventSectionSlug =
+  | "prochainement"
+  | "veggie"
+  | "en-exterieur"
+  | "autour-de-moi";
 
 export type EventSection = {
   slug: EventSectionSlug;
@@ -17,6 +21,13 @@ const EVENT_SECTIONS: EventSection[] = [
     description: "Ne manquez pas les prochains événements !",
     emptyTitle: "Aucun événement à venir",
     emptyDescription: "Les prochains événements apparaîtront ici.",
+  },
+  {
+    slug: "en-exterieur",
+    title: "En extérieur",
+    description: "Parfait pour profiter des beaux jours",
+    emptyTitle: "Aucun événement en extérieur pour le moment",
+    emptyDescription: "Les prochains événements en terrasse ou au jardin apparaîtront ici.",
   },
   {
     slug: "veggie",
@@ -63,6 +74,14 @@ export function getEventsForSection(events: MealEvent[], slug: EventSectionSlug)
       ...events.filter((event) => event.variant === "nearby"),
       ...events.filter((event) => event.variant !== "nearby"),
     ];
+  }
+
+  if (slug === "en-exterieur") {
+    const outdoorEvents = events.filter((event) =>
+      event.filters.includes("repas-en-plein-air"),
+    );
+
+    return outdoorEvents.length > 0 ? outdoorEvents : events;
   }
 
   return events;

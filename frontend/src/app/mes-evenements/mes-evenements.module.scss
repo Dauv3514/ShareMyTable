@@ -171,6 +171,11 @@
   color: #525a0c;
 }
 
+.hero--hosting .secondaryButton:hover,
+.hero--hosting .secondaryButton:focus-visible {
+  border-width: 2px;
+}
+
 .heroDivider {
   width: 100%;
   height: 1px;
@@ -294,6 +299,7 @@
 .discoverButton {
   min-width: auto;
   gap: 0;
+  font-weight: 600;
 }
 
 .secondaryButton {
@@ -315,6 +321,11 @@
   font-size: 0.96rem;
   font-weight: 600;
   line-height: 1;
+}
+
+.reservationDetailButton:hover,
+.reservationDetailButton:focus-visible {
+  border-width: 2px;
 }
 
 .warningButton {
@@ -351,6 +362,19 @@
   border-color: #7B8613;
   background: #7B8613;
   color: #fcfbf8;
+}
+
+.requestsButton:hover,
+.requestsButton:focus-visible {
+  border-width: 2px;
+}
+
+.primaryButton:hover,
+.primaryButton:focus-visible,
+.hostEventButton:hover,
+.hostEventButton:focus-visible {
+  border-color: #626B0F;
+  background: #626B0F;
 }
 
 .panelSwitchButton:hover,
@@ -503,6 +527,11 @@
   color: #525a0c;
 }
 
+.hostGuardCard .secondaryButton:hover,
+.hostGuardCard .secondaryButton:focus-visible {
+  border-width: 2px;
+}
+
 .hostGuardIcon {
   width: 56px;
   height: 56px;
@@ -611,7 +640,7 @@
   background: rgba(255, 255, 255, 0.82);
   color: #5c512c;
   font-size: 0.94rem;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   transition:
     transform 0.2s ease,

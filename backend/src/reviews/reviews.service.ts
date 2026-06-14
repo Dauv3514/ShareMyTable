@@ -132,7 +132,7 @@ export class ReviewsService {
 
     if (!this.canReviewBooking(booking)) {
       throw new BadRequestException(
-        'Un avis peut seulement etre laisse apres un événement confirme.',
+        'Un avis peut seulement être laissé après un événement confirmé.',
       );
     }
 
@@ -142,7 +142,7 @@ export class ReviewsService {
 
     if (existingReview) {
       throw new BadRequestException(
-        'Un avis existe deja pour cette reservation.',
+        'Un avis existe déjà pour cette réservation.',
       );
     }
 
@@ -242,7 +242,7 @@ export class ReviewsService {
     });
 
     if (!review) {
-      throw new NotFoundException('Avis introuvable pour cette reservation.');
+      throw new NotFoundException('Avis introuvable pour cette réservation.');
     }
 
     review.rating = dto.rating;

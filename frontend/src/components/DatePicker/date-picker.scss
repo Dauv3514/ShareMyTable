@@ -9,7 +9,8 @@
   background: transparent;
   text-align: left;
   padding: 0;
-  font-size: 13px;
+  font-family: var(--font-clash-grotesk), "Trebuchet MS", sans-serif;
+  font-size: 14px;
   line-height: 1.2;
   color: #a58a3d;
   cursor: pointer;
@@ -37,11 +38,11 @@
 }
 
 .date-picker__trigger-label--placeholder {
-  color: #9c916d;
+  color: #948438;
 }
 
 .date-picker__trigger-icon--placeholder {
-  color: #9c916d;
+  color: #948438;
 }
 
 .date-picker__popover {

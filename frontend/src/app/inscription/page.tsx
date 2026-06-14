@@ -690,7 +690,8 @@ function InscriptionPageContent() {
                       request_host: !previousForm.request_host,
                     }))
                   }
-                  aria-pressed={formData.request_host}
+                  role="switch"
+                  aria-checked={formData.request_host}
                 >
                   <span className={styles.hostToggleThumb} />
                 </button>
@@ -724,7 +725,7 @@ function InscriptionPageContent() {
                         className={styles.input}
                         type="text"
                         name="host_address"
-                        placeholder="Ex. 12 rue de la Republique"
+                        placeholder="Ex. 12 rue de la République"
                         value={formData.host_address}
                         onChange={handleChange}
                         required={formData.request_host}

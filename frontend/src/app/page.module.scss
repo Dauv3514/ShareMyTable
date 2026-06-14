@@ -1,7 +1,9 @@
+@use "./_variables.scss" as *;
+
 .page {
   max-width: 100%;
   margin: 0 auto;
-  padding: 18px 18px 140px;
+  padding: 0 18px 140px;
 }
 
 .pageTitle {
@@ -29,8 +31,11 @@
   padding: 20px 0 8px;
 
   h1 {
-    font-size: 28px;
-    color: #e05858;
+    display: inline-block;
+    max-width: 7ch;
+    font-size: clamp(4.25rem, 18vw, 4.8rem);
+    line-height: 0.9;
+    color: #C7B76B;
     margin-bottom: 4px;
     font-weight: bold;
   }
@@ -67,6 +72,11 @@
   color: #525A0C;
 }
 
+.btnGhost:hover,
+.btnGhost:focus-visible {
+  border-width: 2px;
+}
+
 .btnPrimary {
   display: inline-flex;
   height: 30px;
@@ -78,6 +88,12 @@
   border: 1px solid #7B8613;
   background: #7B8613;
   color: #fcfbf8;
+}
+
+.btnPrimary:hover,
+.btnPrimary:focus-visible {
+  border-color: #626B0F;
+  background: #626B0F;
 }
 
 .sections {
@@ -148,29 +164,32 @@
 
 .sectionNavButton {
   display: none;
-  width: 38px !important;
-  height: 38px !important;
-  min-height: 38px !important;
-  max-height: 38px !important;
-  border-radius: 50% !important;
-  border: 1px solid rgba(184, 165, 71, 0.65);
-  background: #ffffff;
+  width: 40px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  flex: 0 0 40px;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  border-radius: 999px !important;
+  border: none;
+  background: #FBF9F4;
   color: #52590D;
-  box-shadow: 0 8px 20px rgba(89, 70, 24, 0.1);
+  box-shadow: $shadow-lvl1;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease;
 
   span {
-    font-size: 24px;
+    font-size: 28px;
     line-height: 1;
     transform: translateY(-1px);
   }
 
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 12px 24px rgba(89, 70, 24, 0.14);
+    box-shadow: $shadow-lvl1;
   }
 }
 
@@ -202,10 +221,10 @@
   min-width: 0;
   max-width: 100%;
   overflow-x: auto;
-  padding: 4px 10px 6px 2px;
+  padding: 12px 18px 18px 10px;
   margin-right: -18px;
   scroll-snap-type: x proximity;
-  scroll-padding-left: 2px;
+  scroll-padding-left: 10px;
   scroll-behavior: smooth;
   scrollbar-width: none;
   align-items: stretch;
@@ -217,49 +236,83 @@
   :global(.event-card) {
     scroll-snap-align: start;
   }
+
+  :global(.event-card--featured) {
+    width: min(58vw, 250px);
+    min-width: min(58vw, 250px);
+    flex-basis: min(58vw, 250px);
+  }
 }
 
 .newsletterBlock {
-  margin: 42px auto 0;
+  margin: 54px auto 0;
   width: 100%;
-  max-width: 520px;
+  max-width: 760px;
   display: grid;
-  gap: 8px;
+  justify-items: center;
+  gap: 22px;
+  text-align: center;
+}
+
+.newsletterCopy {
+  display: grid;
+  gap: 10px;
+}
+
+.newsletterCopy h2 {
+  margin: 0;
+  color: #000000;
+  font-family: var(--font-clash-grotesk), "Trebuchet MS", sans-serif;
+  font-size: clamp(23px, 3vw, 30px);
+  line-height: 1.05;
+  font-weight: 700;
+}
+
+.newsletterCopy p {
+  margin: 0 auto;
+  max-width: 560px;
+  color: #000000;
+  font-family: var(--font-clash-grotesk), "Trebuchet MS", sans-serif;
+  font-size: clamp(18px, 2.1vw, 20px);
+  line-height: 1.12;
+  font-weight: 400;
 }
 
 .newsletterButton {
-  width: fit-content;
+  width: min(100%, 280px);
   min-height: 30px;
   height: 30px;
   max-height: 30px;
   min-width: 0;
-  border: 1px solid #7B8613;
-  border-radius: 27px;
-  background: #7B8613;
-  color: #fcfbf8;
-  padding: 0 18px;
+  border: 1px solid #525A0C;
+  border-radius: 20px;
+  background: #ffffff;
+  color: #525A0C;
+  padding: 0 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   justify-self: center;
-  font-size: 14px;
+  font-family: var(--font-alpino), "Trebuchet MS", sans-serif;
+  font-size: 18px;
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
-  box-shadow: none;
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.12);
   transition:
     transform 0.2s ease,
     background 0.2s ease;
 
   &:hover,
   &:focus-visible {
+    border-width: 2px;
     transform: translateY(-1px);
-    background: #7B8613;
+    background: #ffffff;
     outline: none;
   }
 }
 
-.newsletterBlock p {
+.newsletterConfirmation {
   margin: 0;
   color: #52590d;
   font-size: 12px;
@@ -394,10 +447,21 @@
   color: #fcfbf8;
 }
 
+.modalPrimaryButton:hover,
+.modalPrimaryButton:focus-visible {
+  border-color: #626B0F;
+  background: #626B0F;
+}
+
 .modalSecondaryButton {
   border: 1px solid #525A0C;
   background: #ffffff;
   color: #525A0C;
+}
+
+.modalSecondaryButton:hover,
+.modalSecondaryButton:focus-visible {
+  border-width: 2px;
 }
 
 .modalPrimaryButton:disabled,
@@ -409,7 +473,7 @@
 @media (min-width: 720px) {
   .page {
     max-width: 600px;
-    padding: 32px 32px 160px;
+    padding: 12px 32px 160px;
   }
 
   .heroCard {
@@ -422,7 +486,7 @@
   }
 
   .heroContent h1 {
-    font-size: 38px;
+    font-size: clamp(4.4rem, 8vw, 5.8rem);
   }
 
   .btnGhost,
@@ -454,8 +518,10 @@
 
   .cardsRow {
     gap: 16px;
-    padding: 4px 0 6px;
-    margin-right: 0;
+    width: calc(100% + 16px);
+    padding: 12px 8px 18px;
+    margin-right: -8px;
+    margin-left: -8px;
   }
 
   .cardsRow :global(.event-card) {
@@ -463,20 +529,44 @@
     min-width: calc((100% - 16px) / 2);
     flex-basis: calc((100% - 16px) / 2);
   }
+
+  .cardsRow :global(.event-card--featured) {
+    width: min(64%, 320px);
+    min-width: min(64%, 320px);
+    flex-basis: min(64%, 320px);
+  }
 }
 
 @media (max-width: 560px) {
   .newsletterBlock {
-    margin-top: 30px;
-    max-width: 100%;
+    margin-top: 46px;
+    max-width: 320px;
+    gap: 24px;
+    padding: 0 8px;
+  }
+
+  .newsletterCopy {
+    gap: 12px;
+  }
+
+  .newsletterCopy h2 {
+    font-size: 18px;
+    line-height: 1.08;
+  }
+
+  .newsletterCopy p {
+    max-width: 280px;
+    font-size: 16px;
+    line-height: 1.12;
   }
 
   .newsletterButton {
+    width: min(100%, 220px);
     min-height: 30px;
     height: 30px;
     max-height: 30px;
-    border-radius: 14px;
-    font-size: 13px;
+    border-radius: 20px;
+    font-size: 14px;
   }
 
   .modal {
@@ -506,7 +596,7 @@
 @media (min-width: 1024px) {
   .page {
     max-width: 1100px;
-    padding: 36px 36px 120px;
+    padding: 16px 36px 120px;
   }
 
   .heroCard {
@@ -514,7 +604,8 @@
   }
 
   .heroContent h1 {
-    font-size: 38px;
+    max-width: none;
+    font-size: clamp(4rem, 6vw, 5rem);
   }
 
   .heroContent p {
@@ -530,7 +621,7 @@
 
   .cardsRail {
     display: grid;
-    grid-template-columns: 38px minmax(0, 1fr) 38px;
+    grid-template-columns: 40px minmax(0, 1fr) 40px;
     align-items: center;
     gap: 14px;
   }
@@ -541,8 +632,10 @@
 
   .cardsRow {
     gap: 18px;
-    padding: 0 0 6px;
-    margin-right: 0;
+    width: calc(100% + 20px);
+    padding: 12px 10px 18px;
+    margin-right: -10px;
+    margin-left: -10px;
     overflow-x: hidden;
   }
 
@@ -550,6 +643,12 @@
     width: calc((100% - 54px) / 4);
     min-width: calc((100% - 54px) / 4);
     flex-basis: calc((100% - 54px) / 4);
+  }
+
+  .cardsRow :global(.event-card--featured) {
+    width: calc((100% - 54px) / 3.35);
+    min-width: calc((100% - 54px) / 3.35);
+    flex-basis: calc((100% - 54px) / 3.35);
   }
 }
 

@@ -52,11 +52,11 @@ $message-other: #292d06;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 0 20px 0 28px;
-  border: 1px solid #e0d9c7;
+  padding: 0 16px;
+  border: 1px solid #E3DBB5;
   border-radius: 999px;
-  background: #ffffff;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  background: #FCFBF8;
+  box-shadow: 0 1px 3px rgba(74, 66, 28, 0.25);
 }
 
 .searchMealButton {
@@ -72,10 +72,15 @@ $message-other: #292d06;
   background: #ffffff;
   color: #525A0C;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1;
   text-decoration: none;
   box-shadow: 0 2px 2px rgba(0, 0, 0, 0.12);
+}
+
+.searchMealButton:hover,
+.searchMealButton:focus-visible {
+  border-width: 2px;
 }
 
 .searchBar input {
@@ -84,6 +89,8 @@ $message-other: #292d06;
   border: 0;
   outline: 0;
   background: transparent;
+  font-family: var(--font-clash-grotesk), "Trebuchet MS", sans-serif;
+  padding: 0 8px;
   color: #948438 !important;
   font-size: 14px !important;
   font-weight: 400 !important;
