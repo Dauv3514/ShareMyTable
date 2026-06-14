@@ -433,13 +433,13 @@
 }
 
 .approveButton {
-  min-height: 30px;
-  min-width: 160px;
-  padding: 7px 10px;
+  min-width: 0;
+  padding: 0 18px;
   border: 1px solid #7B8613;
   border-radius: 27px;
   background: #7B8613;
   color: #fcfbf8;
+  justify-content: center;
 }
 
 .rejectButton {
