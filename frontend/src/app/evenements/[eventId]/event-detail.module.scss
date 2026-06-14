@@ -705,7 +705,8 @@
 }
 
 .rulesHead h2,
-.ruleLink {
+.ruleLink,
+.ruleDisclosure {
   margin: 0;
 }
 
@@ -768,6 +769,63 @@
   font-size: 13px;
   line-height: 1.25;
   font-weight: 500;
+}
+
+.ruleDisclosure {
+  border-bottom: 1px solid #e8ddbe;
+}
+
+.ruleDisclosure:last-child {
+  border-bottom: 0;
+}
+
+.ruleDisclosure summary {
+  min-height: 46px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  color: #2b2718;
+  font-size: 13px;
+  line-height: 1.25;
+  font-weight: 500;
+  cursor: pointer;
+  list-style: none;
+}
+
+.ruleDisclosure summary::-webkit-details-marker {
+  display: none;
+}
+
+.ruleDisclosure summary:hover,
+.ruleDisclosure summary:focus-visible {
+  color: #5a4c21;
+  outline: none;
+}
+
+.ruleDisclosure[open] .detailChevron {
+  transform: rotate(90deg);
+}
+
+.ruleDisclosureContent {
+  padding: 0 0 16px;
+  color: #5c533e;
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.ruleDisclosureContent p {
+  margin: 0 0 10px;
+}
+
+.ruleDisclosureContent ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.ruleDisclosureContent li + li {
+  margin-top: 6px;
 }
 
 .ruleLink:last-child {
