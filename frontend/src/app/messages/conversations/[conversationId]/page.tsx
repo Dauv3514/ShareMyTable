@@ -716,7 +716,7 @@ export default function ConversationPage() {
                 onClick={() => void handleSubmitReport()}
                 disabled={isSubmittingReport}
               >
-                {isSubmittingReport ? "Envoi..." : "Envoyer le signalement"}
+                {isSubmittingReport ? "Envoi..." : "Envoyer un signalement"}
               </button>
             </div>
           </div>

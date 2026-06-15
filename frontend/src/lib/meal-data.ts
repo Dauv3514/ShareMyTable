@@ -193,12 +193,39 @@ const menuCategoryOrder: ApiMealMenuItem["category"][] = [
   "fruits",
 ];
 
+function normalizeApiBaseUrl(baseUrl: string) {
+  const trimmedBaseUrl = baseUrl.trim();
+
+  if (!trimmedBaseUrl) {
+    return "";
+  }
+
+  if (trimmedBaseUrl.startsWith("http")) {
+    const url = new URL(
+      trimmedBaseUrl.endsWith("/") ? trimmedBaseUrl : `${trimmedBaseUrl}/`,
+    );
+    const pathname = url.pathname.replace(/\/+$/, "");
+
+    if (!pathname.endsWith("/api")) {
+      url.pathname = `${pathname}/api/`.replace(/\/{2,}/g, "/");
+    }
+
+    return url.toString();
+  }
+
+  const normalizedRelativeBaseUrl = trimmedBaseUrl.replace(/\/+$/, "");
+  return normalizedRelativeBaseUrl.endsWith("/api")
+    ? normalizedRelativeBaseUrl
+    : `${normalizedRelativeBaseUrl}/api`;
+}
+
 function buildUrl(path: string, query?: Record<string, string | number | undefined>) {
   const publicApiUrl = process.env.NEXT_PUBLIC_API_URL;
-  const baseUrl =
+  const rawBaseUrl =
     typeof window === "undefined"
       ? process.env.INTERNAL_API_URL ?? publicApiUrl
       : publicApiUrl ?? "/api";
+  const baseUrl = rawBaseUrl ? normalizeApiBaseUrl(rawBaseUrl) : null;
 
   if (!baseUrl) {
     return null;
@@ -209,7 +236,7 @@ function buildUrl(path: string, query?: Record<string, string | number | undefin
     ? new URL(normalizedPath, baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`)
     : new URL(
         `${baseUrl.replace(/\/+$/, "")}/${normalizedPath}`,
-        window.location.origin,
+        typeof window === "undefined" ? "http://localhost" : window.location.origin,
       );
 
   if (query) {

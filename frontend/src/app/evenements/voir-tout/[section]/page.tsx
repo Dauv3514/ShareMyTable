@@ -5,11 +5,14 @@ import EventCard from "@/components/EventCard";
 import {
   buildEventSectionHref,
   type EventSectionSlug,
+  type EventLocation,
   getEventSectionBySlug,
+  getEventsAroundLocation,
   getEventsForSection,
 } from "@/lib/event-sections";
 import { buildMealEventHref, getMealEvents } from "@/lib/meal-data";
 import styles from "./section-list.module.scss";
+import AroundMeLocationSync from "./AroundMeLocationSync";
 
 type EventSectionPageProps = {
   params: Promise<{
@@ -17,6 +20,8 @@ type EventSectionPageProps = {
   }>;
   searchParams: Promise<{
     page?: string;
+    lat?: string;
+    lng?: string;
   }>;
 };
 
@@ -32,14 +37,44 @@ function normalizePage(pageValue?: string) {
   return Math.floor(page);
 }
 
-function buildPaginationHref(section: EventSectionSlug, page: number) {
-  const baseHref = buildEventSectionHref(section);
+function parseEventLocation(lat?: string, lng?: string): EventLocation | null {
+  const parsedLat = Number(lat);
+  const parsedLng = Number(lng);
 
-  if (page <= 1) {
+  if (!Number.isFinite(parsedLat) || !Number.isFinite(parsedLng)) {
+    return null;
+  }
+
+  return {
+    lat: parsedLat,
+    lng: parsedLng,
+  };
+}
+
+function buildPaginationHref(
+  section: EventSectionSlug,
+  page: number,
+  location?: EventLocation | null,
+) {
+  const baseHref = buildEventSectionHref(section);
+  const params = new URLSearchParams();
+
+  if (location) {
+    params.set("lat", String(location.lat));
+    params.set("lng", String(location.lng));
+  }
+
+  if (page > 1) {
+    params.set("page", String(page));
+  }
+
+  const query = params.toString();
+
+  if (!query) {
     return baseHref;
   }
 
-  return `${baseHref}?page=${page}`;
+  return `${baseHref}?${query}`;
 }
 
 export default async function EventSectionPage({
@@ -47,7 +82,7 @@ export default async function EventSectionPage({
   searchParams,
 }: EventSectionPageProps) {
   const { section: sectionSlug } = await params;
-  const { page: rawPage } = await searchParams;
+  const { page: rawPage, lat, lng } = await searchParams;
   const section = getEventSectionBySlug(sectionSlug);
 
   if (!section) {
@@ -55,7 +90,11 @@ export default async function EventSectionPage({
   }
 
   const allEvents = await getMealEvents();
-  const sectionEvents = getEventsForSection(allEvents, section.slug);
+  const currentLocation = parseEventLocation(lat, lng);
+  const sectionEvents =
+    section.slug === "autour-de-moi" && currentLocation
+      ? getEventsAroundLocation(allEvents, currentLocation)
+      : getEventsForSection(allEvents, section.slug);
   const totalPages = Math.max(1, Math.ceil(sectionEvents.length / ITEMS_PER_PAGE));
   const currentPage = Math.min(normalizePage(rawPage), totalPages);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -63,6 +102,8 @@ export default async function EventSectionPage({
 
   return (
     <div className={styles.page}>
+      <AroundMeLocationSync enabled={section.slug === "autour-de-moi" && !currentLocation} />
+
       <div className={styles.topbar}>
         <Link href="/" className={styles.backLink}>
           <ArrowLeft aria-hidden="true" />
@@ -108,7 +149,7 @@ export default async function EventSectionPage({
       {totalPages > 1 ? (
         <nav className={styles.pagination} aria-label="Pagination">
           <Link
-            href={buildPaginationHref(section.slug, currentPage - 1)}
+            href={buildPaginationHref(section.slug, currentPage - 1, currentLocation)}
             className={`${styles.paginationButton} ${
               currentPage === 1 ? styles["paginationButton--disabled"] : ""
             }`}
@@ -122,7 +163,7 @@ export default async function EventSectionPage({
             {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
               <Link
                 key={page}
-                href={buildPaginationHref(section.slug, page)}
+                href={buildPaginationHref(section.slug, page, currentLocation)}
                 className={`${styles.paginationPage} ${
                   page === currentPage ? styles["paginationPage--active"] : ""
                 }`}
@@ -134,7 +175,7 @@ export default async function EventSectionPage({
           </div>
 
           <Link
-            href={buildPaginationHref(section.slug, currentPage + 1)}
+            href={buildPaginationHref(section.slug, currentPage + 1, currentLocation)}
             className={`${styles.paginationButton} ${
               currentPage === totalPages ? styles["paginationButton--disabled"] : ""
             }`}

@@ -10,6 +10,7 @@ import { buildMealEventHref, getMealEvents, type MealEvent } from "../lib/meal-d
 import {
   buildEventSectionHref,
   getHomeSections,
+  type EventLocation,
   type EventSectionSlug,
 } from "../lib/event-sections";
 import styles from "./page.module.scss";
@@ -90,6 +91,7 @@ export default function Home() {
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterError, setNewsletterError] = useState<string | null>(null);
   const [newsletterSubmitting, setNewsletterSubmitting] = useState(false);
+  const [userLocation, setUserLocation] = useState<EventLocation | null>(null);
   const sectionRowRefs = useRef<Partial<Record<EventSectionSlug, HTMLDivElement | null>>>({});
 
   useEffect(() => {
@@ -109,7 +111,31 @@ export default function Home() {
     };
   }, []);
 
-  const homeSections = useMemo(() => getHomeSections(mealEvents), [mealEvents]);
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        setUserLocation({
+          lat: coords.latitude,
+          lng: coords.longitude,
+        });
+      },
+      () => undefined,
+      {
+        enableHighAccuracy: false,
+        timeout: 6000,
+        maximumAge: 300000,
+      },
+    );
+  }, []);
+
+  const homeSections = useMemo(
+    () => getHomeSections(mealEvents, userLocation ?? undefined),
+    [mealEvents, userLocation],
+  );
 
   useEffect(() => {
     if (newsletterModalOpen) {
@@ -188,7 +214,13 @@ export default function Home() {
       <SearchBar />
 
       <div className={styles.sections}>
-        {homeSections.map((section) => (
+        {homeSections.map((section) => {
+          const sectionHref =
+            section.slug === "autour-de-moi" && userLocation
+              ? `${buildEventSectionHref(section.slug)}?lat=${userLocation.lat}&lng=${userLocation.lng}`
+              : buildEventSectionHref(section.slug);
+
+          return (
           <section key={section.title} className={styles.section}>
             <div className={styles.sectionHead}>
               <div className={styles.sectionCopy}>
@@ -196,7 +228,7 @@ export default function Home() {
                 <p>{section.description}</p>
               </div>
               <div className={styles.sectionActions}>
-                <Link href={buildEventSectionHref(section.slug)} className={styles.sectionLink}>
+                <Link href={sectionHref} className={styles.sectionLink}>
                   Voir Tout
                 </Link>
               </div>
@@ -265,7 +297,8 @@ export default function Home() {
               </div>
             ) : null}
           </section>
-        ))}
+          );
+        })}
       </div>
 
       {newsletterModalOpen ? (

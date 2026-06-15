@@ -187,7 +187,7 @@ export default function ReportProfileButton({
                 className={styles.reportSubmit}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Envoi..." : "Envoyer le signalement"}
+                {isSubmitting ? "Envoi..." : "Envoyer un signalement"}
               </button>
             </footer>
           </form>

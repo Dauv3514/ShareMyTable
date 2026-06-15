@@ -220,6 +220,13 @@ export default function AdminPage() {
         ? [request.homePhotoUrl]
         : [];
 
+  const getVisibleAutoReviewNotes = (notes?: string | null) =>
+    (notes ?? "")
+      .split(/\r?\n/)
+      .filter((line) => !/google vision/i.test(line))
+      .join("\n")
+      .trim();
+
   if (loading || isLoading || (!user && isLoggedIn)) {
     return (
       <section className={styles.page}>
@@ -281,6 +288,9 @@ export default function AdminPage() {
             <div className={styles.requestGrid}>
               {pendingRequests.map((request) => {
                 const homePhotoUrls = getRequestHomePhotoUrls(request);
+                const visibleAutoReviewNotes = getVisibleAutoReviewNotes(
+                  request.autoReviewNotes,
+                );
 
                 return (
                   <article key={request.id} className={styles.requestCard}>
@@ -373,7 +383,7 @@ export default function AdminPage() {
 
                   <div className={styles.notesBox}>
                     <strong>Notes automatiques</strong>
-                    <p>{request.autoReviewNotes || "Aucune note automatique."}</p>
+                    <p>{visibleAutoReviewNotes || "Aucune note automatique."}</p>
                   </div>
 
                   <label className={styles.reasonField}>

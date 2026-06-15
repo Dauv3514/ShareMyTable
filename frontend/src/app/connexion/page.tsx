@@ -54,8 +54,21 @@ function ConnexionPageContent() {
 
   useEffect(() => {
     const verify = searchParams.get("verify");
+    const verified = searchParams.get("verified");
+    const verifyError = searchParams.get("verifyError");
+
     if (verify === "1") {
       toast.info("Vérifie ton email pour activer ton compte.");
+      localStorage.removeItem("oauth_flow");
+    }
+
+    if (verified === "1") {
+      toast.success("Email vérifié, tu peux maintenant te connecter.");
+      localStorage.removeItem("oauth_flow");
+    }
+
+    if (verifyError === "1") {
+      toast.error("Lien de vérification invalide ou expiré.");
       localStorage.removeItem("oauth_flow");
     }
   }, [searchParams]);

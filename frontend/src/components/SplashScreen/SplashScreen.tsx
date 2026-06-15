@@ -7,6 +7,7 @@ import { type CSSProperties, useEffect, useState } from "react";
 import EventCard from "../EventCard";
 import { getEventsForSection } from "../../lib/event-sections";
 import { MOCK_MEAL_EVENTS } from "../../lib/data/mocks/meal-events";
+import { getMealEvents, type MealEvent } from "../../lib/meal-data";
 import "./splash-screen.scss";
 
 const LOADING_DURATION_MS = 3000;
@@ -15,17 +16,14 @@ const CAROUSEL_START_DELAY_MS = 3800;
 const CAROUSEL_INTERVAL_MS = 4600;
 const DOT_COUNT = 3;
 const ONBOARDING_STORAGE_KEY = "ramene-ta-poire:onboarding-seen";
-const INTRO_CARDS = getEventsForSection(MOCK_MEAL_EVENTS, "prochainement")
-  .toSorted((firstEvent, secondEvent) => {
-    const dateComparison = firstEvent.date.localeCompare(secondEvent.date);
 
-    if (dateComparison !== 0) {
-      return dateComparison;
-    }
+function buildIntroCards(events: MealEvent[]) {
+  const sourceEvents = events.length > 0 ? events : MOCK_MEAL_EVENTS;
 
-    return firstEvent.timeLabel.localeCompare(secondEvent.timeLabel);
-  })
-  .slice(0, 6);
+  return getEventsForSection(sourceEvents, "prochainement")
+    .toSorted(() => Math.random() - 0.5)
+    .slice(0, 6);
+}
 
 type SplashPhase = "loading" | "intro";
 type CarouselMode = "mobile" | "tablet" | "desktop";
@@ -37,6 +35,7 @@ export default function SplashScreen() {
   const [phase, setPhase] = useState<SplashPhase>("loading");
   const [activeCardIndex, setActiveCardIndex] = useState(0);
   const [carouselMode, setCarouselMode] = useState<CarouselMode>("mobile");
+  const [introCards, setIntroCards] = useState<MealEvent[]>(() => buildIntroCards([]));
   const [shouldShowOnboarding, setShouldShowOnboarding] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -50,6 +49,24 @@ export default function SplashScreen() {
 
     return () => {
       window.clearTimeout(storageTimer);
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadIntroCards = async () => {
+      const events = await getMealEvents();
+
+      if (!cancelled) {
+        setIntroCards(buildIntroCards(events));
+      }
+    };
+
+    void loadIntroCards();
+
+    return () => {
+      cancelled = true;
     };
   }, []);
 
@@ -118,13 +135,17 @@ export default function SplashScreen() {
       return;
     }
 
+    if (introCards.length < 2) {
+      return;
+    }
+
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReducedMotion) {
       return;
     }
 
     const scrollToNextCard = () => {
-      setActiveCardIndex((currentIndex) => (currentIndex + 1) % INTRO_CARDS.length);
+      setActiveCardIndex((currentIndex) => (currentIndex + 1) % introCards.length);
     };
 
     const startTimer = window.setTimeout(scrollToNextCard, CAROUSEL_START_DELAY_MS);
@@ -134,7 +155,7 @@ export default function SplashScreen() {
       window.clearTimeout(startTimer);
       window.clearInterval(interval);
     };
-  }, [phase]);
+  }, [introCards.length, phase]);
 
   if (!shouldRender) {
     return null;
@@ -147,6 +168,16 @@ export default function SplashScreen() {
     window.setTimeout(() => {
       setShouldRender(false);
     }, EXIT_DURATION_MS);
+  };
+
+  const handleNavigation = () => {
+    try {
+      localStorage.setItem(ONBOARDING_STORAGE_KEY, "true");
+    } catch {
+      // Storage can be unavailable in private or restricted browser contexts.
+    }
+
+    setShouldRender(false);
   };
 
   return (
@@ -196,13 +227,13 @@ export default function SplashScreen() {
                 className={`splash-screen__carousel splash-screen__carousel--${carouselMode}`}
                 aria-label="Repas mis en avant"
               >
-                {INTRO_CARDS.map((card, index) => {
+                {introCards.map((card, index) => {
                   const cardOffset =
-                    (index - activeCardIndex + INTRO_CARDS.length) % INTRO_CARDS.length;
+                    (index - activeCardIndex + introCards.length) % introCards.length;
                   const mobileOrder =
-                    cardOffset === INTRO_CARDS.length - 1 ? 0 : cardOffset === 0 ? 1 : 2;
+                    cardOffset === introCards.length - 1 ? 0 : cardOffset === 0 ? 1 : 2;
                   const isMobileVisible =
-                    cardOffset === INTRO_CARDS.length - 1 || cardOffset === 0 || cardOffset === 1;
+                    cardOffset === introCards.length - 1 || cardOffset === 0 || cardOffset === 1;
                   const tabletOrder = cardOffset;
                   const isTabletVisible = cardOffset < 2;
                   const desktopOrder = cardOffset;
@@ -260,12 +291,17 @@ export default function SplashScreen() {
             </section>
 
             <nav className="splash-screen__actions" aria-label="Actions d'introduction">
-              <Link href="/connexion" className="splash-screen__button splash-screen__button--ghost">
+              <Link
+                href="/connexion"
+                className="splash-screen__button splash-screen__button--ghost"
+                onClick={handleNavigation}
+              >
                 Connexion
               </Link>
               <Link
                 href="/inscription"
                 className="splash-screen__button splash-screen__button--primary"
+                onClick={handleNavigation}
               >
                 Inscription
               </Link>

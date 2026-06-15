@@ -149,9 +149,7 @@ export class HostProfileVerificationService {
     }
 
     const params = new URLSearchParams({
-      street: address,
-      city,
-      country,
+      q: [address, city, country].filter(Boolean).join(', '),
       format: 'jsonv2',
       limit: '1',
       addressdetails: '1',
@@ -199,7 +197,7 @@ export class HostProfileVerificationService {
           lat: hostProfile.lat,
           lng: hostProfile.lng,
           note: "Adresse non vérifiée: aucun résultat pertinent trouvé par OpenStreetMap.",
-          riskFlags: ['address_not_verified', 'address_invalid'],
+          riskFlags: ['address_not_verified'],
         };
       }
 
@@ -212,7 +210,7 @@ export class HostProfileVerificationService {
           lat: hostProfile.lat,
           lng: hostProfile.lng,
           note: "Adresse non vérifiée: coordonnées de géocodage invalides.",
-          riskFlags: ['address_not_verified', 'address_invalid'],
+          riskFlags: ['address_not_verified'],
         };
       }
 
