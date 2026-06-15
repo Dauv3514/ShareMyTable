@@ -252,10 +252,19 @@ export class AuthController {
   }
 
   @Public()
-  @HttpCode(HttpStatus.OK)
   @Get('verify-email')
-  async verifyEmail(@Query('token') token: string) {
-    return this.authService.verifyEmail(token);
+  async verifyEmail(@Query('token') token: string, @Res() res: Response) {
+    const baseUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+    const redirectUrl = new URL('/connexion', baseUrl);
+
+    try {
+      await this.authService.verifyEmail(token);
+      redirectUrl.searchParams.set('verified', '1');
+    } catch {
+      redirectUrl.searchParams.set('verifyError', '1');
+    }
+
+    return res.redirect(redirectUrl.toString());
   }
 
   @Public()

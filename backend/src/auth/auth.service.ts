@@ -35,6 +35,19 @@ export class AuthService {
     private mailService: MailService,
   ) {}
 
+  private buildBackendUrl(path: string) {
+    const baseUrl =
+      process.env.BACKEND_URL ?? `http://localhost:${process.env.PORT ?? 5001}`;
+    const globalPrefix = process.env.API_GLOBAL_PREFIX?.trim().replace(/^\/+|\/+$/g, '');
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    const prefixedPath =
+      globalPrefix && !normalizedPath.startsWith(`/${globalPrefix}/`)
+        ? `/${globalPrefix}${normalizedPath}`
+        : normalizedPath;
+
+    return new URL(prefixedPath, baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`).toString();
+  }
+
   private async sendEmailVerification(user: Utilisateur) {
     const token = randomBytes(32).toString('hex');
     const tokenHash = createHash('sha256').update(token).digest('hex');
@@ -42,9 +55,7 @@ export class AuthService {
 
     await this.usersService.setEmailVerificationToken(user.id, tokenHash, expiresAt);
 
-    const baseUrl =
-      process.env.BACKEND_URL ?? `http://localhost:${process.env.PORT ?? 5001}`;
-    const verifyUrl = `${baseUrl}/auth/verify-email?token=${token}`;
+    const verifyUrl = this.buildBackendUrl(`/auth/verify-email?token=${token}`);
     await this.mailService.sendVerifyEmail(user.email, verifyUrl);
   }
 
@@ -369,12 +380,10 @@ export class AuthService {
 
       await this.usersService.setPasswordResetToken(user.id, tokenHash, expiresAt);
 
-      const baseUrl =
-        process.env.FRONTEND_URL ??
-        process.env.BACKEND_URL ??
-        `http://localhost:${process.env.PORT ?? 5001}`;
-      const resetUrl = `${baseUrl}/nouveau-mot-de-passe?token=${token}`;
-      await this.mailService.sendResetPasswordEmail(user.email, resetUrl);
+      const baseUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+      const resetUrl = new URL('/nouveau-mot-de-passe', baseUrl);
+      resetUrl.searchParams.set('token', token);
+      await this.mailService.sendResetPasswordEmail(user.email, resetUrl.toString());
     }
 
     return {

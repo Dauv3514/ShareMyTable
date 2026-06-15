@@ -14,6 +14,13 @@ export type EventSection = {
   emptyDescription: string;
 };
 
+export type EventLocation = {
+  lat: number;
+  lng: number;
+};
+
+export const DEFAULT_NEARBY_RADIUS_KM = 50;
+
 const EVENT_SECTIONS: EventSection[] = [
   {
     slug: "prochainement",
@@ -57,7 +64,58 @@ export function buildEventSectionHref(slug: EventSectionSlug) {
   return `/evenements/voir-tout/${slug}`;
 }
 
-export function getEventsForSection(events: MealEvent[], slug: EventSectionSlug) {
+function isFiniteCoordinate(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+export function getDistanceKm(firstLocation: EventLocation, secondLocation: EventLocation) {
+  const earthRadiusKm = 6371;
+  const latDelta = ((secondLocation.lat - firstLocation.lat) * Math.PI) / 180;
+  const lngDelta = ((secondLocation.lng - firstLocation.lng) * Math.PI) / 180;
+  const firstLat = (firstLocation.lat * Math.PI) / 180;
+  const secondLat = (secondLocation.lat * Math.PI) / 180;
+  const haversine =
+    Math.sin(latDelta / 2) * Math.sin(latDelta / 2) +
+    Math.cos(firstLat) *
+      Math.cos(secondLat) *
+      Math.sin(lngDelta / 2) *
+      Math.sin(lngDelta / 2);
+
+  return earthRadiusKm * 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
+}
+
+export function getEventsAroundLocation(
+  events: MealEvent[],
+  location: EventLocation,
+  radiusKm = DEFAULT_NEARBY_RADIUS_KM,
+) {
+  return events
+    .map((event) => {
+      if (!isFiniteCoordinate(event.locationLat) || !isFiniteCoordinate(event.locationLng)) {
+        return null;
+      }
+
+      const distanceKm = getDistanceKm(location, {
+        lat: event.locationLat,
+        lng: event.locationLng,
+      });
+
+      if (distanceKm > radiusKm) {
+        return null;
+      }
+
+      return { event, distanceKm };
+    })
+    .filter((entry): entry is { event: MealEvent; distanceKm: number } => Boolean(entry))
+    .sort((firstEntry, secondEntry) => firstEntry.distanceKm - secondEntry.distanceKm)
+    .map(({ event }) => event);
+}
+
+export function getEventsForSection(
+  events: MealEvent[],
+  slug: EventSectionSlug,
+  location?: EventLocation,
+) {
   if (slug === "veggie") {
     const veggieEvents = events.filter(
       (event) =>
@@ -70,6 +128,14 @@ export function getEventsForSection(events: MealEvent[], slug: EventSectionSlug)
   }
 
   if (slug === "autour-de-moi") {
+    if (location) {
+      const eventsAroundLocation = getEventsAroundLocation(events, location);
+
+      if (eventsAroundLocation.length > 0) {
+        return eventsAroundLocation;
+      }
+    }
+
     return [
       ...events.filter((event) => event.variant === "nearby"),
       ...events.filter((event) => event.variant !== "nearby"),
@@ -87,9 +153,9 @@ export function getEventsForSection(events: MealEvent[], slug: EventSectionSlug)
   return events;
 }
 
-export function getHomeSections(events: MealEvent[]) {
+export function getHomeSections(events: MealEvent[], location?: EventLocation) {
   return EVENT_SECTIONS.map((section) => ({
     ...section,
-    cards: getEventsForSection(events, section.slug).slice(0, 14),
+    cards: getEventsForSection(events, section.slug, location).slice(0, 14),
   }));
 }

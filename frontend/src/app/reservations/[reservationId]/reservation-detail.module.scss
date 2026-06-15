@@ -1007,6 +1007,11 @@
   border-top: 1px solid rgba(217, 203, 165, 0.72);
 }
 
+.reportModalFooter .primaryButton,
+.reportModalFooter .secondaryButton {
+  font-weight: 600;
+}
+
 .errorText {
   color: #b14646;
   font-weight: 700;

@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -127,6 +128,8 @@ type HostMealBookingsResponse = HostMealBookingSummaryResponse & {
 
 @Injectable()
 export class BookingsService {
+  private readonly logger = new Logger(BookingsService.name);
+
   constructor(
     @InjectRepository(Booking)
     private readonly bookingsRepository: Repository<Booking>,
@@ -322,6 +325,11 @@ export class BookingsService {
   ): Promise<HostBookingResponse> {
     const booking = await this.findHostedBookingEntity(hostUserId, bookingId);
 
+    if (booking.bookingStatus === BookingStatus.CONFIRMED) {
+      await this.safeSyncAcceptedMealConversations(booking.meal.id);
+      return this.toHostBookingResponse(booking);
+    }
+
     const canBeAccepted = [
       BookingStatus.PENDING,
       BookingStatus.REFUSED,
@@ -340,8 +348,8 @@ export class BookingsService {
     booking.refusalReason = null;
 
     const savedBooking = await this.bookingsRepository.save(booking);
-    await this.syncAcceptedMealConversations(savedBooking.meal.id);
-    await this.notifyGuestBookingAccepted(savedBooking);
+    await this.safeSyncAcceptedMealConversations(savedBooking.meal.id);
+    await this.safeNotifyGuestBookingAccepted(savedBooking);
     return this.toHostBookingResponse(savedBooking);
   }
 
@@ -454,6 +462,28 @@ export class BookingsService {
       [user.firstName, user.lastName].filter(Boolean).join(' ').trim() ||
       'Un invité'
     );
+  }
+
+  private async safeNotifyGuestBookingAccepted(booking: Booking): Promise<void> {
+    try {
+      await this.notifyGuestBookingAccepted(booking);
+    } catch (error) {
+      this.logger.error(
+        `Notification acceptation impossible pour la reservation ${booking.id}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
+  }
+
+  private async safeSyncAcceptedMealConversations(mealId: number): Promise<void> {
+    try {
+      await this.syncAcceptedMealConversations(mealId);
+    } catch (error) {
+      this.logger.error(
+        `Synchronisation messagerie impossible pour le repas ${mealId}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
   }
 
   private async syncAcceptedMealConversations(mealId: number): Promise<void> {
