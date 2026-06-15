@@ -15,103 +15,190 @@ if (fs.existsSync(backendEnvPath)) {
   dotenv.config({ path: backendEnvPath, override: false });
 }
 
-const DEMO_EMAIL_DOMAIN =
-  process.env.DEMO_SEED_EMAIL_DOMAIN || 'demo.ramenetapoire.local';
+const DEMO_EMAIL_DOMAIN = 'demo.com';
 const DEMO_PASSWORD = process.env.DEMO_SEED_PASSWORD || 'DemoPassword123!';
 
 const ADMIN_COUNT = 3;
 const HOST_COUNT = 80;
 const GUEST_COUNT = 380;
+const HOST_REQUEST_PENDING_COUNT = 8;
+const HOST_REQUEST_REJECTED_COUNT = 6;
+const HOST_REQUEST_COUNT = HOST_REQUEST_PENDING_COUNT + HOST_REQUEST_REJECTED_COUNT;
 const MEAL_COUNT = 520;
 const REPORT_COUNT = 16;
 
 const HOUSE_PHOTO_COUNT = 100;
-const AVATAR_COUNT = 100;
 
-const firstNames = [
-  'Camille',
-  'Lucas',
-  'Lina',
-  'Hugo',
-  'Emma',
-  'Noah',
-  'Chloé',
-  'Louis',
-  'Inès',
-  'Nathan',
-  'Léa',
-  'Gabriel',
-  'Manon',
-  'Arthur',
-  'Sarah',
-  'Jules',
-  'Zoé',
-  'Raphaël',
-  'Nina',
-  'Adam',
-  'Clara',
-  'Maël',
-  'Louise',
-  'Yanis',
-  'Alice',
-  'Tom',
-  'Mila',
-  'Victor',
-  'Anaïs',
-  'Baptiste',
-  'Nadia',
-  'Romain',
-  'Élise',
-  'Mehdi',
-  'Antoine',
-  'Sofia',
-  'Paul',
-  'Maya',
-  'Théo',
-  'Lola',
+const femaleProfiles = [
+  ['Nadia', 'Boucher'],
+  ['Camille', 'Martin'],
+  ['Emma', 'Dubois'],
+  ['Léa', 'Bernard'],
+  ['Manon', 'Petit'],
+  ['Chloé', 'Robert'],
+  ['Inès', 'Laurent'],
+  ['Sarah', 'Moreau'],
+  ['Louise', 'Simon'],
+  ['Alice', 'Lefèvre'],
+  ['Clara', 'Roux'],
+  ['Zoé', 'Garnier'],
+  ['Nina', 'Perrin'],
+  ['Sofia', 'Lopez'],
+  ['Maya', 'Mercier'],
+  ['Lola', 'Briand'],
+  ['Anaïs', 'Chevalier'],
+  ['Élise', 'Fontaine'],
+  ['Jeanne', 'Morel'],
+  ['Amélie', 'Girard'],
+  ['Julie', 'Lefebvre'],
+  ['Marion', 'Muller'],
+  ['Aïcha', 'Benali'],
+  ['Fatima', 'Haddad'],
+  ['Lina', 'Nguyen'],
+  ['Eva', 'Garcia'],
+  ['Lucie', 'Lambert'],
+  ['Océane', 'Le Goff'],
+  ['Maëlle', 'Leclerc'],
+  ['Salomé', 'Brun'],
 ];
 
-const lastNames = [
-  'Martin',
-  'Bernard',
-  'Thomas',
-  'Petit',
-  'Robert',
-  'Richard',
-  'Durand',
-  'Dubois',
-  'Moreau',
-  'Laurent',
-  'Simon',
-  'Michel',
-  'Lefebvre',
-  'Leroy',
-  'Roux',
-  'David',
-  'Bertrand',
-  'Morel',
-  'Fournier',
-  'Girard',
-  'Bonnet',
-  'Dupont',
-  'Lambert',
-  'Fontaine',
-  'Rousseau',
-  'Vincent',
-  'Muller',
-  'Lefevre',
-  'Faure',
-  'Andre',
-  'Mercier',
-  'Blanc',
-  'Guerin',
-  'Boyer',
-  'Garnier',
-  'Chevalier',
-  'Lopez',
-  'Perrin',
-  'Briand',
-  'Le Goff',
+const maleProfiles = [
+  ['Lucas', 'Martin'],
+  ['Hugo', 'Bernard'],
+  ['Noah', 'Petit'],
+  ['Louis', 'Robert'],
+  ['Nathan', 'Dubois'],
+  ['Gabriel', 'Moreau'],
+  ['Arthur', 'Laurent'],
+  ['Jules', 'Simon'],
+  ['Raphaël', 'Michel'],
+  ['Adam', 'Roux'],
+  ['Maël', 'Leroy'],
+  ['Yanis', 'Fournier'],
+  ['Tom', 'Girard'],
+  ['Victor', 'Bonnet'],
+  ['Baptiste', 'Dupont'],
+  ['Mehdi', 'Benali'],
+  ['Antoine', 'Garnier'],
+  ['Paul', 'Mercier'],
+  ['Théo', 'Lopez'],
+  ['Romain', 'Briand'],
+  ['Karim', 'Haddad'],
+  ['Samuel', 'Fontaine'],
+  ['Maxime', 'Lefevre'],
+  ['Nicolas', 'Muller'],
+  ['Julien', 'Morel'],
+  ['Enzo', 'Garcia'],
+  ['Thomas', 'Lambert'],
+  ['Alexandre', 'Le Goff'],
+  ['Mathis', 'Leclerc'],
+  ['Ibrahim', 'Nguyen'],
+];
+
+const femaleAvatarFiles = [
+  '001.jpg',
+  '003.jpg',
+  '005.jpg',
+  '007.jpg',
+  '009.jpg',
+  '011.jpg',
+  '013.jpg',
+  '015.jpg',
+  '017.jpg',
+  '019.jpg',
+  '021.jpg',
+  '023.jpg',
+  '025.jpg',
+  '027.jpg',
+  '029.jpg',
+  '031.jpg',
+  '034.jpg',
+  '035.jpg',
+  '036.jpg',
+  '038.jpg',
+  '039.jpg',
+  '041.jpg',
+  '042.jpg',
+  '044.jpg',
+  '046.jpg',
+  '049.jpg',
+  '052.jpg',
+  '054.jpg',
+  '055.jpg',
+  '056.jpg',
+  '057.jpg',
+  '058.jpg',
+  '059.jpg',
+  '068.jpg',
+  '069.jpg',
+  '070.jpg',
+  '075.jpg',
+  '076.jpg',
+  '078.jpg',
+  '080.jpg',
+  '081.jpg',
+  '083.jpg',
+  '085.jpg',
+  '088.jpg',
+  '093.jpg',
+  '094.jpg',
+  '096.jpg',
+  '098.jpg',
+];
+
+const maleAvatarFiles = [
+  '002.jpg',
+  '004.jpg',
+  '006.jpg',
+  '008.jpg',
+  '010.jpg',
+  '012.jpg',
+  '014.jpg',
+  '016.jpg',
+  '018.jpg',
+  '020.jpg',
+  '022.jpg',
+  '024.jpg',
+  '026.jpg',
+  '028.jpg',
+  '030.jpg',
+  '032.jpg',
+  '033.jpg',
+  '037.jpg',
+  '040.jpg',
+  '043.jpg',
+  '045.jpg',
+  '047.jpg',
+  '048.jpg',
+  '050.jpg',
+  '051.jpg',
+  '053.jpg',
+  '060.jpg',
+  '061.jpg',
+  '062.jpg',
+  '063.jpg',
+  '064.jpg',
+  '065.jpg',
+  '066.jpg',
+  '067.jpg',
+  '071.jpg',
+  '072.jpg',
+  '073.jpg',
+  '074.jpg',
+  '077.jpg',
+  '079.jpg',
+  '082.jpg',
+  '084.jpg',
+  '086.jpg',
+  '087.jpg',
+  '089.jpg',
+  '090.jpg',
+  '091.jpg',
+  '092.jpg',
+  '095.jpg',
+  '097.jpg',
+  '099.jpg',
+  '100.jpg',
 ];
 
 const cities = [
@@ -192,47 +279,184 @@ const streets = [
   'place du Centre',
 ];
 
-const mealTemplates = [
-  { title: 'Boeuf bourguignon maison', type: 'Diner', main: 'Boeuf bourguignon', tags: ['cuisine-du-monde', 'discussions-enrichissantes'] },
-  { title: 'Couscous convivial', type: 'Diner', main: 'Couscous légumes et semoule', tags: ['halal', 'convivial-et-festif'] },
-  { title: 'Croque-monsieur entre voisins', type: 'Déjeuner', main: 'Croque-monsieur gratiné', tags: ['ambiance-decontractee'] },
-  { title: 'Crêpes sucrées-salées', type: 'Goûter', main: 'Crêpes maison', tags: ['vegetarien', 'repas-calme'] },
-  { title: 'Gratin familial', type: 'Diner', main: 'Gratin de saison', tags: ['vegetarien', 'ambiance-decontractee'] },
-  { title: 'Lasagnes du dimanche', type: 'Diner', main: 'Lasagnes maison', tags: ['convivial-et-festif'] },
-  { title: 'Pâtes carbonara', type: 'Diner', main: 'Pâtes carbonara', tags: ['ambiance-decontractee'] },
-  { title: 'Pâtes au pesto', type: 'Déjeuner', main: 'Pâtes au pesto basilic', tags: ['vegetarien', 'repas-calme'] },
-  { title: 'Pizza partagée', type: 'Diner', main: 'Pizza maison', tags: ['soiree-jeux', 'convivial-et-festif'] },
-  { title: 'Pot-au-feu traditionnel', type: 'Diner', main: 'Pot-au-feu', tags: ['discussions-enrichissantes'] },
-  { title: 'Poulet rôti du marché', type: 'Déjeuner', main: 'Poulet rôti aux herbes', tags: ['repas-en-plein-air'] },
-  { title: 'Quiche lorraine', type: 'Brunch', main: 'Quiche lorraine', tags: ['ambiance-decontractee'] },
-  { title: 'Riz cantonais', type: 'Diner', main: 'Riz cantonais', tags: ['cuisine-du-monde'] },
-  { title: 'Salade César', type: 'Déjeuner', main: 'Salade César', tags: ['flexitarien', 'repas-calme'] },
-  { title: 'Spaghetti bolognaise', type: 'Diner', main: 'Spaghetti bolognaise', tags: ['convivial-et-festif'] },
-  { title: 'Sushis maison', type: 'Diner', main: 'Sushis et makis', tags: ['cuisine-du-monde', 'decouverte-culinaire'] },
-  { title: 'Tarte aux pommes', type: 'Goûter', main: 'Tarte aux pommes', tags: ['vegetarien', 'ambiance-decontractee'] },
-  { title: 'Dahl végétal', type: 'Diner', main: 'Dahl de lentilles corail', tags: ['vegan', 'sans-gluten'] },
-  { title: 'Table sans porc', type: 'Diner', main: 'Tajine de légumes', tags: ['pas-de-porc', 'decouverte-culinaire'] },
-  { title: 'Repas calme et sans écrans', type: 'Diner', main: 'Risotto aux champignons', tags: ['sans-ecrans', 'repas-calme'] },
+const defaultDrinks = [
+  'Eau pétillante',
+  'Citronnade maison',
+  'Infusion froide',
+  'Thé glacé',
 ];
 
-const mealPhotoFiles = [
-  'boeuf bourguignon.webp',
-  'couscous.webp',
-  'croque monsieur.webp',
-  'crêpes.webp',
-  'gratin.webp',
-  'lasagne.webp',
-  'pate carbonara.webp',
-  'pates pesto.webp',
-  'pizza.webp',
-  'pot au feu.webp',
-  'poulet roti.webp',
-  'quiche lorraine.webp',
-  'riz cantonnais.webp',
-  'salade césar.webp',
-  'spaghetti bolognaise.webp',
-  'sushi.webp',
-  'tarte aux pommes.webp',
+const mealTemplates = [
+  {
+    title: 'Bœuf bourguignon maison',
+    titleVariants: ['Bœuf bourguignon maison', 'Bœuf bourguignon mijoté', 'Bœuf bourguignon du dimanche'],
+    type: 'Diner',
+    main: 'Bœuf bourguignon aux carottes et champignons',
+    photoFile: 'boeuf bourguignon.webp',
+    starters: ['Œufs mimosa', 'Salade de mâche', 'Velouté de légumes'],
+    desserts: ['Poire pochée', 'Mousse au chocolat', 'Tarte fine aux pommes'],
+    tags: ['discussions-enrichissantes', 'convivial-et-festif'],
+  },
+  {
+    title: 'Couscous convivial',
+    titleVariants: ['Couscous convivial', 'Couscous légumes et semoule', 'Couscous maison du vendredi'],
+    type: 'Diner',
+    main: 'Couscous aux légumes, pois chiches et semoule',
+    photoFile: 'couscous.webp',
+    starters: ['Carottes au cumin', 'Salade de concombre', 'Brick aux légumes'],
+    desserts: ['Orange à la cannelle', 'Makrout', 'Salade de fruits'],
+    tags: ['halal', 'cuisine-du-monde', 'convivial-et-festif'],
+  },
+  {
+    title: 'Croque-monsieur entre voisins',
+    titleVariants: ['Croque-monsieur entre voisins', 'Croque-monsieur gratiné', 'Déjeuner croque et salade'],
+    type: 'Déjeuner',
+    main: 'Croque-monsieur gratiné et salade verte',
+    photoFile: 'croque monsieur.webp',
+    starters: ['Crudités croquantes', 'Soupe froide', 'Petite salade verte'],
+    desserts: ['Fromage blanc au miel', 'Compote maison', 'Cookie chocolat'],
+    tags: ['ambiance-decontractee', 'repas-calme'],
+  },
+  {
+    title: 'Crêpes sucrées-salées',
+    titleVariants: ['Crêpes sucrées-salées', 'Goûter crêpes maison', 'Crêpes au caramel beurre salé'],
+    type: 'Goûter',
+    main: 'Crêpes maison avec garnitures sucrées et salées',
+    photoFile: 'crêpes.webp',
+    starters: ['Assiette de fruits', 'Noix et raisins secs', 'Petite salade'],
+    desserts: ['Crêpe chocolat', 'Crêpe confiture', 'Crêpe caramel'],
+    tags: ['vegetarien', 'ambiance-decontractee'],
+  },
+  {
+    title: 'Gratin familial',
+    titleVariants: ['Gratin familial', 'Gratin de légumes du marché', 'Gratin fondant à partager'],
+    type: 'Diner',
+    main: 'Gratin de saison aux légumes rôtis',
+    photoFile: 'gratin.webp',
+    starters: ['Velouté de courge', 'Salade de lentilles', 'Tartinade aux herbes'],
+    desserts: ['Clafoutis', 'Yaourt fermier', 'Panna cotta'],
+    tags: ['vegetarien', 'ambiance-decontractee'],
+  },
+  {
+    title: 'Lasagnes du dimanche',
+    titleVariants: ['Lasagnes du dimanche', 'Lasagnes maison gratinées', 'Lasagnes à partager'],
+    type: 'Diner',
+    main: 'Lasagnes maison à la sauce tomate',
+    photoFile: 'lasagne.webp',
+    starters: ['Bruschetta tomate', 'Salade roquette', 'Antipasti de légumes'],
+    desserts: ['Tiramisu léger', 'Panna cotta', 'Salade d’agrumes'],
+    tags: ['convivial-et-festif', 'cuisine-du-monde'],
+  },
+  {
+    title: 'Pâtes carbonara',
+    titleVariants: ['Pâtes carbonara', 'Carbonara généreuse', 'Soirée pâtes carbonara'],
+    type: 'Diner',
+    main: 'Pâtes carbonara crémeuses',
+    photoFile: 'pate carbonara.webp',
+    starters: ['Salade verte', 'Tomates basilic', 'Velouté parmesan'],
+    desserts: ['Crème dessert', 'Tartelette citron', 'Fruit de saison'],
+    tags: ['ambiance-decontractee', 'convivial-et-festif'],
+  },
+  {
+    title: 'Pâtes au pesto',
+    titleVariants: ['Pâtes au pesto', 'Pâtes pesto basilic', 'Déjeuner pesto maison'],
+    type: 'Déjeuner',
+    main: 'Pâtes au pesto de basilic et parmesan',
+    photoFile: 'pates pesto.webp',
+    starters: ['Mozzarella tomate', 'Salade de roquette', 'Courgettes marinées'],
+    desserts: ['Pêche rôtie', 'Panna cotta', 'Sorbet citron'],
+    tags: ['vegetarien', 'repas-calme'],
+  },
+  {
+    title: 'Pizza partagée',
+    titleVariants: ['Pizza partagée', 'Pizza maison à partager', 'Soirée pizza entre voisins'],
+    type: 'Diner',
+    main: 'Pizza maison tomate, mozzarella et légumes',
+    photoFile: 'pizza.webp',
+    starters: ['Olives marinées', 'Focaccia', 'Salade italienne'],
+    desserts: ['Tiramisu', 'Glace vanille', 'Fraises au sucre'],
+    tags: ['soiree-jeux', 'convivial-et-festif'],
+  },
+  {
+    title: 'Pot-au-feu traditionnel',
+    titleVariants: ['Pot-au-feu traditionnel', 'Pot-au-feu familial', 'Pot-au-feu du marché'],
+    type: 'Diner',
+    main: 'Pot-au-feu aux légumes anciens',
+    photoFile: 'pot au feu.webp',
+    starters: ['Bouillon parfumé', 'Poireaux vinaigrette', 'Betteraves rôties'],
+    desserts: ['Riz au lait', 'Compote pomme-poire', 'Tarte normande'],
+    tags: ['discussions-enrichissantes', 'repas-calme'],
+  },
+  {
+    title: 'Poulet rôti du marché',
+    titleVariants: ['Poulet rôti du marché', 'Poulet rôti aux herbes', 'Déjeuner poulet rôti'],
+    type: 'Déjeuner',
+    main: 'Poulet rôti aux herbes et pommes de terre',
+    photoFile: 'poulet roti.webp',
+    starters: ['Carottes râpées', 'Salade de tomates', 'Houmous citronné'],
+    desserts: ['Gâteau au yaourt', 'Abricots rôtis', 'Mousse au chocolat'],
+    tags: ['repas-en-plein-air', 'ambiance-decontractee'],
+  },
+  {
+    title: 'Quiche lorraine',
+    titleVariants: ['Quiche lorraine', 'Brunch quiche lorraine', 'Quiche maison et salade'],
+    type: 'Brunch',
+    main: 'Quiche lorraine accompagnée d’une salade',
+    photoFile: 'quiche lorraine.webp',
+    starters: ['Radis beurre', 'Salade de jeunes pousses', 'Velouté froid'],
+    desserts: ['Cake citron', 'Fromage blanc', 'Compote cannelle'],
+    tags: ['ambiance-decontractee', 'flexitarien'],
+  },
+  {
+    title: 'Riz cantonais',
+    titleVariants: ['Riz cantonais', 'Riz cantonais maison', 'Dîner riz cantonais'],
+    type: 'Diner',
+    main: 'Riz cantonais aux légumes et œufs',
+    photoFile: 'riz cantonnais.webp',
+    starters: ['Rouleaux de printemps', 'Concombre sésame', 'Soupe miso'],
+    desserts: ['Mangue fraîche', 'Perles coco', 'Litchis'],
+    tags: ['cuisine-du-monde', 'decouverte-culinaire'],
+  },
+  {
+    title: 'Salade César',
+    titleVariants: ['Salade César', 'Déjeuner salade César', 'Salade César maison'],
+    type: 'Déjeuner',
+    main: 'Salade César au poulet, parmesan et croûtons',
+    photoFile: 'salade césar.webp',
+    starters: ['Gaspacho', 'Crudités', 'Tartines grillées'],
+    desserts: ['Salade de fruits', 'Yaourt grec', 'Cookie avoine'],
+    tags: ['flexitarien', 'repas-calme'],
+  },
+  {
+    title: 'Spaghetti bolognaise',
+    titleVariants: ['Spaghetti bolognaise', 'Spaghetti bolo maison', 'Dîner spaghetti bolognaise'],
+    type: 'Diner',
+    main: 'Spaghetti bolognaise mijotés',
+    photoFile: 'spaghetti bolognaise.webp',
+    starters: ['Salade italienne', 'Bruschetta', 'Courgettes marinées'],
+    desserts: ['Tiramisu', 'Panna cotta', 'Poire au chocolat'],
+    tags: ['convivial-et-festif', 'ambiance-decontractee'],
+  },
+  {
+    title: 'Sushis maison',
+    titleVariants: ['Sushis maison', 'Soirée sushis', 'Sushis et makis à partager'],
+    type: 'Diner',
+    main: 'Sushis, makis et légumes marinés',
+    photoFile: 'sushi.webp',
+    starters: ['Soupe miso', 'Edamame', 'Salade wakamé'],
+    desserts: ['Mochis glacés', 'Mangue fraîche', 'Perles coco'],
+    tags: ['cuisine-du-monde', 'decouverte-culinaire'],
+  },
+  {
+    title: 'Tarte aux pommes',
+    titleVariants: ['Tarte aux pommes', 'Goûter tarte aux pommes', 'Tarte aux pommes maison'],
+    type: 'Goûter',
+    main: 'Tarte aux pommes maison',
+    photoFile: 'tarte aux pommes.webp',
+    starters: ['Fruits secs', 'Petites madeleines', 'Assiette de fruits'],
+    desserts: ['Tarte aux pommes', 'Crème fouettée', 'Glace vanille'],
+    tags: ['vegetarien', 'ambiance-decontractee'],
+  },
 ];
 
 const mealTags = [
@@ -317,6 +541,15 @@ const reviewComments = [
   'Hôte attentionné, logement propre et accueillant.',
 ];
 
+const hostRequestRejectionReasons = [
+  "Les photos du logement ne permettent pas de vérifier correctement l'espace d'accueil.",
+  "L'adresse indiquée est incomplète ou ne correspond pas au quartier renseigné.",
+  "La candidature manque d'informations pour confirmer les conditions d'accueil.",
+  "Les photos doivent montrer au moins l'espace repas et la cuisine.",
+  "La demande doit être complétée avec une adresse vérifiable.",
+  "Le logement présenté ne permet pas encore de valider l'accueil de participants.",
+];
+
 function createRandom(seed) {
   let value = seed % 2147483647;
   return () => {
@@ -368,6 +601,20 @@ function addDays(date, days, hour = 19, minute = 30) {
   return next;
 }
 
+function makeShowcaseMealDate(now, timing, index, hour) {
+  if (timing === 'today') {
+    const date = new Date(now);
+    date.setHours(Math.max(now.getHours() + 2, hour), index % 2 === 0 ? 0 : 30, 0, 0);
+    return date;
+  }
+
+  if (timing === 'past') {
+    return addDays(now, -8 - index, hour, index % 2 === 0 ? 0 : 30);
+  }
+
+  return addDays(now, 5 + index, hour, index % 2 === 0 ? 0 : 30);
+}
+
 function offsetCoordinate(city, distanceKm = 8) {
   const angle = random() * Math.PI * 2;
   const radius = Math.sqrt(random()) * distanceKm;
@@ -383,19 +630,94 @@ function makeAddress(city, index) {
   return `${(index % 96) + 2} ${pick(streets)}, ${city.name}`;
 }
 
-function makeMealPhotoUrl(index) {
-  const fileName = mealPhotoFiles[index % mealPhotoFiles.length];
-  return encodeURI(`/assets/meals/${fileName}`);
+function makeHomePhotos(index) {
+  const homeIndex = ((index - 1) % HOUSE_PHOTO_COUNT) + 1;
+  const photos = [
+    `/assets/home/${homeIndex}_frontal.jpg`,
+    `/assets/home/${homeIndex}_kitchen.jpg`,
+  ];
+
+  if (index % 3 === 0) {
+    const nextHomeIndex = (homeIndex % HOUSE_PHOTO_COUNT) + 1;
+    photos.push(`/assets/home/${nextHomeIndex}_frontal.jpg`);
+  }
+
+  if (index % 5 === 0) {
+    const nextHomeIndex = ((homeIndex + 1) % HOUSE_PHOTO_COUNT) + 1;
+    photos.push(`/assets/home/${nextHomeIndex}_kitchen.jpg`);
+  }
+
+  return photos;
 }
 
-function makeBio(role, cityName) {
+function normalizeSlug(value) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '.')
+    .replace(/^\.+|\.+$/g, '')
+    .toLowerCase();
+}
+
+function getDemoEmailPatterns() {
+  return [
+    `%@${DEMO_EMAIL_DOMAIN}`,
+    '%@demo.ramenetapoire.local',
+    'rtp.%@%',
+  ];
+}
+
+function makePerson(index, preferredGender) {
+  const gender = preferredGender || (index % 2 === 0 ? 'male' : 'female');
+  const source = gender === 'female' ? femaleProfiles : maleProfiles;
+  const firstName = source[(index - 1) % source.length][0];
+  const lastName = source[Math.floor((index - 1) / source.length) % source.length][1];
+  return {
+    firstName,
+    lastName,
+    gender,
+    fullName: `${firstName} ${lastName}`,
+  };
+}
+
+function makePseudo(person, index) {
+  return `${normalizeSlug(person.firstName)}.${normalizeSlug(person.lastName)}.${pad(index)}`.slice(0, 50);
+}
+
+function makeEmail(person, index) {
+  const base = `${normalizeSlug(person.lastName)}.${normalizeSlug(person.firstName)}`;
+  return `${base}@${DEMO_EMAIL_DOMAIN}`.toLowerCase();
+}
+
+function makeAvatarUrl(person, index) {
+  const isFemale = person.gender === 'female';
+  const files = isFemale ? femaleAvatarFiles : maleAvatarFiles;
+  const folder = isFemale ? 'Femme' : 'Homme';
+  return `/assets/avatars/${folder}/${files[(index - 1) % files.length]}`;
+}
+
+function makeMealPhotoUrl(template) {
+  return encodeURI(`/assets/meals/${template.photoFile}`);
+}
+
+function makeMealTitle(template, host, index) {
+  const variants = template.titleVariants?.length ? template.titleVariants : [template.title];
+  const title = variants[(index - 1) % variants.length];
+  return index % 5 === 0 ? `${title} à ${host.city}` : title;
+}
+
+function makeMealDescription(template) {
+  return `${template.main}, entrée maison et dessert de saison. Repas préparé pour une table conviviale.`;
+}
+
+function makeBio(role, cityName, firstName) {
   if (role === 'host') {
-    return `Hôte démo à ${cityName}, habitué des repas conviviaux et des tables simples.`;
+    return `${firstName} ouvre sa table à ${cityName} pour des repas simples, chaleureux et faits maison.`;
   }
   if (role === 'admin') {
     return 'Compte administrateur de démonstration pour la modération.';
   }
-  return `Invité démo basé à ${cityName}, intéressé par les repas locaux et les nouvelles rencontres.`;
+  return `${firstName} aime découvrir des tables locales à ${cityName} et rencontrer de nouvelles personnes.`;
 }
 
 async function queryRows(client, sql, params = []) {
@@ -483,10 +805,11 @@ async function ensurePreferenceTags(client) {
 }
 
 async function deleteDemoData(client) {
+  const demoEmailPatterns = getDemoEmailPatterns();
   const users = await queryRows(
     client,
-    'SELECT id FROM users WHERE email LIKE $1',
-    [`%@${DEMO_EMAIL_DOMAIN}`],
+    'SELECT id FROM users WHERE email LIKE $1 OR email LIKE $2',
+    demoEmailPatterns,
   );
   const userIds = users.map((user) => user.id);
   if (userIds.length === 0) {
@@ -587,8 +910,8 @@ async function assertDemoCanRun(client) {
 
   const existing = await queryRows(
     client,
-    'SELECT COUNT(*)::int AS count FROM users WHERE email LIKE $1',
-    [`%@${DEMO_EMAIL_DOMAIN}`],
+    'SELECT COUNT(*)::int AS count FROM users WHERE email LIKE $1 OR email LIKE $2',
+    getDemoEmailPatterns(),
   );
 
   if (existing[0].count > 0 && process.env.DEMO_SEED_RESET !== 'true') {
@@ -643,6 +966,19 @@ async function insertUser(client, data) {
 }
 
 async function insertHostProfile(client, data) {
+  const validationStatus = data.validationStatus || 'approved';
+  const isApproved = validationStatus === 'approved';
+  const addressVerified = data.addressVerified ?? true;
+  const homePhotoVerified = data.homePhotoVerified ?? isApproved;
+  const verificationScore = data.verificationScore ?? (isApproved ? 92 : 72);
+  const autoReviewNotes =
+    data.autoReviewNotes ||
+    (isApproved
+      ? 'Profil démo validé automatiquement pour la présentation.'
+      : 'Profil démo en attente de vérification admin.');
+  const verificationRiskFlags = data.verificationRiskFlags || [];
+  const reviewedAt = data.lastAutoReviewedAt || data.activatedAt || new Date();
+
   const rows = await queryRows(
     client,
     `
@@ -672,16 +1008,17 @@ async function insertHostProfile(client, data) {
         user_id
       )
       VALUES (
-        true, $1, $2::jsonb, 'approved', $3, $4, $5, $6, 'France',
-        $7, $8, $9, true, true, $10,
-        'Profil démo validé automatiquement pour la présentation.',
-        NULL, $4, '[]'::jsonb, NULL, '[]'::jsonb, false, $11
+        $1, $2, $3::jsonb, $4, $5, $6, $7, $8, 'France',
+        $9, $10, $11, $12, $13, $14,
+        $15, $16, $17, '[]'::jsonb, NULL, $18::jsonb, $19, $20
       )
       RETURNING id
     `,
     [
+      data.isActive ?? isApproved,
       data.homePhotoUrls[0],
       JSON.stringify(data.homePhotoUrls),
+      validationStatus,
       data.hostLevel,
       data.activatedAt,
       data.lat,
@@ -689,7 +1026,14 @@ async function insertHostProfile(client, data) {
       data.city,
       data.district,
       data.address,
-      data.verificationScore,
+      addressVerified,
+      homePhotoVerified,
+      verificationScore,
+      autoReviewNotes,
+      data.rejectionReason || null,
+      reviewedAt,
+      JSON.stringify(verificationRiskFlags),
+      data.manualReviewRequired ?? !isApproved,
       data.userId,
     ],
   );
@@ -733,10 +1077,10 @@ async function insertMeal(client, data) {
 
 async function insertMenuItems(client, mealId, template) {
   const items = [
-    ['starter', pick(['Salade de saison', 'Houmous citronné', 'Velouté maison', 'Tartinade aux herbes'])],
+    ['starter', pick(template.starters || ['Salade de saison', 'Houmous citronné', 'Velouté maison', 'Tartinade aux herbes'])],
     ['main', template.main],
-    ['dessert', pick(['Tarte aux pommes', 'Mousse au chocolat', 'Compote cannelle', 'Panna cotta'])],
-    ['drinks', pick(['Eau pétillante', 'Jus maison', 'Infusion froide', 'Thé glacé'])],
+    ['dessert', pick(template.desserts || ['Tarte aux pommes', 'Mousse au chocolat', 'Compote cannelle', 'Panna cotta'])],
+    ['drinks', pick(template.drinks || defaultDrinks)],
   ];
 
   for (const [position, item] of items.entries()) {
@@ -1149,14 +1493,15 @@ function writeAccountsFile(accounts, scenarios) {
     'Comptes conseillés pour la présentation',
     ...scenarios.map(
       (scenario) =>
-        `- ${scenario.label} : ${scenario.email} / ${DEMO_PASSWORD} (${scenario.note})`,
+        `- ${scenario.label} : ${scenario.fullName || scenario.pseudo} - ${scenario.email} / ${DEMO_PASSWORD} (${scenario.note})`,
     ),
     '',
     'Tous les comptes',
-    'role;email;mot_de_passe;pseudo;ville;note',
+    'role;nom;email;mot_de_passe;pseudo;ville;note',
     ...accounts.map((account) =>
       [
         account.role,
+        account.fullName || '',
         account.email,
         DEMO_PASSWORD,
         account.pseudo,
@@ -1182,6 +1527,7 @@ async function main() {
   const context = {
     admins: [],
     hosts: [],
+    hostRequests: [],
     guests: [],
     meals: [],
     bookings: [],
@@ -1207,26 +1553,27 @@ async function main() {
 
     for (let index = 1; index <= ADMIN_COUNT; index += 1) {
       const city = cities[index % cities.length];
-      const email = `admin${index}@${DEMO_EMAIL_DOMAIN}`;
-      const firstName = firstNames[index];
-      const lastName = lastNames[index + 5];
+      const person = makePerson(index, index === 2 ? 'male' : 'female');
+      const email = makeEmail(person, index);
+      const pseudo = makePseudo(person, index);
       const userId = await insertUser(client, {
-        pseudo: `admin-demo-${index}`,
+        pseudo,
         email,
         passwordHash,
-        firstName,
-        lastName,
-        avatarUrl: `/assets/avatars/${pad(index)}.jpg`,
+        firstName: person.firstName,
+        lastName: person.lastName,
+        avatarUrl: makeAvatarUrl(person, index),
         city: city.name,
-        bio: makeBio('admin', city.name),
+        bio: makeBio('admin', city.name, person.firstName),
         birthDate: `198${index}-02-0${index}`,
         roleId: roleIds.ADMIN,
       });
       const account = {
         id: userId,
         role: 'ADMIN',
+        fullName: person.fullName,
         email,
-        pseudo: `admin-demo-${index}`,
+        pseudo,
         city: city.name,
         note: 'modération et administration',
       };
@@ -1238,33 +1585,22 @@ async function main() {
       const city = pickPriorityHostCity(index);
       const district = pick(city.districts);
       const coords = offsetCoordinate(city, city.weight >= 18 ? 7 : 4);
-      const firstName = firstNames[index % firstNames.length];
-      const lastName = lastNames[(index * 3) % lastNames.length];
-      const pseudo = `host-demo-${pad(index)}`;
-      const email = `${pseudo}@${DEMO_EMAIL_DOMAIN}`;
-      const homeIndex = ((index - 1) % HOUSE_PHOTO_COUNT) + 1;
-      const photos = [
-        `/assets/home/${homeIndex}_frontal.jpg`,
-        `/assets/home/${homeIndex}_kitchen.jpg`,
-      ];
-      if (index % 3 === 0) {
-        const nextHomeIndex = (homeIndex % HOUSE_PHOTO_COUNT) + 1;
-        photos.push(`/assets/home/${nextHomeIndex}_frontal.jpg`);
-      }
-      if (index % 5 === 0) {
-        const nextHomeIndex = ((homeIndex + 1) % HOUSE_PHOTO_COUNT) + 1;
-        photos.push(`/assets/home/${nextHomeIndex}_kitchen.jpg`);
-      }
+      const globalIndex = ADMIN_COUNT + index;
+      const person = makePerson(globalIndex);
+      const pseudo = makePseudo(person, globalIndex);
+      const email = makeEmail(person, globalIndex);
+      const address = makeAddress(city, index);
+      const photos = makeHomePhotos(index);
 
       const userId = await insertUser(client, {
         pseudo,
         email,
         passwordHash,
-        firstName,
-        lastName,
-        avatarUrl: `/assets/avatars/${pad(((index - 1) % AVATAR_COUNT) + 1)}.jpg`,
+        firstName: person.firstName,
+        lastName: person.lastName,
+        avatarUrl: makeAvatarUrl(person, globalIndex),
         city: city.name,
-        bio: makeBio('host', city.name),
+        bio: makeBio('host', city.name, person.firstName),
         birthDate: `${1980 + (index % 18)}-${pad((index % 12) + 1, 2)}-${pad((index % 25) + 1, 2)}`,
         roleId: roleIds.HOST,
       });
@@ -1278,7 +1614,7 @@ async function main() {
         lng: coords.lng,
         city: city.name,
         district,
-        address: makeAddress(city, index),
+        address,
         verificationScore: randomInt(88, 100),
       });
 
@@ -1319,34 +1655,145 @@ async function main() {
         id: userId,
         userId,
         role: 'HOST',
+        fullName: person.fullName,
         email,
         pseudo,
         city: city.name,
         district,
         lat: coords.lat,
         lng: coords.lng,
-        address: makeAddress(city, index),
+        address,
         note: 'hôte validé avec photos de logement',
       };
       context.hosts.push(account);
       accounts.push(account);
     }
 
-    for (let index = 1; index <= GUEST_COUNT; index += 1) {
+    for (let index = 1; index <= HOST_REQUEST_COUNT; index += 1) {
+      const isRejected = index > HOST_REQUEST_PENDING_COUNT;
+      const requestIndex = isRejected ? index - HOST_REQUEST_PENDING_COUNT : index;
+      const validationStatus = isRejected ? 'rejected' : 'pending';
       const city = weightedPick(cities);
-      const firstName = firstNames[(index + 7) % firstNames.length];
-      const lastName = lastNames[(index * 5) % lastNames.length];
-      const pseudo = `guest-demo-${pad(index)}`;
-      const email = `${pseudo}@${DEMO_EMAIL_DOMAIN}`;
+      const district = pick(city.districts);
+      const coords = offsetCoordinate(city, city.weight >= 18 ? 5 : 3);
+      const globalIndex = ADMIN_COUNT + HOST_COUNT + index;
+      const person = makePerson(globalIndex);
+      const pseudo = makePseudo(person, globalIndex);
+      const email = makeEmail(person, globalIndex);
+      const address = makeAddress(city, HOST_COUNT + index);
+      const photos = makeHomePhotos(HOST_COUNT + index);
+      const reviewedAt = addDays(new Date(), -randomInt(isRejected ? 18 : 8, isRejected ? 90 : 18), 14, 0);
+      const rejectionReason = isRejected ? hostRequestRejectionReasons[(requestIndex - 1) % hostRequestRejectionReasons.length] : null;
+
       const userId = await insertUser(client, {
         pseudo,
         email,
         passwordHash,
-        firstName,
-        lastName,
-        avatarUrl: `/assets/avatars/${pad(((index + 19) % AVATAR_COUNT) + 1)}.jpg`,
+        firstName: person.firstName,
+        lastName: person.lastName,
+        avatarUrl: makeAvatarUrl(person, globalIndex),
         city: city.name,
-        bio: makeBio('guest', city.name),
+        bio: `${person.firstName} souhaite devenir hôte à ${city.name} et partager des repas maison.`,
+        birthDate: `${1982 + (index % 18)}-${pad((index % 12) + 1, 2)}-${pad((index % 25) + 1, 2)}`,
+        roleId: roleIds.USER,
+      });
+
+      const hostProfileId = await insertHostProfile(client, {
+        userId,
+        homePhotoUrls: photos,
+        hostLevel: 1,
+        activatedAt: null,
+        lat: coords.lat,
+        lng: coords.lng,
+        city: city.name,
+        district,
+        address,
+        validationStatus,
+        isActive: false,
+        addressVerified: !isRejected || requestIndex % 2 === 0,
+        homePhotoVerified: false,
+        verificationScore: isRejected ? randomInt(32, 66) : randomInt(72, 91),
+        autoReviewNotes: isRejected
+          ? `Candidature refusée pour la démo admin. ${rejectionReason}`
+          : 'Adresse vérifiée. Photos du logement à contrôler manuellement avant validation.',
+        rejectionReason,
+        lastAutoReviewedAt: reviewedAt,
+        verificationRiskFlags: isRejected ? ['manual_review_required'] : [],
+        manualReviewRequired: true,
+      });
+
+      if (isRejected) {
+        await client.query(
+          `
+            INSERT INTO host_profile_review_logs (
+              host_profile_id,
+              admin_user_id,
+              decision,
+              rejection_reason,
+              created_at
+            )
+            VALUES ($1, $2, 'rejected', $3, $4)
+          `,
+          [
+            hostProfileId,
+            context.admins[requestIndex % context.admins.length].id,
+            rejectionReason,
+            reviewedAt,
+          ],
+        );
+      }
+
+      await assignUserPreferences(client, userId, preferenceTagIds);
+      await client.query(
+        `
+          INSERT INTO push_notification_preferences (
+            user_id,
+            messages_enabled,
+            reservations_enabled,
+            meal_reminders_enabled,
+            host_status_enabled
+          )
+          VALUES ($1, true, true, true, true)
+        `,
+        [userId],
+      );
+
+      const account = {
+        id: userId,
+        userId,
+        hostProfileId,
+        role: isRejected ? 'DEMANDE HÔTE REFUSÉE' : 'DEMANDE HÔTE EN ATTENTE',
+        fullName: person.fullName,
+        email,
+        pseudo,
+        city: city.name,
+        district,
+        lat: coords.lat,
+        lng: coords.lng,
+        address,
+        note: isRejected
+          ? `candidature hôte refusée - ${rejectionReason}`
+          : 'candidature hôte en attente visible dans l’admin',
+      };
+      context.hostRequests.push({ ...account, validationStatus });
+      accounts.push(account);
+    }
+
+    for (let index = 1; index <= GUEST_COUNT; index += 1) {
+      const city = weightedPick(cities);
+      const globalIndex = ADMIN_COUNT + HOST_COUNT + HOST_REQUEST_COUNT + index;
+      const person = makePerson(globalIndex);
+      const pseudo = makePseudo(person, globalIndex);
+      const email = makeEmail(person, globalIndex);
+      const userId = await insertUser(client, {
+        pseudo,
+        email,
+        passwordHash,
+        firstName: person.firstName,
+        lastName: person.lastName,
+        avatarUrl: makeAvatarUrl(person, globalIndex),
+        city: city.name,
+        bio: makeBio('guest', city.name, person.firstName),
         birthDate: `${1978 + (index % 25)}-${pad((index % 12) + 1, 2)}-${pad((index % 26) + 1, 2)}`,
         roleId: roleIds.USER,
       });
@@ -1369,6 +1816,7 @@ async function main() {
       const account = {
         id: userId,
         role: 'INVITÉ',
+        fullName: person.fullName,
         email,
         pseudo,
         city: city.name,
@@ -1378,30 +1826,47 @@ async function main() {
       accounts.push(account);
     }
 
+    const parisHost = context.hosts.find((host) => host.city === 'Paris') || context.hosts[0];
+    const rennesHost = context.hosts.find((host) => host.city === 'Rennes') || context.hosts[1] || context.hosts[0];
+    const showcaseMealCases = [
+      { kind: 'host-draft', host: parisHost, status: 'draft', timing: 'future' },
+      { kind: 'host-upcoming', host: parisHost, status: 'published', timing: 'future' },
+      { kind: 'host-today', host: parisHost, status: 'published', timing: 'today' },
+      { kind: 'host-past', host: parisHost, status: 'done', timing: 'past' },
+      { kind: 'host-cancelled', host: parisHost, status: 'cancelled', timing: 'future' },
+      { kind: 'guest-pending', host: rennesHost, status: 'published', timing: 'future' },
+      { kind: 'guest-refused', host: rennesHost, status: 'published', timing: 'future' },
+      { kind: 'guest-cancelled', host: rennesHost, status: 'cancelled', timing: 'future' },
+      { kind: 'guest-group', host: rennesHost, status: 'published', timing: 'future' },
+    ];
+
     const now = new Date();
     for (let index = 1; index <= MEAL_COUNT; index += 1) {
-      const host = context.hosts[index % context.hosts.length];
-      const template = mealTemplates[index % mealTemplates.length];
+      const showcaseCase = showcaseMealCases[index - 1];
+      const host = showcaseCase?.host || context.hosts[index % context.hosts.length];
+      const template = mealTemplates[(index - 1) % mealTemplates.length];
       const isPast = index % 100 < 25;
       const isToday = index % 100 >= 25 && index % 100 < 32;
       const isCancelled = index % 29 === 0;
       const isDraft = index % 37 === 0;
       const mealHour = template.type === 'Brunch' ? 11 : template.type === 'Déjeuner' ? 12 : template.type === 'Goûter' ? 16 : 19;
-      const dateTime = isPast
+      const dateTime = showcaseCase
+        ? makeShowcaseMealDate(now, showcaseCase.timing, index, mealHour)
+        : isPast
         ? addDays(now, -randomInt(2, 140), mealHour, pick([0, 15, 30, 45]))
         : isToday
           ? addDays(now, randomInt(0, 1), mealHour, pick([0, 15, 30, 45]))
           : addDays(now, randomInt(2, 150), mealHour, pick([0, 15, 30, 45]));
-      const status = isDraft ? 'draft' : isCancelled ? 'cancelled' : isPast ? 'done' : 'published';
+      const status = showcaseCase?.status || (isDraft ? 'draft' : isCancelled ? 'cancelled' : isPast ? 'done' : 'published');
       const seatsTotal = randomInt(4, 10);
       const price = randomInt(12, 36) * 100;
-      const titleSuffix = index % 5 === 0 ? ` à ${host.city}` : '';
+      const mealTitle = makeMealTitle(template, host, index);
       const mealId = await insertMeal(client, {
         hostId: host.userId,
-        title: `${template.title}${titleSuffix}`,
+        title: mealTitle,
         mealType: template.type,
-        mealPhotoUrl: makeMealPhotoUrl(index - 1),
-        menuDescription: `${template.main}, entrée maison et dessert de saison. Repas préparé pour une table conviviale.`,
+        mealPhotoUrl: makeMealPhotoUrl(template),
+        menuDescription: makeMealDescription(template),
         dateTime,
         seatsTotal,
         pricePerSeatCents: price,
@@ -1415,13 +1880,97 @@ async function main() {
         id: mealId,
         hostId: host.userId,
         host,
-        title: `${template.title}${titleSuffix}`,
+        title: mealTitle,
         status,
         dateTime,
         seatsTotal,
         pricePerSeatCents: price,
+        showcaseKind: showcaseCase?.kind || null,
       });
     }
+
+    const showcaseMeals = new Map(
+      context.meals
+        .filter((meal) => meal.showcaseKind)
+        .map((meal) => [meal.showcaseKind, meal]),
+    );
+    const bookingPairKeys = new Set();
+
+    async function createDemoBooking(mealKind, guest, bookingStatus, messageCount = 6) {
+      const meal = showcaseMeals.get(mealKind);
+      if (!meal || !guest) {
+        return null;
+      }
+
+      const pairKey = `${meal.id}:${guest.id}`;
+      if (bookingPairKeys.has(pairKey)) {
+        return null;
+      }
+
+      const paymentState = paymentStateForBooking(bookingStatus);
+      const createdAt = addDays(meal.dateTime, -randomInt(6, 24), randomInt(9, 18), randomInt(0, 55));
+      const confirmedAt = ['confirmed', 'completed'].includes(bookingStatus)
+        ? addDays(createdAt, 1, randomInt(9, 20), randomInt(0, 55))
+        : null;
+      const refusedAt = bookingStatus === 'refused' ? addDays(createdAt, 1, 10, 15) : null;
+      const cancelledAt = bookingStatus === 'cancelled' ? addDays(createdAt, 2, 14, 30) : null;
+      const completedAt = bookingStatus === 'completed' ? addDays(meal.dateTime, 0, 23, 0) : null;
+      const totalPriceCents = meal.pricePerSeatCents;
+
+      const bookingId = await insertBooking(client, {
+        guestUserId: guest.id,
+        mealId: meal.id,
+        seats: 1,
+        bookingStatus,
+        paymentMethod: pick(['card', 'apple-pay', 'paypal']),
+        paymentState: paymentState.state,
+        unitPriceCents: meal.pricePerSeatCents,
+        totalPriceCents,
+        confirmedAt,
+        refusedAt,
+        cancelledAt,
+        completedAt,
+        refusalReason: bookingStatus === 'refused' ? 'L’hôte ne peut finalement pas accueillir cette demande.' : null,
+      });
+
+      const booking = {
+        id: bookingId,
+        mealId: meal.id,
+        guestUserId: guest.id,
+        hostId: meal.hostId,
+        bookingStatus,
+        totalPriceCents,
+        paymentStatus: paymentState.paymentStatus,
+        paidAt: ['authorized', 'succeeded', 'refunded'].includes(paymentState.paymentStatus) ? confirmedAt || createdAt : null,
+        releasedAt: bookingStatus === 'completed' ? addDays(meal.dateTime, 1, 10, 0) : null,
+        refundedAt: bookingStatus === 'cancelled' || bookingStatus === 'refused' ? cancelledAt || refusedAt : null,
+        createdAt,
+        mealDateTime: meal.dateTime,
+      };
+
+      await insertPayment(client, booking);
+      if (bookingStatus !== 'refused') {
+        await createDirectConversation(client, booking, meal, meal.hostId, guest.id, messageCount);
+      }
+      await createReview(client, booking, randomInt(0, reviewComments.length - 1));
+      context.bookings.push(booking);
+      bookingPairKeys.add(pairKey);
+      return booking;
+    }
+
+    const activeGuest = context.guests[0];
+    const messagingGuest = context.guests[1];
+    const extraGroupGuest = context.guests[2];
+
+    await createDemoBooking('guest-pending', activeGuest, 'pending', 5);
+    await createDemoBooking('host-upcoming', activeGuest, 'confirmed', 8);
+    await createDemoBooking('host-today', activeGuest, 'confirmed', 8);
+    await createDemoBooking('host-past', activeGuest, 'completed', 5);
+    await createDemoBooking('guest-refused', activeGuest, 'refused', 0);
+    await createDemoBooking('guest-cancelled', activeGuest, 'cancelled', 3);
+    await createDemoBooking('guest-group', activeGuest, 'confirmed', 12);
+    await createDemoBooking('guest-group', messagingGuest, 'confirmed', 12);
+    await createDemoBooking('guest-group', extraGroupGuest, 'confirmed', 12);
 
     for (const [mealIndex, meal] of context.meals.entries()) {
       if (meal.status === 'draft') {
@@ -1436,8 +1985,13 @@ async function main() {
 
       for (let index = 0; index < desiredBookings; index += 1) {
         let guest = pick(context.guests);
-        while (usedGuests.has(guest.id)) {
+        let guard = 0;
+        while ((usedGuests.has(guest.id) || bookingPairKeys.has(`${meal.id}:${guest.id}`)) && guard < 80) {
           guest = pick(context.guests);
+          guard += 1;
+        }
+        if (usedGuests.has(guest.id) || bookingPairKeys.has(`${meal.id}:${guest.id}`)) {
+          continue;
         }
         usedGuests.add(guest.id);
 
@@ -1484,16 +2038,19 @@ async function main() {
           mealDateTime: meal.dateTime,
         };
         await insertPayment(client, booking);
-        await createDirectConversation(
-          client,
-          booking,
-          meal,
-          meal.hostId,
-          guest.id,
-          random() < 0.08 ? randomInt(25, 55) : randomInt(1, 8),
-        );
+        if (bookingStatus !== 'refused') {
+          await createDirectConversation(
+            client,
+            booking,
+            meal,
+            meal.hostId,
+            guest.id,
+            random() < 0.08 ? randomInt(25, 55) : randomInt(1, 8),
+          );
+        }
         await createReview(client, booking, mealIndex + index);
         context.bookings.push(booking);
+        bookingPairKeys.add(`${meal.id}:${guest.id}`);
       }
     }
 
@@ -1590,29 +2147,49 @@ async function main() {
 
     await client.query('COMMIT');
 
+    const pendingHostRequest = context.hostRequests.find((request) => request.validationStatus === 'pending');
+    const rejectedHostRequest = context.hostRequests.find((request) => request.validationStatus === 'rejected');
+
     const scenarios = [
       {
         label: 'Administrateur',
+        fullName: context.admins[0].fullName,
         email: context.admins[0].email,
-        note: 'voir demandes hôte, signalements et modération',
+        note: 'voir demandes hôte en attente, historique des refus/validations, signalements et modération',
+      },
+      {
+        label: 'Demande hôte en attente',
+        fullName: pendingHostRequest.fullName,
+        email: pendingHostRequest.email,
+        note: 'candidature visible dans la page admin des demandes hôte',
+      },
+      {
+        label: 'Demande hôte refusée',
+        fullName: rejectedHostRequest.fullName,
+        email: rejectedHostRequest.email,
+        note: 'candidature visible dans l’historique admin avec une raison de refus',
       },
       {
         label: 'Hôte Rennes',
-        email: context.hosts.find((host) => host.city === 'Rennes')?.email || context.hosts[0].email,
-        note: 'profil hôte, photos logement, repas et messagerie',
+        fullName: rennesHost.fullName,
+        email: rennesHost.email,
+        note: 'profil hôte, photos logement, repas à venir, refusé, annulé et messagerie',
       },
       {
         label: 'Hôte Paris',
-        email: context.hosts.find((host) => host.city === 'Paris')?.email || context.hosts[1].email,
-        note: 'repas dans une grande ville',
+        fullName: parisHost.fullName,
+        email: parisHost.email,
+        note: 'repas brouillon, publié, du jour, passé et annulé dans une grande ville',
       },
       {
         label: 'Invité actif',
+        fullName: context.guests[0].fullName,
         email: context.guests[0].email,
-        note: 'réservations, conversations et avis',
+        note: 'réservations en attente, acceptées, refusées, annulées, passées et conversations',
       },
       {
         label: 'Invité messagerie',
+        fullName: context.guests[1].fullName,
         email: context.guests[1].email,
         note: 'cas utile pour tester les discussions',
       },
@@ -1622,6 +2199,8 @@ async function main() {
     console.log('Seed démo terminée.');
     console.log(`Comptes créés : ${accounts.length}`);
     console.log(`Hôtes : ${context.hosts.length}`);
+    console.log(`Demandes hôte en attente : ${context.hostRequests.filter((request) => request.validationStatus === 'pending').length}`);
+    console.log(`Demandes hôte refusées : ${context.hostRequests.filter((request) => request.validationStatus === 'rejected').length}`);
     console.log(`Repas : ${context.meals.length}`);
     console.log(`Réservations : ${context.bookings.length}`);
     console.log(`Conversations : ${context.conversations.length}`);
