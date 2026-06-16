@@ -36,8 +36,18 @@ export type MealEvent = {
   currentParticipants: number;
   maxParticipants: number;
   participantProfileIds?: string[];
+  participants?: MealParticipant[];
   menuSections: MealMenuSection[];
   dietaryPreferenceGroups?: MealDietaryPreferenceGroup[];
+};
+
+export type MealParticipant = {
+  userId: string;
+  name: string;
+  city: string;
+  country: string;
+  photoUrl?: string | null;
+  isHost: boolean;
 };
 
 export type MealMenuSection = {
