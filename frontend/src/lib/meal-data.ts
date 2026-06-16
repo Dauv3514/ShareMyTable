@@ -320,7 +320,16 @@ function buildHostName(params: {
   return params.fallback;
 }
 
-function inferVariant(meal: ApiMealItem, fallback: MealEvent["variant"]): MealEvent["variant"] {
+function inferVariant(meal: ApiMealItem): MealEvent["variant"] {
+  const apiFilters = new Set([
+    ...(meal.selectedFilterIds ?? []),
+    ...(meal.selectedTagCodes ?? []),
+  ]);
+
+  if (apiFilters.has("vegetarien") || apiFilters.has("vegan")) {
+    return "veggie";
+  }
+
   const haystack = normalizeText(
     [meal.title, meal.mealType, meal.menuDescription, meal.houseRules].filter(Boolean).join(" "),
   );
@@ -333,16 +342,18 @@ function inferVariant(meal: ApiMealItem, fallback: MealEvent["variant"]): MealEv
     return "veggie";
   }
 
-  if (fallback === "nearby") {
-    return "nearby";
-  }
-
   return "default";
 }
 
-function inferFilters(meal: ApiMealItem, fallbackFilters: string[]) {
-  if (Array.isArray(meal.selectedFilterIds) && meal.selectedFilterIds.length > 0) {
+function inferFilters(meal: ApiMealItem) {
+  if (Array.isArray(meal.selectedFilterIds)) {
     return Array.from(new Set(meal.selectedFilterIds));
+  }
+
+  if (Array.isArray(meal.selectedTagCodes) && meal.selectedTagCodes.length > 0) {
+    return Array.from(
+      new Set(meal.selectedTagCodes.filter((tagCode) => !houseRuleTagLabels[tagCode])),
+    );
   }
 
   const haystack = normalizeText(
@@ -353,7 +364,7 @@ function inferFilters(meal: ApiMealItem, fallbackFilters: string[]) {
     .filter(({ keywords }) => keywords.some((keyword) => haystack.includes(normalizeText(keyword))))
     .map(({ id }) => id);
 
-  return inferred.length > 0 ? inferred : fallbackFilters;
+  return Array.from(new Set(inferred));
 }
 
 function buildHouseRuleTags(meal: ApiMealItem) {
@@ -421,9 +432,9 @@ function buildMenuSections(meal: ApiMealItem, fallbackSections: MealMenuSection[
   ];
 }
 
-function buildPreferenceGroups(filters: string[], fallback: MealEvent["dietaryPreferenceGroups"]) {
+function buildPreferenceGroups(filters: string[]) {
   if (filters.length === 0) {
-    return fallback;
+    return undefined;
   }
 
   return [
@@ -463,7 +474,7 @@ function mapMealToEvent(
 ): MealEvent {
   const fallbackEvent = options?.fallbackEvent ?? pickFallbackEvent(meal.id);
   const eventDate = new Date(meal.dateTime);
-  const derivedFilters = inferFilters(meal, fallbackEvent.filters);
+  const derivedFilters = inferFilters(meal);
   const hostName = options?.hostProfile?.name
     ?? buildHostName({
       pseudo: meal.host.pseudo,
@@ -494,7 +505,7 @@ function mapMealToEvent(
     detailDateLabel: capitalize(format(eventDate, "EEEE d MMMM", { locale: fr })),
     timeLabel: format(eventDate, "HH'h'mm"),
     host: hostName,
-    variant: inferVariant(meal, fallbackEvent.variant),
+    variant: inferVariant(meal),
     filters: derivedFilters,
     houseRuleTags: buildHouseRuleTags(meal),
     houseRules: meal.houseRules,
@@ -504,12 +515,9 @@ function mapMealToEvent(
         ? meal.currentParticipants
         : fallbackEvent.currentParticipants,
     maxParticipants: meal.seatsTotal || fallbackEvent.maxParticipants,
-    participantProfileIds: fallbackEvent.participantProfileIds,
+    participantProfileIds: undefined,
     menuSections: buildMenuSections(meal, fallbackEvent.menuSections),
-    dietaryPreferenceGroups: buildPreferenceGroups(
-      derivedFilters,
-      fallbackEvent.dietaryPreferenceGroups,
-    ),
+    dietaryPreferenceGroups: buildPreferenceGroups(derivedFilters),
   };
 }
 
