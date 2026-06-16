@@ -7,6 +7,7 @@ import styles from "./connexion.module.scss";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/app/providers/AuthProvider";
+import { buildPublicApiUrl } from "@/lib/api-url";
 
 function ConnexionPageContent() {
   const router = useRouter();
@@ -28,8 +29,13 @@ function ConnexionPageContent() {
     e.preventDefault();
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const res = await axios.post(`${apiUrl}/auth/connexion`, formData);
+      const authUrl = buildPublicApiUrl("/auth/connexion");
+      if (!authUrl) {
+        toast.error("API_URL manquante");
+        return;
+      }
+
+      const res = await axios.post(authUrl, formData);
 
       // 🔐 sauvegarde du token
       login(res.data.access_token);
@@ -74,14 +80,13 @@ function ConnexionPageContent() {
   }, [searchParams]);
 
   const handleOAuth = (provider: "google" | "apple") => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    if (!apiUrl) {
+    const authUrl = buildPublicApiUrl(`/auth/${provider}?flow=login`);
+    if (!authUrl) {
       toast.error("API_URL manquante");
       return;
     }
     localStorage.setItem("oauth_flow", "login");
-    const flow = "login";
-    window.location.href = `${apiUrl}/auth/${provider}?flow=${flow}`;
+    window.location.href = authUrl;
   };
 
   return (

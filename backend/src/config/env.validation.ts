@@ -64,6 +64,8 @@ export function validateEnvConfig(config: Record<string, unknown>) {
 
   validateOptionalUrl(env, 'BACKEND_URL');
   validateOptionalUrl(env, 'FRONTEND_URL');
+  validateOptionalUrl(env, 'PUBLIC_API_URL');
+  validateOptionalUrl(env, 'NEXT_PUBLIC_API_URL');
   validateOptionalUrl(env, 'GOOGLE_CALLBACK_URL');
   validateOptionalUrl(env, 'APPLE_CALLBACK_URL');
   validateOptionalUrl(env, 'NOMINATIM_BASE_URL');
