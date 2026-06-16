@@ -280,7 +280,7 @@ function GuestRequestCard({
               </button>
               <button
                 type="button"
-                className={styles.secondaryButton}
+                className={styles.primaryButton}
                 onClick={() => onAccept(booking)}
                 disabled={isBusy}
               >
@@ -447,7 +447,9 @@ function ModerationModal({
           </button>
           <button
             type="button"
-            className={styles.modalSecondaryButton}
+            className={
+              isAccept ? styles.modalPrimaryButton : styles.modalSecondaryButton
+            }
             onClick={onConfirm}
             disabled={isBusy}
           >
