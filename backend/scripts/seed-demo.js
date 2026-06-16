@@ -305,7 +305,7 @@ const mealTemplates = [
     photoFile: 'couscous.webp',
     starters: ['Carottes au cumin', 'Salade de concombre', 'Brick aux légumes'],
     desserts: ['Orange à la cannelle', 'Makrout', 'Salade de fruits'],
-    tags: ['halal', 'cuisine-du-monde', 'convivial-et-festif'],
+    tags: ['halal', 'repas-en-plein-air', 'cuisine-du-monde', 'convivial-et-festif'],
   },
   {
     title: 'Croque-monsieur entre voisins',
@@ -325,7 +325,7 @@ const mealTemplates = [
     photoFile: 'crêpes.webp',
     starters: ['Assiette de fruits', 'Noix et raisins secs', 'Petite salade'],
     desserts: ['Crêpe chocolat', 'Crêpe confiture', 'Crêpe caramel'],
-    tags: ['vegetarien', 'ambiance-decontractee'],
+    tags: ['vegetarien', 'repas-en-plein-air', 'ambiance-decontractee'],
   },
   {
     title: 'Gratin familial',
@@ -345,7 +345,7 @@ const mealTemplates = [
     photoFile: 'lasagne.webp',
     starters: ['Bruschetta tomate', 'Salade roquette', 'Antipasti de légumes'],
     desserts: ['Tiramisu léger', 'Panna cotta', 'Salade d’agrumes'],
-    tags: ['convivial-et-festif', 'cuisine-du-monde'],
+    tags: ['vegetarien', 'convivial-et-festif', 'cuisine-du-monde'],
   },
   {
     title: 'Pâtes carbonara',
@@ -375,7 +375,7 @@ const mealTemplates = [
     photoFile: 'pizza.webp',
     starters: ['Olives marinées', 'Focaccia', 'Salade italienne'],
     desserts: ['Tiramisu', 'Glace vanille', 'Fraises au sucre'],
-    tags: ['soiree-jeux', 'convivial-et-festif'],
+    tags: ['vegetarien', 'repas-en-plein-air', 'soiree-jeux', 'convivial-et-festif'],
   },
   {
     title: 'Pot-au-feu traditionnel',
@@ -405,7 +405,7 @@ const mealTemplates = [
     photoFile: 'quiche lorraine.webp',
     starters: ['Radis beurre', 'Salade de jeunes pousses', 'Velouté froid'],
     desserts: ['Cake citron', 'Fromage blanc', 'Compote cannelle'],
-    tags: ['ambiance-decontractee', 'flexitarien'],
+    tags: ['repas-en-plein-air', 'ambiance-decontractee', 'flexitarien'],
   },
   {
     title: 'Riz cantonais',
@@ -415,7 +415,7 @@ const mealTemplates = [
     photoFile: 'riz cantonnais.webp',
     starters: ['Rouleaux de printemps', 'Concombre sésame', 'Soupe miso'],
     desserts: ['Mangue fraîche', 'Perles coco', 'Litchis'],
-    tags: ['cuisine-du-monde', 'decouverte-culinaire'],
+    tags: ['vegetarien', 'cuisine-du-monde', 'decouverte-culinaire'],
   },
   {
     title: 'Salade César',
@@ -425,7 +425,7 @@ const mealTemplates = [
     photoFile: 'salade césar.webp',
     starters: ['Gaspacho', 'Crudités', 'Tartines grillées'],
     desserts: ['Salade de fruits', 'Yaourt grec', 'Cookie avoine'],
-    tags: ['flexitarien', 'repas-calme'],
+    tags: ['repas-en-plein-air', 'flexitarien', 'repas-calme'],
   },
   {
     title: 'Spaghetti bolognaise',
@@ -671,6 +671,54 @@ function buildLikeWhere(column, values) {
   return values.map((_, index) => `${column} LIKE $${index + 1}`).join(' OR ');
 }
 
+function quoteIdentifier(value) {
+  return `"${value.replace(/"/g, '""')}"`;
+}
+
+async function deleteAllSeedData(client) {
+  const tables = [
+    'reports',
+    'message_entries',
+    'message_conversation_members',
+    'message_conversations',
+    'meal_reminder_notifications',
+    'push_subscriptions',
+    'push_notification_preferences',
+    'tips',
+    'reviews',
+    'payments',
+    'bookings',
+    'meal_tag_assignments',
+    'meal_menu_items',
+    'meals',
+    'host_profile_review_logs',
+    'user_preference_tags',
+    'preference_tags',
+    'host_profiles',
+    'newsletter_subscriptions',
+    'users',
+    'meal_tags',
+    'roles',
+  ];
+  const existingTables = await queryRows(
+    client,
+    `
+      SELECT table_name
+      FROM information_schema.tables
+      WHERE table_schema = 'public'
+        AND table_name = ANY($1::text[])
+    `,
+    [tables],
+  );
+  const tableNames = existingTables.map((row) => quoteIdentifier(row.table_name));
+
+  if (tableNames.length === 0) {
+    return;
+  }
+
+  await client.query(`TRUNCATE TABLE ${tableNames.join(', ')} RESTART IDENTITY CASCADE`);
+}
+
 function makePerson(index, preferredGender) {
   const gender = preferredGender || (index % 2 === 0 ? 'male' : 'female');
   const source = gender === 'female' ? femaleProfiles : maleProfiles;
@@ -702,6 +750,86 @@ function makeAvatarUrl(person, index) {
 
 function makeMealPhotoUrl(template) {
   return encodeURI(`/assets/meals/${template.photoFile}`);
+}
+
+const mealPriceRangesByPhoto = {
+  'boeuf.bourguignon': [17, 21],
+  couscous: [11, 15],
+  'croque.monsieur': [7, 9],
+  crepes: [7, 9],
+  gratin: [8, 11],
+  lasagne: [10, 13],
+  'pate.carbonara': [9, 12],
+  'pates.pesto': [9, 9],
+  pizza: [8, 11],
+  'pot.au.feu': [13, 17],
+  'poulet.roti': [12, 15],
+  'quiche.lorraine': [8, 11],
+  'riz.cantonnais': [9, 12],
+  'salade.cesar': [8, 11],
+  'spaghetti.bolognaise': [10, 13],
+  sushi: [16, 22],
+  'tarte.aux.pommes': [6, 8],
+};
+
+const vegetarianMealPhotoKeys = new Set([
+  'crepes',
+  'gratin',
+  'lasagne',
+  'pates.pesto',
+  'pizza',
+  'riz.cantonnais',
+  'tarte.aux.pommes',
+]);
+
+const veganMealPhotoKeys = new Set(['couscous']);
+
+const noPorkMealPhotoKeys = new Set([
+  'boeuf.bourguignon',
+  'couscous',
+  'crepes',
+  'gratin',
+  'lasagne',
+  'pates.pesto',
+  'pizza',
+  'pot.au.feu',
+  'poulet.roti',
+  'riz.cantonnais',
+  'salade.cesar',
+  'spaghetti.bolognaise',
+  'sushi',
+  'tarte.aux.pommes',
+]);
+
+const halalMealPhotoKeys = new Set([
+  'boeuf.bourguignon',
+  'couscous',
+  'poulet.roti',
+  'riz.cantonnais',
+]);
+
+const dietaryTagCompatibility = new Map([
+  ['vegetarien', vegetarianMealPhotoKeys],
+  ['vegan', veganMealPhotoKeys],
+  ['halal', halalMealPhotoKeys],
+  ['pas-de-porc', noPorkMealPhotoKeys],
+]);
+
+function getMealPhotoKey(template) {
+  return normalizeSlug(template.photoFile).replace(/\.webp$/, '');
+}
+
+function makeMealPriceCents(template) {
+  const photoKey = getMealPhotoKey(template);
+  const [min, max] = mealPriceRangesByPhoto[photoKey] ?? [10, 16];
+  return randomInt(min, max) * 100;
+}
+
+function getCompatibleMealTags(codes, photoKey) {
+  return codes.filter((code) => {
+    const compatiblePhotoKeys = dietaryTagCompatibility.get(code);
+    return !compatiblePhotoKeys || compatiblePhotoKeys.has(photoKey);
+  });
 }
 
 function makeMealTitle(template, host, index) {
@@ -1101,20 +1229,33 @@ async function insertMenuItems(client, mealId, template) {
   }
 }
 
-async function assignMealTags(client, mealId, tagIds, baseTags) {
+async function assignMealTags(client, mealId, tagIds, baseTags, template) {
+  const photoKey = getMealPhotoKey(template);
   const extraTags = [
     random() < 0.42 ? 'ambiance-decontractee' : null,
-    random() < 0.24 ? 'vegetarien' : null,
     random() < 0.16 ? 'flexitarien' : null,
-    random() < 0.12 ? 'halal' : null,
-    random() < 0.09 ? 'vegan' : null,
+    random() < 0.14 ? 'repas-en-plein-air' : null,
     random() < 0.08 ? 'sans-gluten' : null,
-    random() < 0.06 ? 'pas-de-porc' : null,
     random() < 0.05 ? 'soiree-jeux' : null,
     random() < 0.05 ? 'echange-linguistique' : null,
     random() < 0.04 ? 'sans-ecrans' : null,
-    random() < 0.03 ? 'casher' : null,
   ].filter(Boolean);
+
+  if (vegetarianMealPhotoKeys.has(photoKey) && random() < 0.32) {
+    extraTags.push('vegetarien');
+  }
+
+  if (veganMealPhotoKeys.has(photoKey) && random() < 0.16) {
+    extraTags.push('vegan');
+  }
+
+  if (halalMealPhotoKeys.has(photoKey) && random() < 0.12) {
+    extraTags.push('halal');
+  }
+
+  if (noPorkMealPhotoKeys.has(photoKey) && random() < 0.08) {
+    extraTags.push('pas-de-porc');
+  }
 
   const rules = [
     'arriver_a_l_heure',
@@ -1123,7 +1264,9 @@ async function assignMealTags(client, mealId, tagIds, baseTags) {
     random() < 0.25 ? 'retirer_ses_chaussures' : null,
   ].filter(Boolean);
 
-  const uniqueCodes = [...new Set([...baseTags, ...extraTags, ...rules])];
+  const compatibleBaseTags = getCompatibleMealTags(baseTags, photoKey);
+  const compatibleExtraTags = getCompatibleMealTags(extraTags, photoKey);
+  const uniqueCodes = [...new Set([...compatibleBaseTags, ...compatibleExtraTags, ...rules])];
   for (const code of uniqueCodes) {
     const tagId = tagIds.get(code);
     if (!tagId) {
@@ -1546,7 +1689,11 @@ async function main() {
 
     await client.query('BEGIN');
     if (process.env.DEMO_SEED_RESET === 'true') {
-      await deleteDemoData(client);
+      if (process.env.DEMO_SEED_FULL_RESET === 'false') {
+        await deleteDemoData(client);
+      } else {
+        await deleteAllSeedData(client);
+      }
     }
 
     const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
@@ -1866,7 +2013,7 @@ async function main() {
           : addDays(now, randomInt(2, 150), mealHour, pick([0, 15, 30, 45]));
       const status = showcaseCase?.status || (isDraft ? 'draft' : isCancelled ? 'cancelled' : isPast ? 'done' : 'published');
       const seatsTotal = randomInt(4, 10);
-      const price = randomInt(12, 36) * 100;
+      const price = makeMealPriceCents(template);
       const mealTitle = makeMealTitle(template, host, index);
       const mealId = await insertMeal(client, {
         hostId: host.userId,
@@ -1881,7 +2028,7 @@ async function main() {
         status,
       });
       await insertMenuItems(client, mealId, template);
-      await assignMealTags(client, mealId, mealTagIds, template.tags);
+      await assignMealTags(client, mealId, mealTagIds, template.tags, template);
 
       context.meals.push({
         id: mealId,
