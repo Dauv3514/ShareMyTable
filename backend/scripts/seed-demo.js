@@ -667,6 +667,10 @@ function getDemoEmailPatterns() {
   ];
 }
 
+function buildLikeWhere(column, values) {
+  return values.map((_, index) => `${column} LIKE $${index + 1}`).join(' OR ');
+}
+
 function makePerson(index, preferredGender) {
   const gender = preferredGender || (index % 2 === 0 ? 'male' : 'female');
   const source = gender === 'female' ? femaleProfiles : maleProfiles;
@@ -806,9 +810,10 @@ async function ensurePreferenceTags(client) {
 
 async function deleteDemoData(client) {
   const demoEmailPatterns = getDemoEmailPatterns();
+  const demoEmailWhere = buildLikeWhere('email', demoEmailPatterns);
   const users = await queryRows(
     client,
-    'SELECT id FROM users WHERE email LIKE $1 OR email LIKE $2',
+    `SELECT id FROM users WHERE ${demoEmailWhere}`,
     demoEmailPatterns,
   );
   const userIds = users.map((user) => user.id);
@@ -908,10 +913,12 @@ async function assertDemoCanRun(client) {
     );
   }
 
+  const demoEmailPatterns = getDemoEmailPatterns();
+  const demoEmailWhere = buildLikeWhere('email', demoEmailPatterns);
   const existing = await queryRows(
     client,
-    'SELECT COUNT(*)::int AS count FROM users WHERE email LIKE $1 OR email LIKE $2',
-    getDemoEmailPatterns(),
+    `SELECT COUNT(*)::int AS count FROM users WHERE ${demoEmailWhere}`,
+    demoEmailPatterns,
   );
 
   if (existing[0].count > 0 && process.env.DEMO_SEED_RESET !== 'true') {
