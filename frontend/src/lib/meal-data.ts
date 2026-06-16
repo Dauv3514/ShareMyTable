@@ -223,8 +223,8 @@ function buildUrl(path: string, query?: Record<string, string | number | undefin
   const publicApiUrl = process.env.NEXT_PUBLIC_API_URL;
   const rawBaseUrl =
     typeof window === "undefined"
-      ? process.env.INTERNAL_API_URL ?? publicApiUrl
-      : publicApiUrl ?? "/api";
+      ? process.env.INTERNAL_API_URL ?? publicApiUrl ?? "/api"
+      : "/api";
   const baseUrl = rawBaseUrl ? normalizeApiBaseUrl(rawBaseUrl) : null;
 
   if (!baseUrl) {
