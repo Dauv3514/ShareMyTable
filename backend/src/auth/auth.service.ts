@@ -6,6 +6,7 @@ import { ChangePasswordDto, ForgotPasswordDto, InscriptionDto, ResetPasswordDto 
 import { MailService } from '../mail/mail.service';
 import { UsersService } from '../users/users.service';
 import { AuthProvider, Utilisateur } from '../users/users.entity';
+import { buildPublicApiUrl } from './auth-url.util';
 
 type OAuthProfile = {
   id?: string;
@@ -36,16 +37,7 @@ export class AuthService {
   ) {}
 
   private buildBackendUrl(path: string) {
-    const baseUrl =
-      process.env.BACKEND_URL ?? `http://localhost:${process.env.PORT ?? 5001}`;
-    const globalPrefix = process.env.API_GLOBAL_PREFIX?.trim().replace(/^\/+|\/+$/g, '');
-    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-    const prefixedPath =
-      globalPrefix && !normalizedPath.startsWith(`/${globalPrefix}/`)
-        ? `/${globalPrefix}${normalizedPath}`
-        : normalizedPath;
-
-    return new URL(prefixedPath, baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`).toString();
+    return buildPublicApiUrl(path);
   }
 
   private async sendEmailVerification(user: Utilisateur) {

@@ -15,6 +15,7 @@ import {
 import { toast } from "react-toastify";
 import { PWA_INSTALL_NUDGE_EVENT } from "@/components/Pwa";
 import DatePickerField from "@/components/DatePicker";
+import { buildPublicApiUrl } from "@/lib/api-url";
 import styles from "./inscription.module.scss";
 
 type RegistrationResponse = {
@@ -275,7 +276,12 @@ function InscriptionPageContent() {
   const submitRegistration = async () => {
     try {
       setIsSubmitting(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const inscriptionUrl = buildPublicApiUrl("/auth/inscription");
+      if (!inscriptionUrl) {
+        toast.error("API_URL manquante");
+        return;
+      }
+
       const payload = new FormData();
 
       payload.append("email", formData.email);
@@ -299,7 +305,7 @@ function InscriptionPageContent() {
       });
 
       const response = await axios.post<RegistrationResponse>(
-        `${apiUrl}/auth/inscription`,
+        inscriptionUrl,
         payload,
       );
 
@@ -434,15 +440,15 @@ function InscriptionPageContent() {
   };
 
   const handleOAuth = (provider: "google" | "apple") => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const authUrl = buildPublicApiUrl(`/auth/${provider}?flow=register`);
 
-    if (!apiUrl) {
+    if (!authUrl) {
       toast.error("API_URL manquante");
       return;
     }
 
     localStorage.setItem("oauth_flow", "register");
-    window.location.href = `${apiUrl}/auth/${provider}?flow=register`;
+    window.location.href = authUrl;
   };
 
   return (
