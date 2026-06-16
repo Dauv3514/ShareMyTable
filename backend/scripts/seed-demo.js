@@ -319,13 +319,13 @@ const mealTemplates = [
   },
   {
     title: 'Crêpes sucrées-salées',
-    titleVariants: ['Crêpes sucrées-salées', 'Goûter crêpes maison', 'Crêpes au caramel beurre salé'],
+    titleVariants: ['Crêpes végétales sucrées-salées', 'Goûter crêpes végétales', 'Crêpes au caramel de coco'],
     type: 'Goûter',
-    main: 'Crêpes maison avec garnitures sucrées et salées',
+    main: "Crêpes maison à la boisson d'avoine avec garnitures végétales",
     photoFile: 'crêpes.webp',
     starters: ['Assiette de fruits', 'Noix et raisins secs', 'Petite salade'],
-    desserts: ['Crêpe chocolat', 'Crêpe confiture', 'Crêpe caramel'],
-    tags: ['vegetarien', 'repas-en-plein-air', 'ambiance-decontractee'],
+    desserts: ['Crêpe chocolat noir', 'Crêpe confiture', 'Crêpe caramel de coco'],
+    tags: ['vegetarien', 'vegan', 'repas-en-plein-air', 'ambiance-decontractee'],
   },
   {
     title: 'Gratin familial',
@@ -335,7 +335,7 @@ const mealTemplates = [
     photoFile: 'gratin.webp',
     starters: ['Velouté de courge', 'Salade de lentilles', 'Tartinade aux herbes'],
     desserts: ['Clafoutis', 'Yaourt fermier', 'Panna cotta'],
-    tags: ['vegetarien', 'ambiance-decontractee'],
+    tags: ['ambiance-decontractee'],
   },
   {
     title: 'Lasagnes du dimanche',
@@ -345,7 +345,7 @@ const mealTemplates = [
     photoFile: 'lasagne.webp',
     starters: ['Bruschetta tomate', 'Salade roquette', 'Antipasti de légumes'],
     desserts: ['Tiramisu léger', 'Panna cotta', 'Salade d’agrumes'],
-    tags: ['vegetarien', 'convivial-et-festif', 'cuisine-du-monde'],
+    tags: ['convivial-et-festif', 'cuisine-du-monde'],
   },
   {
     title: 'Pâtes carbonara',
@@ -375,7 +375,7 @@ const mealTemplates = [
     photoFile: 'pizza.webp',
     starters: ['Olives marinées', 'Focaccia', 'Salade italienne'],
     desserts: ['Tiramisu', 'Glace vanille', 'Fraises au sucre'],
-    tags: ['vegetarien', 'repas-en-plein-air', 'soiree-jeux', 'convivial-et-festif'],
+    tags: ['repas-en-plein-air', 'soiree-jeux', 'convivial-et-festif'],
   },
   {
     title: 'Pot-au-feu traditionnel',
@@ -415,17 +415,17 @@ const mealTemplates = [
     photoFile: 'riz cantonnais.webp',
     starters: ['Rouleaux de printemps', 'Concombre sésame', 'Soupe miso'],
     desserts: ['Mangue fraîche', 'Perles coco', 'Litchis'],
-    tags: ['vegetarien', 'cuisine-du-monde', 'decouverte-culinaire'],
+    tags: ['cuisine-du-monde', 'decouverte-culinaire'],
   },
   {
-    title: 'Salade César',
-    titleVariants: ['Salade César', 'Déjeuner salade César', 'Salade César maison'],
+    title: 'Salade César veggie',
+    titleVariants: ['Salade César veggie', 'Déjeuner salade César veggie', 'Salade César maison végétarienne'],
     type: 'Déjeuner',
-    main: 'Salade César au poulet, parmesan et croûtons',
+    main: 'Salade César végétarienne aux pois chiches grillés, parmesan et croûtons',
     photoFile: 'salade césar.webp',
     starters: ['Gaspacho', 'Crudités', 'Tartines grillées'],
     desserts: ['Salade de fruits', 'Yaourt grec', 'Cookie avoine'],
-    tags: ['repas-en-plein-air', 'flexitarien', 'repas-calme'],
+    tags: ['vegetarien', 'repas-en-plein-air', 'repas-calme'],
   },
   {
     title: 'Spaghetti bolognaise',
@@ -448,14 +448,14 @@ const mealTemplates = [
     tags: ['cuisine-du-monde', 'decouverte-culinaire'],
   },
   {
-    title: 'Tarte aux pommes',
-    titleVariants: ['Tarte aux pommes', 'Goûter tarte aux pommes', 'Tarte aux pommes maison'],
+    title: 'Tarte aux pommes végétale',
+    titleVariants: ['Tarte aux pommes végétale', 'Goûter tarte aux pommes végétale', 'Tarte aux pommes maison sans beurre'],
     type: 'Goûter',
-    main: 'Tarte aux pommes maison',
+    main: "Tarte aux pommes maison avec pâte à l'huile d'olive et compote vanillée",
     photoFile: 'tarte aux pommes.webp',
-    starters: ['Fruits secs', 'Petites madeleines', 'Assiette de fruits'],
-    desserts: ['Tarte aux pommes', 'Crème fouettée', 'Glace vanille'],
-    tags: ['vegetarien', 'ambiance-decontractee'],
+    starters: ['Fruits secs', 'Petites madeleines végétales', 'Assiette de fruits'],
+    desserts: ['Tarte aux pommes', 'Crème fouettée de coco', 'Sorbet poire'],
+    tags: ['vegetarien', 'vegan', 'ambiance-decontractee'],
   },
 ];
 
@@ -732,8 +732,58 @@ function makePerson(index, preferredGender) {
   };
 }
 
+const pseudoFallbackWords = [
+  'table',
+  'maison',
+  'voisin',
+  'partage',
+  'cuisine',
+  'repas',
+  'atelier',
+  'jardin',
+  'marche',
+  'brunch',
+  'soupe',
+  'tarte',
+  'pesto',
+  'basilic',
+  'mijote',
+  'gouter',
+  'convive',
+  'saveur',
+  'terroir',
+  'epice',
+];
+const usedDemoPseudos = new Set();
+
 function makePseudo(person, index) {
-  return `${normalizeSlug(person.firstName)}.${normalizeSlug(person.lastName)}.${pad(index)}`.slice(0, 50);
+  const base = `${normalizeSlug(person.firstName)}.${normalizeSlug(person.lastName)}`.slice(0, 50);
+  if (!usedDemoPseudos.has(base)) {
+    usedDemoPseudos.add(base);
+    return base;
+  }
+
+  for (let offset = 0; offset < pseudoFallbackWords.length; offset += 1) {
+    const word = pseudoFallbackWords[(index + offset) % pseudoFallbackWords.length];
+    const candidate = `${base}.${word}`.slice(0, 50);
+    if (!usedDemoPseudos.has(candidate)) {
+      usedDemoPseudos.add(candidate);
+      return candidate;
+    }
+  }
+
+  const compactBase = `${normalizeSlug(person.firstName).slice(0, 1)}.${normalizeSlug(person.lastName)}`;
+  for (const firstWord of pseudoFallbackWords) {
+    for (const secondWord of pseudoFallbackWords) {
+      const candidate = `${compactBase}.${firstWord}.${secondWord}`.slice(0, 50);
+      if (!usedDemoPseudos.has(candidate)) {
+        usedDemoPseudos.add(candidate);
+        return candidate;
+      }
+    }
+  }
+
+  throw new Error(`Impossible de générer un pseudo démo unique pour ${person.fullName}`);
 }
 
 function makeEmail(person, index) {
@@ -774,15 +824,12 @@ const mealPriceRangesByPhoto = {
 
 const vegetarianMealPhotoKeys = new Set([
   'crepes',
-  'gratin',
-  'lasagne',
   'pates.pesto',
-  'pizza',
-  'riz.cantonnais',
+  'salade.cesar',
   'tarte.aux.pommes',
 ]);
 
-const veganMealPhotoKeys = new Set(['couscous']);
+const veganMealPhotoKeys = new Set(['crepes', 'tarte.aux.pommes']);
 
 const noPorkMealPhotoKeys = new Set([
   'boeuf.bourguignon',

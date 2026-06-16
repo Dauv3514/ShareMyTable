@@ -66,13 +66,28 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
     .map((filter) => filter.label);
   const houseRuleTags = event.houseRuleTags ?? [];
   const houseRulesDescription = event.houseRules?.trim() ?? "";
-  const participantProfiles = (
-    await Promise.all(
-      (event.participantProfileIds ?? [])
-        .slice(0, event.currentParticipants)
-        .map((participantId) => getHostProfileById(participantId)),
-    )
-  ).filter(Boolean);
+  const fallbackParticipantProfiles = event.participants
+    ? []
+    : (
+        await Promise.all(
+          (event.participantProfileIds ?? [])
+            .slice(0, event.currentParticipants)
+            .map((participantId) => getHostProfileById(participantId)),
+        )
+      ).filter(Boolean);
+  const participantProfiles =
+    event.participants?.map((participant) => ({
+      id: participant.userId,
+      name: participant.name,
+      photoUrl: participant.photoUrl,
+      isHost: participant.isHost,
+    })) ??
+    fallbackParticipantProfiles.map((participant) => ({
+      id: participant.id,
+      name: participant.name,
+      photoUrl: participant.photoUrl,
+      isHost: true,
+    }));
   const participationRatio = Math.min(
     100,
     Math.round((event.currentParticipants / event.maxParticipants) * 100),
@@ -117,20 +132,36 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                 {participantProfiles.length > 0 ? (
                   <div className={styles.participantAvatarList} aria-label="Participants au repas">
                     {participantProfiles.map((participant, index) => (
-                      <Link
-                        key={`${participant.id}-${index}`}
-                        href={buildHostProfileHref(participant.id)}
-                        className={styles.participantAvatarLink}
-                        aria-label={`Voir le profil de ${participant.name}`}
-                      >
-                        <span className={styles.participantAvatarFrame}>
-                          <UserAvatar
-                            src={participant.photoUrl}
-                            alt={participant.name}
-                            size={32}
-                          />
+                      participant.isHost ? (
+                        <Link
+                          key={`${participant.id}-${index}`}
+                          href={buildHostProfileHref(participant.id)}
+                          className={styles.participantAvatarLink}
+                          aria-label={`Voir le profil de ${participant.name}`}
+                        >
+                          <span className={styles.participantAvatarFrame}>
+                            <UserAvatar
+                              src={participant.photoUrl}
+                              alt={participant.name}
+                              size={32}
+                            />
+                          </span>
+                        </Link>
+                      ) : (
+                        <span
+                          key={`${participant.id}-${index}`}
+                          className={styles.participantAvatarLink}
+                          title={participant.name}
+                        >
+                          <span className={styles.participantAvatarFrame}>
+                            <UserAvatar
+                              src={participant.photoUrl}
+                              alt={participant.name}
+                              size={32}
+                            />
+                          </span>
                         </span>
-                      </Link>
+                      )
                     ))}
                   </div>
                 ) : null}

@@ -34,6 +34,17 @@ type MealHostSummary = {
   lng: number | null;
 };
 
+type MealParticipantSummary = {
+  userId: number;
+  pseudo: string | null;
+  firstName: string;
+  lastName: string;
+  city: string;
+  country: string;
+  profilePhotoUrl: string | null;
+  role: RoleName;
+};
+
 type MealResponse = {
   id: number;
   title: string | null;
@@ -49,6 +60,7 @@ type MealResponse = {
   dateTime: Date | null;
   seatsTotal: number;
   currentParticipants: number;
+  participants: MealParticipantSummary[];
   pricePerSeatCents: number;
   houseRules: string | null;
   selectedTagCodes: string[];
@@ -184,13 +196,13 @@ export class MealsService implements OnModuleInit {
 
     const [meals, total] = await queryBuilder.getManyAndCount();
 
-    const participantCounts = await this.getCurrentParticipantCounts(
+    const participantData = await this.getCurrentParticipantData(
       meals.map((meal) => meal.id),
     );
 
     return {
       items: meals.map((meal) =>
-        this.toMealResponse(meal, participantCounts.get(meal.id) ?? 0),
+        this.toMealResponse(meal, participantData.get(meal.id)),
       ),
       page,
       limit,
@@ -215,9 +227,9 @@ export class MealsService implements OnModuleInit {
       throw new NotFoundException('Événement publie introuvable');
     }
 
-    const participantCounts = await this.getCurrentParticipantCounts([meal.id]);
+    const participantData = await this.getCurrentParticipantData([meal.id]);
 
-    return this.toMealResponse(meal, participantCounts.get(meal.id) ?? 0);
+    return this.toMealResponse(meal, participantData.get(meal.id));
   }
 
   async findMine(userId: number): Promise<MealResponse[]> {
@@ -235,21 +247,21 @@ export class MealsService implements OnModuleInit {
       order: { createdAt: 'DESC' },
     });
 
-    const participantCounts = await this.getCurrentParticipantCounts(
+    const participantData = await this.getCurrentParticipantData(
       meals.map((meal) => meal.id),
     );
 
     return meals.map((meal) =>
-      this.toMealResponse(meal, participantCounts.get(meal.id) ?? 0),
+      this.toMealResponse(meal, participantData.get(meal.id)),
     );
   }
 
   async findOneMine(userId: number, mealId: number): Promise<MealResponse> {
     await this.ensureApprovedActiveHost(userId);
     const meal = await this.findOwnedMealEntity(userId, mealId);
-    const participantCounts = await this.getCurrentParticipantCounts([meal.id]);
+    const participantData = await this.getCurrentParticipantData([meal.id]);
 
-    return this.toMealResponse(meal, participantCounts.get(meal.id) ?? 0);
+    return this.toMealResponse(meal, participantData.get(meal.id));
   }
 
   async updateMine(
@@ -536,9 +548,9 @@ export class MealsService implements OnModuleInit {
     }
   }
 
-  private async getCurrentParticipantCounts(
+  private async getCurrentParticipantData(
     mealIds: number[],
-  ): Promise<Map<number, number>> {
+  ): Promise<Map<number, { count: number; participants: MealParticipantSummary[] }>> {
     if (mealIds.length === 0) {
       return new Map();
     }
@@ -552,7 +564,6 @@ export class MealsService implements OnModuleInit {
     const bookings = await this.bookingsRepository.find({
       where: {
         meal: { id: In(mealIds) },
-        bookingStatus: In(activeStatuses),
       },
       relations: ['meal', 'guestUser'],
       order: { createdAt: 'DESC' },
@@ -572,19 +583,44 @@ export class MealsService implements OnModuleInit {
       }
     }
 
-    const participantCounts = new Map<number, number>();
+    const participantData = new Map<
+      number,
+      { count: number; participants: MealParticipantSummary[] }
+    >();
 
     for (const booking of bookingsByMealAndGuest.values()) {
-      participantCounts.set(
-        booking.meal.id,
-        (participantCounts.get(booking.meal.id) ?? 0) + booking.seats,
-      );
+      if (!activeStatuses.includes(booking.bookingStatus)) {
+        continue;
+      }
+
+      const mealId = booking.meal.id;
+      const data = participantData.get(mealId) ?? {
+        count: 0,
+        participants: [],
+      };
+      const guestUser = booking.guestUser;
+
+      data.count += booking.seats;
+      data.participants.push({
+        userId: guestUser.id,
+        pseudo: guestUser.pseudo,
+        firstName: guestUser.firstName,
+        lastName: guestUser.lastName,
+        city: guestUser.city,
+        country: guestUser.country,
+        profilePhotoUrl: guestUser.profilePhotoUrl,
+        role: guestUser.role.name as RoleName,
+      });
+      participantData.set(mealId, data);
     }
 
-    return participantCounts;
+    return participantData;
   }
 
-  private toMealResponse(meal: Meal, currentParticipants = 0): MealResponse {
+  private toMealResponse(
+    meal: Meal,
+    participantData?: { count: number; participants: MealParticipantSummary[] },
+  ): MealResponse {
     const assignedTags = this.getAssignedTags(meal);
     const selectedTagCodes = assignedTags.map((tag) => tag.code);
     const selectedFilterIds = assignedTags
@@ -605,7 +641,8 @@ export class MealsService implements OnModuleInit {
       })),
       dateTime: meal.dateTime,
       seatsTotal: meal.seatsTotal,
-      currentParticipants,
+      currentParticipants: participantData?.count ?? 0,
+      participants: participantData?.participants ?? [],
       pricePerSeatCents: meal.pricePerSeatCents,
       houseRules: meal.houseRules,
       selectedTagCodes,

@@ -14,6 +14,17 @@ type ApiMealHostSummary = {
   lng?: number | null;
 };
 
+type ApiMealParticipant = {
+  userId: number;
+  pseudo: string | null;
+  firstName: string;
+  lastName: string;
+  city: string;
+  country: string;
+  profilePhotoUrl: string | null;
+  role: "USER" | "HOST" | "ADMIN";
+};
+
 type ApiMealMenuItem = {
   id: number;
   category:
@@ -41,6 +52,7 @@ type ApiMealItem = {
   dateTime: string;
   seatsTotal: number;
   currentParticipants?: number;
+  participants?: ApiMealParticipant[];
   pricePerSeatCents: number;
   houseRules: string | null;
   selectedTagCodes?: string[];
@@ -320,6 +332,22 @@ function buildHostName(params: {
   return params.fallback;
 }
 
+function mapApiParticipant(participant: ApiMealParticipant) {
+  return {
+    userId: String(participant.userId),
+    name: buildHostName({
+      firstName: participant.firstName,
+      lastName: participant.lastName,
+      pseudo: participant.pseudo,
+      fallback: `Participant ${participant.userId}`,
+    }),
+    city: participant.city,
+    country: participant.country,
+    photoUrl: participant.profilePhotoUrl,
+    isHost: participant.role === "HOST" || participant.role === "ADMIN",
+  };
+}
+
 function inferVariant(meal: ApiMealItem): MealEvent["variant"] {
   const apiFilters = new Set([
     ...(meal.selectedFilterIds ?? []),
@@ -516,6 +544,7 @@ function mapMealToEvent(
         : fallbackEvent.currentParticipants,
     maxParticipants: meal.seatsTotal || fallbackEvent.maxParticipants,
     participantProfileIds: undefined,
+    participants: (meal.participants ?? []).map(mapApiParticipant),
     menuSections: buildMenuSections(meal, fallbackEvent.menuSections),
     dietaryPreferenceGroups: buildPreferenceGroups(derivedFilters),
   };
