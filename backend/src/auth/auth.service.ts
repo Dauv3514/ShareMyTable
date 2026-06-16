@@ -27,6 +27,7 @@ type OAuthPendingPayload = {
 };
 
 type MissingFlags = { email: boolean; firstName: boolean; lastName: boolean };
+type OAuthFlow = 'login' | 'register';
 
 @Injectable()
 export class AuthService {
@@ -116,7 +117,7 @@ export class AuthService {
     return { access_token: await this.jwtService.signAsync(payload) };
   }
 
-  async oauthLogin(provider: AuthProvider, profile: OAuthProfile) {
+  async oauthLogin(provider: AuthProvider, profile: OAuthProfile, flow: OAuthFlow = 'login') {
     const providerId = profile?.id;
     if (!providerId) {
       throw new BadRequestException('Identifiant fournisseur manquant');
@@ -198,6 +199,17 @@ export class AuthService {
     }
 
     if (user) {
+      if (flow === 'register') {
+        return buildPending({
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          profilePhotoUrl: user.profilePhotoUrl ?? undefined,
+          missing: { email: false, firstName: false, lastName: false },
+          reason: user.isProfileComplete ? 'profile_incomplete' : 'not_registered',
+        });
+      }
+
       if (!user.emailVerifiedAt) {
         await this.sendEmailVerification(user);
         return { type: 'verify' as const };

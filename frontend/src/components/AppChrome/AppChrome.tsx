@@ -13,6 +13,7 @@ type AppChromeProps = {
 export default function AppChrome({ children }: AppChromeProps) {
   const pathname = usePathname();
   const isMessagingConversationRoute = pathname.startsWith("/messages/conversations/");
+  const shouldShowSplash = pathname === "/";
 
   return (
     <div
@@ -20,7 +21,7 @@ export default function AppChrome({ children }: AppChromeProps) {
         isMessagingConversationRoute ? "app-shell--messaging" : ""
       }`}
     >
-      <SplashScreen />
+      {shouldShowSplash ? <SplashScreen /> : null}
 
       {!isMessagingConversationRoute ? <Navbar /> : null}
 

@@ -179,11 +179,12 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   async googleCallback(@Req() req: Request & { user?: any }, @Res() res: Response) {
+    const flow = req.query.state === 'register' ? 'register' : 'login';
     const result = await this.authService.oauthLogin(
       AuthProvider.GOOGLE,
       req.user as any,
+      flow,
     );
-    const flow = typeof req.query.state === 'string' ? req.query.state : undefined;
     if (result.type === 'verify') {
       const baseUrl = process.env.FRONTEND_URL;
       const redirectUrl = new URL(flow === 'login' ? '/connexion' : '/inscription', baseUrl);
@@ -243,7 +244,6 @@ export class AuthController {
       });
       return res.redirect(redirectUrl);
     }
-
     const redirectUrl = this.authService.buildOAuthRedirect(
       result.access_token,
       result.isProfileComplete,

@@ -247,6 +247,11 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     pushNotificationsSupported &&
     notificationPermission === "granted" &&
     hasPushSubscription;
+  const isAuthPath =
+    pathname === "/inscription" ||
+    pathname === "/connexion" ||
+    pathname === "/complete-profile" ||
+    pathname === "/auth/callback";
 
   const showInstallNudge = useCallback(() => {
     if (!canInstall) {
@@ -657,6 +662,10 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     }, 0);
 
     const handleBeforeInstallPrompt = (event: Event) => {
+      if (isAuthPath) {
+        return;
+      }
+
       event.preventDefault();
       setDeferredPrompt(event as BeforeInstallPromptEvent);
       setIsCoolingDown(isDismissedRecently());
@@ -730,7 +739,7 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
       window.removeEventListener("appinstalled", handleAppInstalled);
     };
-  }, [showUpdatePrompt]);
+  }, [isAuthPath, showUpdatePrompt]);
 
   useEffect(() => {
     const handleActionNudge = () => setPendingActionNudge(true);

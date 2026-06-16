@@ -62,6 +62,7 @@ function ConnexionPageContent() {
     const verify = searchParams.get("verify");
     const verified = searchParams.get("verified");
     const verifyError = searchParams.get("verifyError");
+    const reason = searchParams.get("reason");
 
     if (verify === "1") {
       toast.info("Vérifie ton email pour activer ton compte.");
@@ -75,6 +76,10 @@ function ConnexionPageContent() {
 
     if (verifyError === "1") {
       toast.error("Lien de vérification invalide ou expiré.");
+      localStorage.removeItem("oauth_flow");
+    }
+    if (reason === "already_registered") {
+      toast.info("Ce compte Google existe deja. Connecte-toi pour continuer.");
       localStorage.removeItem("oauth_flow");
     }
   }, [searchParams]);
