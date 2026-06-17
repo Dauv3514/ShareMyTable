@@ -61,7 +61,8 @@ const toastStyle = {
 
 export const metadata: Metadata = {
   title: "RamèneTaPoire",
-  description: "Le blablacar des repas",
+  description:
+    "Découvrez des repas partagés et conviviaux près de chez vous avec RamèneTaPoire.",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [

@@ -280,7 +280,7 @@ export default function Home() {
               <div className={styles.newsletterBlock}>
                 <div className={styles.newsletterCopy}>
                   <h2>Newsletter Ramène ta poire</h2>
-                  <p>Soyez au courant des derniers repas près de chez vous</p>
+                  <p>Recevez les prochains repas conviviaux près de chez vous</p>
                 </div>
                 <button
                   type="button"
