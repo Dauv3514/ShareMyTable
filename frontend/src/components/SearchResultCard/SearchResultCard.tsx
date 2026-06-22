@@ -33,6 +33,8 @@ export default function SearchResultCard({ event }: SearchResultCardProps) {
         />
       </div>
 
+      <h2>{event.title}</h2>
+
       <div className="search-result-card__content">
         <div className="search-result-card__host">
           <span>{event.host}</span>
@@ -43,8 +45,6 @@ export default function SearchResultCard({ event }: SearchResultCardProps) {
           <span>{event.dateLabel}</span>
         </div>
       </div>
-
-      <h2>{event.title}</h2>
 
       {visibleFilters.length > 0 && (
         <div className="search-result-card__tags" aria-label="Filtres compatibles">
